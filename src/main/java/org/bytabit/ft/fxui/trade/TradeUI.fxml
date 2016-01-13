@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2016 Steven Myers
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.bytabit.ft.fxui.trade.TradeUI">
+    <children>
+        <TableView fx:id="tradeTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action"/>
+                <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status"/>
+                <TableColumn fx:id="fiatCurrencyColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Currency"/>
+                <TableColumn fx:id="fiatAmountColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Amount"/>
+                <TableColumn fx:id="btcAmountColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Amount"/>
+                <TableColumn fx:id="exchRateColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat / XBT"/>
+                <TableColumn fx:id="deliveryMethodColumn" maxWidth="300.0" prefWidth="300.0"
+                             text="Fiat Delivery Method"/>
+                <TableColumn fx:id="bondPercentColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Bond %"/>
+                <TableColumn fx:id="notaryFeeColumn" maxWidth="100.0" prefWidth="100.0" text="Notary Fee"/>
+            </columns>
+            <VBox.margin>
+                <Insets top="5.0"/>
+            </VBox.margin>
+            <padding>
+                <Insets left="1.0" top="5.0"/>
+            </padding>
+        </TableView>
+        <GridPane fx:id="sellGrid">
+            <columnConstraints>
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0"
+                                   prefWidth="100.0"/>
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0"
+                                   prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="ALWAYS" maxWidth="300.0" minWidth="10.0" prefWidth="300.0"/>
+                <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0"
+                                   prefWidth="100.0"/>
+                <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0"
+                                   prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+            </rowConstraints>
+            <children>
+                <ChoiceBox fx:id="sellFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="2"/>
+                <TextField fx:id="sellFiatAmtField" promptText="Fiat Amount" GridPane.columnIndex="3"/>
+                <TextField fx:id="sellExchRateField" editable="false" focusTraversable="false" promptText="Fiat / BTC"
+                           GridPane.columnIndex="5"/>
+                <TextField fx:id="sellBtcAmtField" promptText="BTC Amount" GridPane.columnIndex="4"/>
+                <ChoiceBox fx:id="sellDeliveryMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="6"/>
+                <Button fx:id="sellButton" mnemonicParsing="false" onAction="#handleCreateSellOffer" text="SELL"/>
+                <Label fx:id="sellBondPercentLabel" disable="true" text="XBT Bond %" GridPane.columnIndex="7"/>
+                <Label fx:id="sellNotaryFeeLabel" disable="true" text="Notary Fee" GridPane.columnIndex="8"/>
+            </children>
+            <padding>
+                <Insets top="5.0"/>
+            </padding>
+            <VBox.margin>
+                <Insets bottom="5.0" top="5.0"/>
+            </VBox.margin>
+        </GridPane>
+    </children>
+    <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0"/>
+    </padding>
+</VBox>

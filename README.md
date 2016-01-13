@@ -24,21 +24,21 @@ sbt run
 1. From the project directory run command:
 
 ```
-sbt '; set javaOptions += "-Dconfig.file=./config/notary1.conf" ; runMain com.bytabit.ft.fxui.FiatTrader'
-sbt '; set javaOptions += "-Dconfig.file=./config/trader1.conf" ; runMain com.bytabit.ft.fxui.FiatTrader'
+sbt '; set javaOptions += "-Dconfig.file=./config/notary1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
+sbt '; set javaOptions += "-Dconfig.file=./config/trader1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
 ```
 
 ### Run From IntelliJ with Custom Config 
 
 ```
-Main class: com.bytabit.ft.fxui.FiatTrader
+Main class: org.bytabit.ft.fxui.FiatTrader
 VM options: -Dconfig.file=./config/notary1.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
 
 ```
-Main class: com.bytabit.fxui.FiatTrader
+Main class: org.bytabit.fxui.FiatTrader
 VM options: -Dconfig.file=./config/trader1.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
