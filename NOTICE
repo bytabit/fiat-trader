@@ -1,0 +1,36 @@
+Bytabit
+
+Copyright 2016 Steven Myers
+
+Application framework support, including actor and streams concurrency model,
+persistence, and HTTP and JSON communications is provided by the akka-actor,
+akka-persistence, leveldb, leveldbjni-all, akka-http-experimental, and
+akka-http-spray-json-experimental libraries.  The original software and their
+licenses are available here:
+
+https://github.com/akka/akka
+https://github.com/dain/leveldb
+https://github.com/fusesource/leveldbjni
+
+Bitcoin protocol support, including wallet and transactions support is provided
+by the bitcoinj library.  The original software and its license are available here:
+
+https://github.com/bitcoinj/bitcoinj
+
+Cryptographic support is provided by the spongycastle and bc-java libraries.
+The original software and their licenses are available here:
+
+https://github.com/rtyley/spongycastle
+https://github.com/bcgit/bc-java
+
+Time and money support is provided by the joda-time and joda-money libraries.  The
+original software and their licenses are available here:
+
+https://github.com/JodaOrg/joda-time
+https://github.com/JodaOrg/joda-money
+
+Font and QR code generation support is provided by the fontawesomefx and qrgen
+libraries.  The original software and their licenses are available here:
+
+https://bitbucket.org/Jerady/fontawesomefx
+https://github.com/kenglxn/QRGen
