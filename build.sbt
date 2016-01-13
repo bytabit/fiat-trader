@@ -15,7 +15,7 @@ git.useGitDescribe := true
 
 name := "fiat-trader"
 
-organization := "com.bytabit"
+organization := "org.bytabit"
 
 scalaVersion := "2.11.7"
 
