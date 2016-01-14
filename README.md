@@ -56,7 +56,7 @@ Note: Don't use the IntelliJ scala plugin project import, I found it doesn't wor
 ### JavaFX Scene Builder
 
 1. Install [JavaFX Scene Builder 2.0](http://www.oracle.com/technetwork/java/javase/downloads/index.html). Find it under “Additional Resources”.
-2. Open main UI file: ```src/main/java/com/bytabit/ft/fxui/MainUI.fxml```
+2. Open main UI file: ```src/main/java/org/bytabit/ft/fxui/MainUI.fxml```
 
 ### Testnet In a Box
 
