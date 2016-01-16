@@ -44,8 +44,10 @@ public class FiatTrader extends Application {
         // Create Actor System
         ActorSystem system = ActorSystem.create(Config.config());
         ActorRef walletMgrRef = WalletManager.actorOf(system);
-        NotaryServerManager.actorOf(walletMgrRef, system);
         NotaryClientManager.actorOf(walletMgrRef, system);
+        if (Config.serverEnabled()) {
+            NotaryServerManager.actorOf(walletMgrRef, system);
+        }
 
         // Load  UI
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/bytabit/ft/fxui/MainUI.fxml"));
