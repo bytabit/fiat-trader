@@ -183,7 +183,6 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
   }
 
   when(SOLD) {
-    // TODO issue #30, remove escrow wallet
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! SellerReceivedPayout(sto.id)
