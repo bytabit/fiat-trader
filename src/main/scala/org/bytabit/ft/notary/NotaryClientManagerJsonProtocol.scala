@@ -17,39 +17,16 @@
 package org.bytabit.ft.notary
 
 import org.bytabit.ft.notary.NotaryClientManager.{NotaryAdded, NotaryRemoved}
-import org.bytabit.ft.util.UtilJsonProtocol
-import spray.json._
+import org.bytabit.ft.util.{EventJsonFormat, UtilJsonProtocol}
 
 trait NotaryClientManagerJsonProtocol extends UtilJsonProtocol {
 
-  implicit val notaryAddedJsonFormat = jsonFormat(NotaryAdded.apply(_), "url")
-  implicit val notaryRemovedJsonFormat = jsonFormat(NotaryRemoved.apply(_), "url")
+  implicit def notaryAddedJsonFormat = jsonFormat(NotaryAdded.apply(_), "url")
 
-  implicit val notaryClientManagerEventJsonFormat = new RootJsonFormat[NotaryClientManager.Event] {
+  implicit def notaryRemovedJsonFormat = jsonFormat(NotaryRemoved.apply(_), "url")
 
-    def read(value: JsValue) = value.asJsObject.getFields("clazz", "event") match {
-      case Seq(JsString(clazz), event) => clazz match {
-        case "NotaryAdded" => notaryAddedJsonFormat.read(event)
-        case "NotaryRemoved" => notaryRemovedJsonFormat.read(event)
-
-        case _ => throw new DeserializationException("NotaryClientManager Event expected")
-      }
-      case e => throw new DeserializationException("NotaryClientManager Event expected")
-    }
-
-    def write(evt: NotaryClientManager.Event) = {
-      val clazz = JsString(evt.getClass.getSimpleName)
-      val eventJson: JsValue = evt match {
-        case aa: NotaryAdded => notaryAddedJsonFormat.write(aa)
-        case aa: NotaryRemoved => notaryRemovedJsonFormat.write(aa)
-
-        case _ =>
-          throw new SerializationException("NotaryClientManager Event expected")
-      }
-      JsObject(
-        "clazz" -> clazz,
-        "event" -> eventJson
-      )
-    }
-  }
+  implicit def notaryClientManagerEventJsonFormat = new EventJsonFormat[NotaryClientManager.Event](
+    Map(simpleName(classOf[NotaryAdded]) -> notaryAddedJsonFormat,
+      simpleName(classOf[NotaryRemoved]) -> notaryRemovedJsonFormat)
+  )
 }

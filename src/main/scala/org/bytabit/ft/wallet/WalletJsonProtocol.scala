@@ -24,13 +24,13 @@ import spray.json._
 
 trait WalletJsonProtocol extends UtilJsonProtocol {
 
-  implicit val buyerJsonFormat = jsonFormat(Buyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+  implicit def buyerJsonFormat = jsonFormat(Buyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
     "openTxUtxo", "fundTxUtxo", "fiatDeliveryDetails", "fiatDeliveryDetailsKey")
 
-  implicit val sellerJsonFormat = jsonFormat(Seller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+  implicit def sellerJsonFormat = jsonFormat(Seller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
     "openTxUtxo", "fiatDeliveryDetailsKey")
 
-  implicit val NotaryJsonFormat = jsonFormat(Notary.apply, "url", "netParams", "escrowPubKey", "feesAddr",
+  implicit def NotaryJsonFormat = jsonFormat(Notary.apply, "url", "netParams", "escrowPubKey", "feesAddr",
     "bondPercent", "btcNotaryFee")
 
   implicit object Sha256HashJsonFormat extends JsonFormat[Sha256Hash] {

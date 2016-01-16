@@ -18,57 +18,38 @@ package org.bytabit.ft.notary
 
 import org.bytabit.ft.notary.NotaryClientFSM._
 import org.bytabit.ft.trade.TradeFSMJsonProtocol
+import org.bytabit.ft.util.EventJsonFormat
 import spray.json._
 
 trait NotaryClientFSMJsonProtocol extends TradeFSMJsonProtocol {
 
-  implicit val notaryCreatedJsonFormat = jsonFormat3(NotaryCreated)
-  implicit val contractAddedJsonFormat = jsonFormat3(ContractAdded)
-  implicit val contractRemovedJsonFormat = jsonFormat3(ContractRemoved)
+  implicit def notaryCreatedJsonFormat = jsonFormat3(NotaryCreated)
 
-  implicit val sellTradeAddedJsonFormat = jsonFormat4(SellTradeAdded)
-  implicit val buyTradeAddedJsonFormat = jsonFormat4(BuyTradeAdded)
+  implicit def contractAddedJsonFormat = jsonFormat3(ContractAdded)
 
-  implicit val tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
-  implicit val postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
+  implicit def contractRemovedJsonFormat = jsonFormat3(ContractRemoved)
 
-  implicit val notaryEventJsonFormat = new RootJsonFormat[NotaryClientFSM.Event] {
+  implicit def sellTradeAddedJsonFormat = jsonFormat4(SellTradeAdded)
 
-    def read(value: JsValue): NotaryClientFSM.Event = value.asJsObject.getFields("clazz", "event") match {
-      case Seq(JsString(clazz), event) => clazz match {
-        case "NotaryCreated" => notaryCreatedJsonFormat.read(event)
-        case "ContractAdded" => contractAddedJsonFormat.read(event)
-        case "ContractRemoved" => contractRemovedJsonFormat.read(event)
-        case "SellTradeAdded" => sellTradeAddedJsonFormat.read(event)
-        case "BuyTradeAdded" => buyTradeAddedJsonFormat.read(event)
-        case "TradeRemoved" => tradeRemovedJsonFormat.read(event)
-        case "PostedTradeEventReceived" => postedTradeEventReceivedJsonFormat.read(event)
-        case _ => throw new DeserializationException("NotaryClientFSM Event expected")
-      }
-      case e => throw new DeserializationException("NotaryClientFSM Event expected")
-    }
+  implicit def buyTradeAddedJsonFormat = jsonFormat4(BuyTradeAdded)
 
-    def write(evt: NotaryClientFSM.Event) = {
-      val clazz = JsString(evt.getClass.getSimpleName)
-      val eventJson: JsValue = evt match {
-        case ac: NotaryCreated => notaryCreatedJsonFormat.write(ac)
-        case cta: ContractAdded => contractAddedJsonFormat.write(cta)
-        case ctr: ContractRemoved => contractRemovedJsonFormat.write(ctr)
-        case ta: SellTradeAdded => sellTradeAddedJsonFormat.write(ta)
-        case ta: BuyTradeAdded => buyTradeAddedJsonFormat.write(ta)
-        case tr: TradeRemoved => tradeRemovedJsonFormat.write(tr)
-        case pte: PostedTradeEventReceived => postedTradeEventReceivedJsonFormat.write(pte)
-        case _ =>
-          throw new SerializationException("NotaryClientFSM Event expected")
-      }
-      JsObject(
-        "clazz" -> clazz,
-        "event" -> eventJson
-      )
-    }
-  }
+  implicit def tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
 
-  implicit val notaryPostedEventJsonFormat = new RootJsonFormat[NotaryClientFSM.PostedEvent] {
+  implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
+
+  val notaryClientEventJsonFormatMap: Map[String, RootJsonFormat[_ <: NotaryClientFSM.Event]] = Map(
+    simpleName(classOf[NotaryCreated]) -> notaryCreatedJsonFormat,
+    simpleName(classOf[ContractAdded]) -> contractAddedJsonFormat,
+    simpleName(classOf[ContractRemoved]) -> contractRemovedJsonFormat,
+    simpleName(classOf[SellTradeAdded]) -> sellTradeAddedJsonFormat,
+    simpleName(classOf[BuyTradeAdded]) -> buyTradeAddedJsonFormat,
+    simpleName(classOf[TradeRemoved]) -> tradeRemovedJsonFormat,
+    simpleName(classOf[PostedTradeEventReceived]) -> postedTradeEventReceivedJsonFormat
+  )
+
+  implicit def notaryEventJsonFormat = new EventJsonFormat[NotaryClientFSM.Event](notaryClientEventJsonFormatMap)
+
+  implicit def notaryPostedEventJsonFormat = new RootJsonFormat[NotaryClientFSM.PostedEvent] {
 
     override def read(json: JsValue): PostedEvent =
       notaryEventJsonFormat.read(json) match {
