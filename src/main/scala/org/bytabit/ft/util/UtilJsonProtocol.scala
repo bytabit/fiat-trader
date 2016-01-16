@@ -28,6 +28,8 @@ trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
   import spray.json._
 
+  def simpleName(clazz: Class[_]): String = clazz.getSimpleName
+
   implicit object MoneyJsonFormat extends JsonFormat[Money] {
 
     def read(value: JsValue) = value match {

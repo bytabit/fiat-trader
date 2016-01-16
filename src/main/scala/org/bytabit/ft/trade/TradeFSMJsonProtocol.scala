@@ -18,20 +18,21 @@ package org.bytabit.ft.trade
 
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model.{Contract, SellOffer, SignedTakenOffer, TakenOffer, _}
+import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import spray.json._
 
 trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
-  implicit val contractJsonFormat = jsonFormat(Contract.apply, "text", "notary", "fiatCurrencyUnit", "fiatDeliveryMethod")
+  implicit def contractJsonFormat = jsonFormat(Contract.apply, "text", "notary", "fiatCurrencyUnit", "fiatDeliveryMethod")
 
-  implicit val offerJsonFormat = jsonFormat(Offer.apply, "contract", "fiatAmount", "btcAmount", "btcBond")
+  implicit def offerJsonFormat = jsonFormat(Offer.apply, "contract", "fiatAmount", "btcAmount", "btcBond")
 
-  implicit val sellOfferJsonFormat = jsonFormat(SellOffer.apply, "offer", "seller")
+  implicit def sellOfferJsonFormat = jsonFormat(SellOffer.apply, "offer", "seller")
 
-  implicit val takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "sellOffer", "buyer", "buyerOpenTxSigs", "buyerFundPayoutTxo")
+  implicit def takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "sellOffer", "buyer", "buyerOpenTxSigs", "buyerFundPayoutTxo")
 
-  implicit val signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "sellerOpenTxSigs", "sellerPayoutTxSigs")
+  implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "sellerOpenTxSigs", "sellerPayoutTxSigs")
 
   implicit object tradeStateJsonFormat extends JsonFormat[TradeFSM.State] {
 
@@ -52,67 +53,39 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   // events
 
-  implicit val sellerAddedToOfferJsonFormat = jsonFormat2(SellerAddedToOffer)
+  implicit def sellerAddedToOfferJsonFormat: RootJsonFormat[SellerAddedToOffer] = jsonFormat2(SellerAddedToOffer)
 
-  implicit val localSellerCreatedOfferJsonFormat = jsonFormat3(LocalSellerCreatedOffer)
+  implicit def localSellerCreatedOfferJsonFormat = jsonFormat3(LocalSellerCreatedOffer)
 
-  implicit val sellerCreatedOfferJsonFormat = jsonFormat3(SellerCreatedOffer)
+  implicit def sellerCreatedOfferJsonFormat = jsonFormat3(SellerCreatedOffer)
 
-  implicit val sellerCanceledOfferJsonFormat = jsonFormat2(SellerCanceledOffer)
+  implicit def sellerCanceledOfferJsonFormat = jsonFormat2(SellerCanceledOffer)
 
-  implicit val buyerTookOfferJsonFormat = jsonFormat5(BuyerTookOffer)
+  implicit def buyerTookOfferJsonFormat = jsonFormat5(BuyerTookOffer)
 
-  implicit val sellerSignedOfferJsonFormat = jsonFormat4(SellerSignedOffer)
+  implicit def sellerSignedOfferJsonFormat = jsonFormat4(SellerSignedOffer)
 
-  implicit val buyerOpenedEscrowJsonFormat = jsonFormat2(BuyerOpenedEscrow)
+  implicit def buyerOpenedEscrowJsonFormat = jsonFormat2(BuyerOpenedEscrow)
 
-  implicit val buyerFundedEscrowJsonFormat = jsonFormat1(BuyerFundedEscrow)
+  implicit def buyerFundedEscrowJsonFormat = jsonFormat1(BuyerFundedEscrow)
 
-  implicit val buyerSettledEscrowJsonFormat = jsonFormat1(BuyerReceivedPayout)
+  implicit def buyerReceivedPayoutJsonFormat = jsonFormat1(BuyerReceivedPayout)
 
-  implicit val tradeEventJsonFormat = new RootJsonFormat[TradeFSM.Event] {
+  val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeFSM.Event]] = Map(
+    simpleName(classOf[LocalSellerCreatedOffer]) -> localSellerCreatedOfferJsonFormat,
+    simpleName(classOf[SellerCreatedOffer]) -> sellerCreatedOfferJsonFormat,
+    simpleName(classOf[SellerCanceledOffer]) -> sellerCanceledOfferJsonFormat,
+    simpleName(classOf[BuyerTookOffer]) -> buyerTookOfferJsonFormat,
+    simpleName(classOf[SellerAddedToOffer]) -> sellerAddedToOfferJsonFormat,
+    simpleName(classOf[SellerSignedOffer]) -> sellerSignedOfferJsonFormat,
+    simpleName(classOf[BuyerOpenedEscrow]) -> buyerOpenedEscrowJsonFormat,
+    simpleName(classOf[BuyerFundedEscrow]) -> buyerFundedEscrowJsonFormat,
+    simpleName(classOf[BuyerReceivedPayout]) -> buyerReceivedPayoutJsonFormat
+  )
 
-    def read(value: JsValue): TradeFSM.Event = value.asJsObject.getFields("clazz", "event") match {
-      case Seq(JsString(clazz), event) => clazz match {
-        case "LocalSellerCreatedOffer" => localSellerCreatedOfferJsonFormat.read(event)
-        case "SellerCreatedOffer" => sellerCreatedOfferJsonFormat.read(event)
-        case "SellerCanceledOffer" => sellerCanceledOfferJsonFormat.read(event)
-        case "BuyerTookOffer" => buyerTookOfferJsonFormat.read(event)
-        case "SellerAddedToOffer" => sellerAddedToOfferJsonFormat.read(event)
-        case "SellerSignedOffer" => sellerSignedOfferJsonFormat.read(event)
-        case "BuyerOpenedEscrow" => buyerOpenedEscrowJsonFormat.read(event)
-        case "BuyerFundedEscrow" => buyerFundedEscrowJsonFormat.read(event)
-        case "BuyerSettledEscrow" => buyerSettledEscrowJsonFormat.read(event)
+  implicit def tradeEventJsonFormat = new EventJsonFormat[TradeFSM.Event](tradeEventJsonFormatMap)
 
-        case _ => throw new DeserializationException("TradeFSM Event expected")
-      }
-      case e => throw new DeserializationException("TradeFSM Event expected")
-    }
-
-    def write(evt: TradeFSM.Event) = {
-      val clazz = JsString(evt.getClass.getSimpleName)
-      val eventJson: JsValue = evt match {
-        case lsoc: LocalSellerCreatedOffer => localSellerCreatedOfferJsonFormat.write(lsoc)
-        case soc: SellerCreatedOffer => sellerCreatedOfferJsonFormat.write(soc)
-        case soc: SellerCanceledOffer => sellerCanceledOfferJsonFormat.write(soc)
-        case soa: BuyerTookOffer => buyerTookOfferJsonFormat.write(soa)
-        case sa: SellerAddedToOffer => sellerAddedToOfferJsonFormat.write(sa)
-        case sa: SellerSignedOffer => sellerSignedOfferJsonFormat.write(sa)
-        case boe: BuyerOpenedEscrow => buyerOpenedEscrowJsonFormat.write(boe)
-        case bse: BuyerFundedEscrow => buyerFundedEscrowJsonFormat.write(bse)
-        case bse: BuyerReceivedPayout => buyerSettledEscrowJsonFormat.write(bse)
-
-        case _ =>
-          throw new SerializationException("TradeFSM Event expected")
-      }
-      JsObject(
-        "clazz" -> clazz,
-        "event" -> eventJson
-      )
-    }
-  }
-
-  implicit val tradePostedEventJsonFormat = new RootJsonFormat[TradeFSM.PostedEvent] {
+  implicit def tradePostedEventJsonFormat = new RootJsonFormat[TradeFSM.PostedEvent] {
 
     override def read(json: JsValue): PostedEvent =
       tradeEventJsonFormat.read(json) match {

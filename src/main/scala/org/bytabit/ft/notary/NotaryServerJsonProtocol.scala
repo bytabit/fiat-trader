@@ -17,41 +17,16 @@
 package org.bytabit.ft.notary
 
 import org.bytabit.ft.notary.NotaryServerManager.{NotaryEventPosted, TradeEventPosted}
-import spray.json._
+import org.bytabit.ft.util.EventJsonFormat
 
 trait NotaryServerJsonProtocol extends NotaryClientFSMJsonProtocol {
 
-  implicit val notaryEventPostedJsonFormat = jsonFormat1(NotaryEventPosted)
-  implicit val tradeEventPostedJsonFormat = jsonFormat1(TradeEventPosted)
+  implicit def notaryEventPostedJsonFormat = jsonFormat1(NotaryEventPosted)
 
-  implicit val notaryServerManagerEventJsonFormat = new RootJsonFormat[NotaryServerManager.Event] {
+  implicit def tradeEventPostedJsonFormat = jsonFormat1(TradeEventPosted)
 
-    // TODO use macro reflection to create maps of sub-class type, type name to JsonFormatter?
-
-    def read(value: JsValue): NotaryServerManager.Event = value.asJsObject.getFields("clazz", "event") match {
-      case Seq(JsString(clazz), event) => clazz match {
-        case "NotaryEventPosted" => notaryEventPostedJsonFormat.read(event)
-        case "TradeEventPosted" => tradeEventPostedJsonFormat.read(event)
-
-        case _ => throw new DeserializationException("NotaryServerManager PostedEvent expected")
-      }
-      case e => throw new DeserializationException("NotaryServerManager PostedEvent expected")
-    }
-
-    def write(evt: NotaryServerManager.Event) = {
-      val clazz = JsString(evt.getClass.getSimpleName)
-      val eventJson: JsValue = evt match {
-        case aep: NotaryEventPosted => notaryEventPostedJsonFormat.write(aep)
-        case tep: TradeEventPosted => tradeEventPostedJsonFormat.write(tep)
-
-        case _ =>
-          throw new SerializationException("NotaryServerManager Event expected")
-      }
-      JsObject(
-        "clazz" -> clazz,
-        "event" -> eventJson
-      )
-    }
-  }
-
+  implicit def notaryServerManagerEventJsonFormat = new EventJsonFormat[NotaryServerManager.Event](
+    Map(simpleName(classOf[NotaryEventPosted]) -> notaryEventPostedJsonFormat,
+      simpleName(classOf[TradeEventPosted]) -> tradeEventPostedJsonFormat)
+  )
 }
