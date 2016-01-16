@@ -48,6 +48,4 @@ public class MainUI extends ActorController {
         notaryServerTab.setDisable(!Config.serverEnabled());
         tabPane.getTabs().removeIf(Tab::isDisable);
     }
-
-    // TODO add code for log and other main screen feature
 }

@@ -128,7 +128,7 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
       context.sender ! aa
 
     case RemoveNotary(u: URL) =>
-      // TODO return errors if notary in use for active trades
+      // TODO issue #29, return errors if notary in use for active trades
       if (data.notaries.contains(u)) {
         val ar = NotaryRemoved(u)
         persist(ar)(updateData)

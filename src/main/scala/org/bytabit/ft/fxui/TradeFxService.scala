@@ -147,7 +147,7 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
   }
 
   def setSelectedContract(dm: String) = {
-    // TODO allow user to rank notaries in notary client screen so UI can auto pick top ranked one
+    // TODO issue #26, allow user to rank notaries in notary client screen so UI can auto pick top ranked one
     // for now pick lowest fee contract template that matches currency and delivery method
     sellContractSelected = for {
       fcu <- sellCurrencyUnitSelected
@@ -219,13 +219,6 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
   }
 
   def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: String) = {
-    //    // TODO allow user to choose one or multiple contract template to create trade offers with
-    //    // pick lowest fee contract template that matches currency and delivery method
-    //    val co = contracts.filter(t => t.fiatCurrencyUnit == fcu && t.fiatDeliveryMethod == fdm)
-    //      .sortWith((x, y) => x.notary.btcNotaryFee.isGreaterThan(y.notary.btcNotaryFee)).headOption
-    //
-    //    // TODO get bond amount percent from preferences or from the user
-    //    val bondAmt = btcAmount.multipliedBy(0.20, Monies.roundingMode)
 
     sellContractSelected.foreach { c =>
       val o = Offer(UUID.randomUUID(), c, fiatAmount, btcAmount)
@@ -238,7 +231,7 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
   }
 
   def takeSellOffer(url: URL, tradeId: UUID): Unit = {
-    // TODO get delivery details from delivery details setup/preferences
+    // TODO issue #15, get delivery details from delivery details preferences
     sendCmd(TakeSellOffer(url, tradeId, "Test Delivery Details"))
   }
 

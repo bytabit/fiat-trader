@@ -38,14 +38,13 @@ public class FiatTrader extends Application {
     @Override
     public final void start(Stage stage) throws IOException {
 
-        // TODO Create config directory (if it doesn't exist), do this here?
+        // TODO issue #24, create config directory (if it doesn't exist), do this here?
         // File configDir = new File(Config.);
 
         // Create Actor System
         ActorSystem system = ActorSystem.create(Config.config());
         ActorRef walletMgrRef = WalletManager.actorOf(system);
         NotaryServerManager.actorOf(walletMgrRef, system);
-        //ActorRef tradeMgrRef = TradeManager.actorOf(walletMgrRef, system);
         NotaryClientManager.actorOf(walletMgrRef, system);
 
         // Load  UI
@@ -59,7 +58,7 @@ public class FiatTrader extends Application {
 
         stage.setTitle(title);
         stage.setScene(scene);
-        // TODO add custom icon and with hover text
+        // TODO issue #25, add custom icon and with hover text
         // stage.getIcons().add(new Image(this.getClass().getResourceAsStream("bytabit-icon.png")));
 
         // Set UI Close Handler

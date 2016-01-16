@@ -24,7 +24,7 @@ import scala.collection.JavaConversions._
 
 object TxTools {
 
-  // TODO currently fixed at 0.0001, should be calculated
+  // TODO issue #35, currently fixed at 0.0001, should be calculated
   val COIN_MINER_FEE = Coin.COIN.divide(10000)
 
   val COIN_OP_RETURN_FEE = Transaction.MIN_NONDUST_OUTPUT
