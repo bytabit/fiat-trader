@@ -113,7 +113,7 @@ class WalletFxService(system: ActorSystem) extends ActorFxService(system) {
       override def handle(event: MouseEvent): Unit = {
         copyAddress(a)
         if (Config.walletNet == NetworkParameters.ID_MAINNET)
-        // TODO warn user bitcoin wallet will be launched
+        // TODO issue #27, warn user bitcoin wallet will be launched
           requestMoney(a)
       }
     })

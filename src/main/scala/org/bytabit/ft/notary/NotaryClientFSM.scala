@@ -257,7 +257,6 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
     case Event(aoff: NotaryOffline, d) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! aoff
-        // TODO disable contracts in UI when notary is offline
         d.contracts.keys.foreach(context.parent ! ContractRemoved(d.url, _))
       }
 
@@ -355,7 +354,7 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
       context.parent ! NotaryCreated(a.url, a)
       context.parent ! NotaryOffline(a.url)
 
-      // TODO disable action buttons in trade UI when notary is offline
+      // TODO issue #28, disable trade negotation buttons in trade UI when notary is offline
       // start active trade FSMs and notify parent
       as.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start)
       ab.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start)
@@ -377,7 +376,6 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
     case Event(NotaryOnline(_), Data(u, Some(a), cm, alt, art, lp)) =>
       goto(ONLINE) andThen { ud =>
         context.parent ! NotaryOnline(u)
-        // TODO enable contracts in UI when notary is online
         cm.values.foreach(c => context.parent ! ContractAdded(c.notary.url, c))
       }
 
@@ -389,8 +387,6 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
     case Event(NotaryOffline(_), _) =>
       stay()
-
-    // TODO manage trades while offline
 
     // update latestUpdate for other posted events
     case Event(te: TradeFSM.PostedEvent, d) if te.posted.isDefined =>

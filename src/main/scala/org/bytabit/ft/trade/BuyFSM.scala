@@ -170,7 +170,6 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
       stay()
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
-      // TODO need to look for outputs equal to fully signed payout tx??
       if (outputsEqual(sto.unsignedPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(BOUGHT) andThen {
@@ -184,7 +183,6 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
   }
 
   when(BOUGHT) {
-    // TODO remove escrow wallet
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! BuyerReceivedPayout(sto.id)
