@@ -37,7 +37,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
   implicit object tradeStateJsonFormat extends JsonFormat[TradeFSM.State] {
 
     def read(value: JsValue) = value match {
-      case JsString(PUBLISHED.identifier) => PUBLISHED
+      case JsString(CREATED.identifier) => CREATED
       case JsString(CANCELED.identifier) => CANCELED
       case JsString(TAKEN.identifier) => TAKEN
       case JsString(SIGNED.identifier) => SIGNED
@@ -63,7 +63,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def buyerTookOfferJsonFormat = jsonFormat5(BuyerTookOffer)
 
-  implicit def sellerSignedOfferJsonFormat = jsonFormat4(SellerSignedOffer)
+  implicit def sellerSignedOfferJsonFormat = jsonFormat5(SellerSignedOffer)
 
   implicit def buyerOpenedEscrowJsonFormat = jsonFormat2(BuyerOpenedEscrow)
 

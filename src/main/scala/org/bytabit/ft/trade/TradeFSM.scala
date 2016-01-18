@@ -28,7 +28,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import org.bitcoinj.core.{Transaction, TransactionOutput}
+import org.bitcoinj.core.{Address, Transaction, TransactionOutput}
 import org.bytabit.ft.trade.TradeFSM.{SellerSignedOffer, _}
 import org.bytabit.ft.trade.model.{SellOffer, TakenOffer, TradeData, _}
 import org.bytabit.ft.util.Posted
@@ -72,7 +72,7 @@ object TradeFSM {
                                   buyerFundPayoutTxo: Seq[TransactionOutput],
                                   posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class SellerSignedOffer(id: UUID, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
+  final case class SellerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
                                      posted: Option[DateTime] = None) extends PostedEvent
 
   final case class BuyerOpenedEscrow(id: UUID, openSigs: Seq[TxSig]) extends Event
@@ -93,8 +93,8 @@ object TradeFSM {
     override val identifier: String = "ADDED"
   }
 
-  case object PUBLISHED extends State {
-    override val identifier: String = "PUBLISHED"
+  case object CREATED extends State {
+    override val identifier: String = "CREATED"
   }
 
   case object CANCELED extends State {
@@ -117,8 +117,12 @@ object TradeFSM {
     override val identifier: String = "FUNDED"
   }
 
+  case object FIAT_SENT extends State {
+    override val identifier: String = "FIAT SENT"
+  }
+
   case object FIAT_RCVD extends State {
-    override val identifier: String = "FUNDED"
+    override val identifier: String = "FIAT RCVD"
   }
 
   case object BOUGHT extends State {
@@ -161,10 +165,10 @@ abstract class TradeFSM(id: UUID)
       case (SellerCreatedOffer(_, so, Some(_)), offer: Offer) =>
         so
 
-      case (BuyerTookOffer(_, b, bots, bfpt, Some(_)), sellOffer: SellOffer) =>
+      case (BuyerTookOffer(_, b, bots, bfpt, _), sellOffer: SellOffer) =>
         sellOffer.withBuyer(b, bots, bfpt)
 
-      case (SellerSignedOffer(_, sots, spts, Some(_)), takenOffer: TakenOffer) =>
+      case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
       case _ =>

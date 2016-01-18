@@ -38,8 +38,6 @@ object BuyFSM {
 
   case object Start extends Command
 
-  //final case class CancelSellOffer(notaryUrl: URL, id: UUID) extends Command
-
   final case class TakeSellOffer(notaryUrl: URL, id: UUID, fiatDeliveryDetails: String) extends Command
 
   final case class ReceiveFiat(notaryUrl: URL, id: UUID) extends Command
@@ -52,9 +50,9 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
 
   override val log = Logging(context.system, this)
 
-  startWith(PUBLISHED, sellOffer)
+  startWith(CREATED, sellOffer)
 
-  when(PUBLISHED) {
+  when(CREATED) {
 
     case Event(Start, so: SellOffer) =>
       context.parent ! SellerCreatedOffer(so.id, so)
@@ -64,7 +62,7 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
       context.parent ! sco
       stay()
 
-    case Event(sco: SellerCanceledOffer, so: SellOffer) if sco.posted.isDefined =>
+    case Event(sco: SellerCanceledOffer, _) if sco.posted.isDefined =>
       goto(CANCELED) andThen { uso =>
         context.parent ! sco
       }
@@ -77,16 +75,39 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
 
       if (to.amountOk) {
         val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo)
-        postTradeEvent(to.url, bto, self)
+        stay applying bto andThen { case to: TakenOffer =>
+          postTradeEvent(to.url, bto, self)
+        }
       } else {
         log.error(s"Insufficient btc amount to take offer ${so.id}")
+        stay()
       }
-      stay()
 
-    case Event(bto: BuyerTookOffer, so: SellOffer) if bto.posted.isDefined =>
+    // my take offer was posted
+    case Event(bto: BuyerTookOffer, to: TakenOffer) if to.buyer.id == bto.buyer.id && bto.posted.isDefined =>
       goto(TAKEN) applying bto andThen {
         case uto: TakenOffer =>
           context.parent ! bto
+      }
+
+    // someone else took the offer before mine was posted
+    case Event(bto: BuyerTookOffer, to: TakenOffer) if to.buyer.id != bto.buyer.id && bto.posted.isDefined =>
+      stay()
+
+    // seller signed someone else's take before mine was posted, cancel for us
+    case Event(sso: SellerSignedOffer, to: TakenOffer) if to.buyer.id != sso.buyerId && sso.posted.isDefined =>
+      goto(CANCELED) andThen { case uto: TakenOffer =>
+        context.parent ! SellerCanceledOffer(uto.id, sso.posted)
+      }
+
+    // someone else took the offer
+    case Event(bto: BuyerTookOffer, so: SellOffer) if bto.posted.isDefined =>
+      stay()
+
+    // seller signed someone else's take, cancel for us
+    case Event(sso: SellerSignedOffer, so: SellOffer) if sso.posted.isDefined =>
+      goto(CANCELED) andThen { case uso: SellOffer =>
+        context.parent ! SellerCanceledOffer(uso.id, sso.posted)
       }
   }
 
@@ -96,19 +117,26 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
       context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq())
       stay()
 
-    case Event(sso: SellerSignedOffer, to: TakenOffer) if sso.posted.isDefined =>
+    // seller signed my take
+    case Event(sso: SellerSignedOffer, to: TakenOffer) if to.buyer.id == sso.buyerId && sso.posted.isDefined =>
       goto(SIGNED) applying sso andThen {
         case sto: SignedTakenOffer =>
           walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
           walletMgrRef ! BroadcastTx(sto.fullySignedOpenTx)
           context.parent ! sso
       }
+
+    // seller signed someone else's take, cancel for us
+    case Event(sso: SellerSignedOffer, to: TakenOffer) if to.buyer.id != sso.buyerId && sso.posted.isDefined =>
+      goto(CANCELED) andThen { case uto: TakenOffer =>
+        context.parent ! SellerCanceledOffer(uto.id, sso.posted)
+      }
   }
 
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerSignedOffer(sto.id, Seq(), Seq())
+      context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 

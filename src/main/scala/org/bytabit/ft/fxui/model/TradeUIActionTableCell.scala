@@ -25,15 +25,15 @@ import javafx.scene.layout.VBox
 
 import org.bytabit.ft.fxui.TradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Origin, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{FUNDED, PUBLISHED}
+import org.bytabit.ft.trade.TradeFSM.{CREATED, FUNDED}
 
 import scala.collection.JavaConversions._
 
 object TradeUIActionTableCell {
 
-  case class TradeOriginState(url: URL, id: UUID, origin: Origin, state: TradeFSM.State)
+  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
 
 }
 
@@ -64,9 +64,9 @@ class TradeUIActionTableCell(tradefxService: TradeFxService) extends TableCell[T
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, SELLER, PUBLISHED), false) =>
+      case (TradeOriginState(u, i, SELLER, CREATED), false) =>
         Seq(cancelButton)
-      case (TradeOriginState(u, i, BUYER, PUBLISHED), false) =>
+      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
         Seq(buyButton)
       case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
         Seq(fiatReceivedButton)

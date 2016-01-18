@@ -24,7 +24,7 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.fxui.model.TradeUIModel
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Origin, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.notary.NotaryClientFSM.{AddSellOffer, ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
@@ -35,7 +35,6 @@ import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
-import org.bytabit.ft.wallet.model.Buyer
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 import org.joda.time.DateTime
 
@@ -89,42 +88,33 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
       log.debug(s"unhandled NotaryClientFSM event: $e")
 
     case LocalSellerCreatedOffer(id, offer, p) =>
-      tradeActive.set(true)
-      addOrUpdateTradeUIModel(SELLER, PUBLISHED, offer, p)
+      addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
 
     case SellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(BUYER, PUBLISHED, offer, p)
+      addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
 
-    case BuyerTookOffer(id, buyer, _, _, p) =>
-      tradeActive.set(true)
-      acceptTradeUIModel(id, buyer)
+    case BuyerTookOffer(id, _, _, _, _) =>
+      updateStateTradeUIModel(TAKEN, id)
 
-    case SellerSignedOffer(id, _, _, _) =>
-      tradeActive.set(true)
+    case SellerSignedOffer(id, _, _, _, _) =>
       updateStateTradeUIModel(SIGNED, id)
 
     case BuyerOpenedEscrow(id, _) =>
-      tradeActive.set(true)
       updateStateTradeUIModel(OPENED, id)
 
     case BuyerFundedEscrow(id) =>
-      tradeActive.set(true)
       updateStateTradeUIModel(FUNDED, id)
 
     case FiatReceived(id) =>
-      tradeActive.set(true)
       updateStateTradeUIModel(FIAT_RCVD, id)
 
     case BuyerReceivedPayout(id) =>
-      tradeActive.set(false)
       updateStateTradeUIModel(BOUGHT, id)
 
     case SellerReceivedPayout(id) =>
-      tradeActive.set(false)
       updateStateTradeUIModel(SOLD, id)
 
     case SellerCanceledOffer(id, p) =>
-      tradeActive.set(false)
       cancelTradeUIModel(id)
 
     case e: TradeFSM.Event =>
@@ -239,7 +229,11 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
     sendCmd(ReceiveFiat(url, tradeId))
   }
 
-  private def addOrUpdateTradeUIModel(origin: Origin, state: State, offer: SellOffer,
+  def updateActive() = {
+    tradeActive.set(trades.exists(_.active))
+  }
+
+  private def addOrUpdateTradeUIModel(role: Role, state: State, offer: SellOffer,
                                       posted: Option[DateTime] = None): Unit = {
 
     trades.find(t => t.getId == offer.id) match {
@@ -247,18 +241,9 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
         val newTradeUI = t.copy(state = state, offer = offer, posted = posted)
         trades.set(trades.indexOf(t), newTradeUI)
       case None =>
-        trades.add(TradeUIModel(origin, state, offer, posted))
+        trades.add(TradeUIModel(role, state, offer, posted))
     }
-  }
-
-  private def acceptTradeUIModel(id: UUID, buyer: Buyer) {
-    trades.find(t => t.getId == id) match {
-      case Some(t) =>
-        val newTradeUI = t.copy(state = TAKEN)
-        trades.set(trades.indexOf(t), newTradeUI)
-      case None =>
-        log.error(s"Accept trade error, id not found: $id")
-    }
+    updateActive()
   }
 
   private def updateStateTradeUIModel(state: State, id: UUID) {
@@ -269,6 +254,7 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
       case None =>
         log.error(s"trade error, id not found: $id")
     }
+    updateActive()
   }
 
   private def cancelTradeUIModel(id: UUID) = {
@@ -277,6 +263,7 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
         a.getId == id
       }
     })
+    updateActive()
   }
 
   private def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryMgrRef, cmd)

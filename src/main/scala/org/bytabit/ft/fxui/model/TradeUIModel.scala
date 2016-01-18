@@ -19,7 +19,7 @@ package org.bytabit.ft.fxui.model
 import javafx.beans.property._
 
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.Origin
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model.SellOffer
@@ -28,15 +28,16 @@ import org.joda.time.DateTime
 
 object TradeUIModel {
 
-  sealed trait Origin
+  sealed trait Role
 
-  case object SELLER extends Origin
+  case object NOTARY extends Role
 
-  case object BUYER extends Origin
+  case object SELLER extends Role
 
+  case object BUYER extends Role
 }
 
-case class TradeUIModel(origin: Origin, state: TradeFSM.State, offer: SellOffer,
+case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
                         posted: Option[DateTime] = None) {
 
   val url = offer.contract.notary.url
@@ -51,7 +52,7 @@ case class TradeUIModel(origin: Origin, state: TradeFSM.State, offer: SellOffer,
   val bondPercent = template.notary.bondPercent
   val notaryFee = template.notary.btcNotaryFee
 
-  val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, origin, state))
+  val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
   val statusProperty = new SimpleStringProperty(stateToString(state, posted.isDefined))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
@@ -62,12 +63,17 @@ case class TradeUIModel(origin: Origin, state: TradeFSM.State, offer: SellOffer,
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
+  val active = (role, state) match {
+    case (SELLER, s) if s != SOLD => true
+    case (BUYER, s) if s != CREATED && s != BOUGHT => true
+    case _ => false
+  }
 
   def getId = id
 
   def stateToString(state: TradeFSM.State, posted: Boolean = false): String = {
     state match {
-      case PUBLISHED => s"OFFERED"
+      case CREATED => s"OFFERED"
       case CANCELED => s"CANCELED"
       case TAKEN => s"TAKEN"
       case SIGNED => s"SIGNED"

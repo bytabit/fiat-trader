@@ -72,12 +72,12 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
 
     // posted created offer
     case Event(sco: SellerCreatedOffer, o: Offer) if sco.posted.isDefined =>
-      goto(PUBLISHED) applying sco andThen { case uso: SellOffer =>
+      goto(CREATED) applying sco andThen { case uso: SellOffer =>
         context.parent ! LocalSellerCreatedOffer(uso.id, uso, sco.posted)
       }
   }
 
-  when(PUBLISHED) {
+  when(CREATED) {
 
     case Event(Start, so: SellOffer) =>
       context.parent ! LocalSellerCreatedOffer(so.id, so)
@@ -106,7 +106,7 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
       stay()
 
     case Event(WalletManager.TakenOfferSigned(sto), to: TakenOffer) =>
-      postTradeEvent(sto.url, SellerSignedOffer(sto.id, sto.sellerOpenTxSigs, sto.sellerPayoutTxSigs), self)
+      postTradeEvent(sto.url, SellerSignedOffer(sto.id, to.buyer.id, sto.sellerOpenTxSigs, sto.sellerPayoutTxSigs), self)
       stay()
 
     case Event(sso: SellerSignedOffer, to: TakenOffer) if sso.posted.isDefined =>
@@ -124,7 +124,7 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerSignedOffer(sto.id, Seq(), Seq())
+      context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
