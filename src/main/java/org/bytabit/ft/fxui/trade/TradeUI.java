@@ -152,11 +152,11 @@ public class TradeUI extends ActorController {
         });
 
         sellFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
-            updateAddTradeExchRate();
+            updateAddTradeBtcAmt();
         });
 
-        sellBtcAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
-            updateAddTradeExchRate();
+        sellExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
+            updateAddTradeBtcAmt();
         });
     }
 
@@ -168,9 +168,9 @@ public class TradeUI extends ActorController {
         tradeFxService.createSellOffer(cu, fa, ba, dm);
     }
 
-    private void updateAddTradeExchRate() {
+    private void updateAddTradeBtcAmt() {
         String fiatAmt = sellFiatAmtField.getText();
-        String btcAmt = sellBtcAmtField.getText();
-        sellExchRateField.setText(tradeFxService.calculateAddExchRate(fiatAmt, btcAmt));
+        String exchRate = sellExchRateField.getText();
+        sellBtcAmtField.setText(tradeFxService.calculateAddBtcAmt(fiatAmt, exchRate));
     }
 }
