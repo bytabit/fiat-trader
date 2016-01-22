@@ -55,8 +55,9 @@ public class FiatTrader extends Application {
 
         Parent mainUI = loader.load();
         Scene scene = new Scene(mainUI, 1111, 350);
-        String title = "Fiat Trader (" + Config.walletNet() + ")";
-        if (Config.config().length() > 0) title += " | " + Config.config();
+        String title = "Fiat Trader (" + Config.walletNet() + ", v" + Config.version();
+        if (Config.config().length() > 0 && !Config.config().equals("default")) title += ", " + Config.config();
+        title += ")";
 
         stage.setTitle(title);
         stage.setScene(scene);

@@ -4,7 +4,7 @@ import com.typesafe.sbt.{GitBranchPrompt, GitVersioning}
 // generate the version.conf file containing sbt app name and version
 resourceGenerators in Compile += Def.task {
   val file = (resourceManaged in Compile).value / "version.conf"
-  val contents = "bytabit {\n  version = %s\n}\n".format(version.value)
+  val contents = "bytabit.fiat-trader {\n  version = %s\n}\n".format(version.value)
   IO.write(file, contents)
   Seq(file)
 }.taskValue
