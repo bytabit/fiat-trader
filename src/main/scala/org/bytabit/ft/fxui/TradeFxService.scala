@@ -34,7 +34,7 @@ import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
+import org.bytabit.ft.util._
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 import org.joda.time.DateTime
 
@@ -176,12 +176,12 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
     }
   }
 
-  def calculateAddExchRate(fiatAmt: String, btcAmt: String): String = {
+  def calculateAddBtcAmt(fiatAmt: String, exchRate: String): String = {
     try {
       sellCurrencyUnitSelected.map { cu =>
         val fa: Money = FiatMoney(cu, fiatAmt)
-        val ba: Money = BTCMoney(btcAmt)
-        fa.dividedBy(ba.getAmount, Monies.roundingMode).getAmount.toString
+        val er: BigDecimal = BigDecimal(1.0) / BigDecimal(exchRate)
+        fa.convertedTo(CurrencyUnits.XBT, er.bigDecimal, Monies.roundingMode).getAmount.toString
       }.getOrElse("")
     } catch {
       case x: Exception => "ERROR"
