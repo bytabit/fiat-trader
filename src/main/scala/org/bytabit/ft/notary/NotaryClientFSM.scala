@@ -31,7 +31,7 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.notary.NotaryClientFSM._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.CancelSellOffer
+import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
 import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}
 import org.bytabit.ft.trade.{BuyFSM, SellFSM, TradeFSM}
@@ -63,8 +63,6 @@ object NotaryClientFSM {
   case object Start extends Command
 
   final case class ReceivePostedNotaryEvent(event: NotaryClientFSM.PostedEvent) extends Command
-
-  final case class AddSellOffer(offer: Offer) extends Command
 
   final case class ReceivePostedTradeEvent(event: TradeFSM.PostedEvent) extends Command
 

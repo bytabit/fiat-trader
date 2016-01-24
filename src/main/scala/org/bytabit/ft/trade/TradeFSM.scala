@@ -140,8 +140,6 @@ abstract class TradeFSM(id: UUID)
 
   import spray.json._
 
-  //val log: LoggingAdapter
-
   // implicits
 
   implicit val system = context.system

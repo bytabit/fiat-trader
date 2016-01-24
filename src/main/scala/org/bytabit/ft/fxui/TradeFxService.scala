@@ -26,10 +26,10 @@ import akka.actor.ActorSystem
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientFSM.{AddSellOffer, ContractAdded, ContractRemoved}
+import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.CancelSellOffer
+import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}

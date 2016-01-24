@@ -39,9 +39,11 @@ object SellFSM {
 
   case object Start extends Command
 
-  //final case class CreateSellOffer(offer: Offer) extends Command
+  final case class AddSellOffer(offer: Offer) extends Command
 
   final case class CancelSellOffer(notaryUrl: URL, id: UUID) extends Command
+
+  final case class SendFiat(notaryUrl: URL, id: UUID) extends Command
 
 }
 
