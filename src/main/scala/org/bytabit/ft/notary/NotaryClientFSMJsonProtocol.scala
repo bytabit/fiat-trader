@@ -17,6 +17,7 @@
 package org.bytabit.ft.notary
 
 import org.bytabit.ft.notary.NotaryClientFSM._
+import org.bytabit.ft.notary.server.PostedEvents
 import org.bytabit.ft.trade.TradeFSMJsonProtocol
 import org.bytabit.ft.util.EventJsonFormat
 import spray.json._
@@ -51,13 +52,13 @@ trait NotaryClientFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def notaryPostedEventJsonFormat = new RootJsonFormat[NotaryClientFSM.PostedEvent] {
 
-    override def read(json: JsValue): PostedEvent =
+    override def read(json: JsValue): NotaryClientFSM.PostedEvent =
       notaryEventJsonFormat.read(json) match {
-        case pe: PostedEvent => pe
+        case pe: NotaryClientFSM.PostedEvent => pe
         case _ => throw new DeserializationException("NotaryClientFSM PostedEvent expected")
       }
 
-    override def write(obj: PostedEvent): JsValue =
+    override def write(obj: NotaryClientFSM.PostedEvent): JsValue =
       notaryEventJsonFormat.write(obj)
   }
 

@@ -25,7 +25,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
 import org.bytabit.ft.notary.NotaryClientManager;
-import org.bytabit.ft.notary.NotaryServerManager;
+import org.bytabit.ft.notary.server.NotaryServerManager;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.wallet.WalletManager;
 import scala.concurrent.Await;

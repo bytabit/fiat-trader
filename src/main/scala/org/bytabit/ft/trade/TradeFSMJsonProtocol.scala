@@ -87,9 +87,9 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def tradePostedEventJsonFormat = new RootJsonFormat[TradeFSM.PostedEvent] {
 
-    override def read(json: JsValue): PostedEvent =
+    override def read(json: JsValue): TradeFSM.PostedEvent =
       tradeEventJsonFormat.read(json) match {
-        case pe: PostedEvent => pe
+        case pe: TradeFSM.PostedEvent => pe
         case _ => throw new DeserializationException("TradeFSM PostedEvent expected")
       }
 

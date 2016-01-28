@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
+import org.bytabit.ft.notary.NotaryClientFSM
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.util.DateTimeOrdering
 

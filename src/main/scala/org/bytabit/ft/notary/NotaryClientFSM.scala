@@ -30,6 +30,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.notary.NotaryClientFSM._
+import org.bytabit.ft.notary.server.PostedEvents
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer

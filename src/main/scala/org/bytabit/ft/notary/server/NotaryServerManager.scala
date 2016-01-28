@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
@@ -23,8 +23,9 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
+import org.bytabit.ft.notary.NotaryClientFSM
 import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved, NotaryCreated}
-import org.bytabit.ft.notary.NotaryServerManager._
+import org.bytabit.ft.notary.server.NotaryServerManager._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
