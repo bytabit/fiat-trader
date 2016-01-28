@@ -16,11 +16,11 @@
 
 package org.bytabit.ft.notary.server
 
-import org.bytabit.ft.notary.NotaryClientFSM
+import org.bytabit.ft.notary.NotaryFSM
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.util.DateTimeOrdering
 
-final case class PostedEvents(notaryEvents: Seq[NotaryClientFSM.PostedEvent],
+final case class PostedEvents(notaryEvents: Seq[NotaryFSM.PostedEvent],
                               tradeEvents: Seq[TradeFSM.PostedEvent]) {
 
   val latestUpdate = (notaryEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))

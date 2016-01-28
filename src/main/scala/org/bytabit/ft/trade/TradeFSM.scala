@@ -47,6 +47,8 @@ object TradeFSM {
 
   def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyFSM(sellOffer, walletMgrRef))
 
+  def notarizeProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new NotarizeFSM(sellOffer, walletMgrRef))
+
   def name(id: UUID) = s"tradeFSM-${id.toString}"
 
   // events

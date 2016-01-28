@@ -23,8 +23,8 @@ import javafx.collections.{FXCollections, ObservableList}
 import akka.actor.ActorSystem
 import org.bytabit.ft.fxui.model.NotaryUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientFSM._
 import org.bytabit.ft.notary.NotaryClientManager.{Start, _}
+import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
@@ -82,8 +82,8 @@ class NotaryClientFxService(system: ActorSystem) extends ActorFxService(system) 
     case NotaryOffline(u) =>
       updateNotaryUIModel(OFFLINE, u, None)
 
-    case e: NotaryClientFSM.Event =>
-      log.debug(s"unhandled NotaryClientFSM event: $e")
+    case e: NotaryFSM.Event =>
+      log.debug(s"unhandled NotaryFSM event: $e")
 
     case e: TradeFSM.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
@@ -92,7 +92,7 @@ class NotaryClientFxService(system: ActorSystem) extends ActorFxService(system) 
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  private def updateNotaryUIModel(state: NotaryClientFSM.State, url: URL, notary: Option[Notary]) = {
+  private def updateNotaryUIModel(state: NotaryFSM.State, url: URL, notary: Option[Notary]) = {
     notaries.find(n => n.getUrl == url.toString) match {
       case Some(n) if notary.isDefined =>
         val newNotaryUI = NotaryUIModel(state, url, notary)

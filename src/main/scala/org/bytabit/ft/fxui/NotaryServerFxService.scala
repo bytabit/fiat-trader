@@ -25,10 +25,9 @@ import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved, NotaryCreated}
+import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved, NotaryCreated}
 import org.bytabit.ft.notary.server.NotaryServerManager
-import NotaryServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
-import org.bytabit.ft.notary._
+import org.bytabit.ft.notary.server.NotaryServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 

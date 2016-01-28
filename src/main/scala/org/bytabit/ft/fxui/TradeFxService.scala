@@ -26,7 +26,7 @@ import akka.actor.ActorSystem
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved}
+import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
@@ -84,8 +84,8 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
 
-    case e: NotaryClientFSM.Event =>
-      log.debug(s"unhandled NotaryClientFSM event: $e")
+    case e: NotaryFSM.Event =>
+      log.debug(s"unhandled NotaryFSM event: $e")
 
     case LocalSellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)

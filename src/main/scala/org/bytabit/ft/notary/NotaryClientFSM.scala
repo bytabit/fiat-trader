@@ -19,43 +19,22 @@ package org.bytabit.ft.notary
 import java.net.URL
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.ActorRef
 import akka.event.Logging
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.persistence.fsm.PersistentFSM
-import akka.persistence.fsm.PersistentFSM.FSMState
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import org.bitcoinj.core.Sha256Hash
+import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, SELLER}
 import org.bytabit.ft.notary.NotaryClientFSM._
-import org.bytabit.ft.notary.server.PostedEvents
+import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
-import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}
-import org.bytabit.ft.trade.{BuyFSM, SellFSM, TradeFSM}
-import org.bytabit.ft.util.{DateTimeOrdering, Posted}
-import org.bytabit.ft.wallet.model.Notary
-import org.joda.time.DateTime
+import org.bytabit.ft.trade.model.{Offer, SellOffer}
+import org.bytabit.ft.trade.{NotarizeFSM, BuyFSM, SellFSM, TradeFSM}
+import org.bytabit.ft.util.Config
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.reflect._
-import scala.util.{Failure, Success}
 
 object NotaryClientFSM {
-
-  // actor setup
-
-  def props(url: URL, walletMgr: ActorRef) = Props(new NotaryClientFSM(url, walletMgr))
-
-  def name(url: URL) = s"${NotaryClientFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
-
-  def actorOf(url: URL, walletMgr: ActorRef)(implicit system: ActorSystem) =
-    system.actorOf(props(url, walletMgr), name(url))
 
   // commands
 
@@ -63,151 +42,21 @@ object NotaryClientFSM {
 
   case object Start extends Command
 
-  final case class ReceivePostedNotaryEvent(event: NotaryClientFSM.PostedEvent) extends Command
+  final case class ReceivePostedNotaryEvent(event: NotaryFSM.PostedEvent) extends Command
 
   final case class ReceivePostedTradeEvent(event: TradeFSM.PostedEvent) extends Command
 
-  // events
-
-  sealed trait Event {
-    val url: URL
-  }
-
-  sealed trait PostedEvent extends Event with Posted
-
-  // notary events
-
-  final case class NotaryCreated(url: URL, notary: Notary,
-                                 posted: Option[DateTime] = None) extends PostedEvent
-
-  final case class ContractAdded(url: URL, contract: Contract,
-                                 posted: Option[DateTime] = None) extends PostedEvent
-
-  final case class ContractRemoved(url: URL, id: Sha256Hash,
-                                   posted: Option[DateTime] = None) extends PostedEvent
-
-  final case class NotaryOnline(url: URL) extends Event
-
-  final case class NotaryOffline(url: URL) extends Event
-
-  // trade events
-
-  final case class SellTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                  posted: Option[DateTime] = None) extends Event
-
-  final case class BuyTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                 posted: Option[DateTime] = None) extends Event
-
-  final case class TradeRemoved(url: URL, tradeId: UUID,
-                                posted: Option[DateTime]) extends Event
-
-  final case class PostedTradeEventReceived(url: URL,
-                                            posted: Option[DateTime]) extends PostedEvent
-
-  // states
-
-  trait State extends FSMState
-
-  case object ADDED extends State {
-    override def identifier: String = "ADDED"
-  }
-
-  case object ONLINE extends State {
-    override def identifier: String = "ONLINE"
-  }
-
-  case object OFFLINE extends State {
-    override def identifier: String = "OFFLINE"
-  }
-
-  // data
-
-  case class Data(url: URL, notary: Option[Notary] = None,
-                  contracts: Map[Sha256Hash, Contract] = Map(),
-                  activeSellTrades: Map[UUID, SellOffer] = Map(),
-                  activeBuyTrades: Map[UUID, SellOffer] = Map(),
-                  latestPosted: Option[DateTime] = None) {
-
-    def postedEventReceived(dateTime: DateTime): Data =
-      this.copy(latestPosted = Seq(Some(dateTime), latestPosted).flatten.reduceOption(DateTimeOrdering.max))
-
-    def notaryCreated(notary: Notary, posted: DateTime) =
-      this.copy(notary = Some(notary))
-        .postedEventReceived(posted)
-
-    def contractAdded(contract: Contract, posted: DateTime) =
-      this.copy(contracts = contracts + (contract.id -> contract))
-        .postedEventReceived(posted)
-
-    def contractRemoved(id: Sha256Hash, posted: DateTime) =
-      this.copy(contracts = contracts - id)
-        .postedEventReceived(posted)
-
-    def sellTradeAdded(id: UUID, offer: SellOffer, posted: DateTime) =
-      this.copy(activeSellTrades = activeSellTrades + (id -> offer))
-        .postedEventReceived(posted)
-
-    def buyTradeAdded(id: UUID, offer: SellOffer, posted: DateTime) =
-      this.copy(activeBuyTrades = activeBuyTrades + (id -> offer))
-        .postedEventReceived(posted)
-
-    def tradeRemoved(id: UUID, posted: DateTime) =
-      this.copy(activeSellTrades = activeSellTrades - id, activeBuyTrades = activeBuyTrades - id)
-        .postedEventReceived(posted)
-  }
-
 }
 
-class NotaryClientFSM(url: URL, walletMgr: ActorRef)
-  extends PersistentFSM[NotaryClientFSM.State, NotaryClientFSM.Data, NotaryClientFSM.Event] with NotaryClientFSMJsonProtocol {
-
-  // implicits
-
-  implicit val system = context.system
-
-  implicit def executor = system.dispatcher
-
-  implicit val materializer = ActorMaterializer()
-
-  override def domainEventClassTag: ClassTag[NotaryClientFSM.Event] = classTag[NotaryClientFSM.Event]
-
-  // logging
+class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
 
   override val log = Logging(context.system, this)
 
-  // persistence
+  override val url: URL = serverUrl
 
-  override def persistenceId = NotaryClientFSM.name(url)
+  val isNotary = Config.serverEnabled
 
-  // apply events to state and data
-
-  def applyEvent(evt: NotaryClientFSM.Event, data: NotaryClientFSM.Data): NotaryClientFSM.Data = evt match {
-
-    case NotaryCreated(u, a, Some(p)) =>
-      data.notaryCreated(a, p)
-
-    case ContractAdded(u, c, Some(p)) =>
-      data.contractAdded(c, p)
-
-    case ContractRemoved(u, id, Some(p)) =>
-      data.contractRemoved(id, p)
-
-    case SellTradeAdded(u, i, o, Some(p)) =>
-      data.sellTradeAdded(i, o, p)
-
-    case BuyTradeAdded(u, i, o, Some(p)) =>
-      data.buyTradeAdded(i, o, p)
-
-    case TradeRemoved(u, i, Some(p)) =>
-      data.tradeRemoved(i, p)
-
-    case PostedTradeEventReceived(u, Some(p)) =>
-      data.postedEventReceived(p)
-
-    case _ => data
-  }
-
-  startWith(ADDED, Data(url))
+  startWith(ADDED, AddedNotary(url))
 
   when(ADDED, stateTimeout = 30 second) {
 
@@ -230,33 +79,34 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
     // handle notary commands
 
-    case Event(Start, Data(u, Some(a), cm, as, ab, lp)) =>
+    case Event(Start, ActiveNotary(n, lp, cm, at)) =>
       // notify parent notary is online
-      context.parent ! NotaryCreated(a.url, a)
-      context.parent ! NotaryOnline(u)
+      context.parent ! NotaryCreated(n.url, n)
+      context.parent ! NotaryOnline(n.url)
 
       // notify parent of notary contract
       cm.values.foreach(c => context.parent ! ContractAdded(c.notary.url, c))
 
       // start active trade FSMs and notify parent
-      as.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start)
-      ab.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start)
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start))
+      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeFSM.Start))
 
       // request new events from event server
-      reqNotaryEvents(url, lp)
+      reqNotaryEvents(url, Some(lp))
       stay()
 
-    case Event(StateTimeout, d) =>
-      reqNotaryEvents(url, d.latestPosted)
+    case Event(StateTimeout, ActiveNotary(n, lp, cm, at)) =>
+      reqNotaryEvents(url, Some(lp))
       stay()
 
     case Event(aon: NotaryOnline, d) =>
       stay()
 
-    case Event(aoff: NotaryOffline, d) =>
+    case Event(aoff: NotaryOffline, ActiveNotary(n, lp, cm, at)) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! aoff
-        d.contracts.keys.foreach(context.parent ! ContractRemoved(d.url, _))
+        cm.keys.foreach(context.parent ! ContractRemoved(n.url, _))
       }
 
     // handle notary events
@@ -268,25 +118,25 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
     // handle trade commands
 
-    case Event(AddSellOffer(o), d) =>
+    case Event(AddSellOffer(o), d) if !isNotary =>
       createSellTrade(o.id, o) ! SellFSM.Start
       stay()
 
-    case Event(cso: CancelSellOffer, d) =>
+    case Event(cso: CancelSellOffer, d) if !isNotary =>
       tradeFSM(cso.id) match {
         case Some(ref) => ref ! cso
         case None => log.error(s"Could not cancel offer ${cso.id}")
       }
       stay()
 
-    case Event(tso: TakeSellOffer, d) =>
+    case Event(tso: TakeSellOffer, d) if !isNotary =>
       tradeFSM(tso.id) match {
         case Some(ref) => ref ! tso
         case None => log.error(s"Could not take offer ${tso.id}")
       }
       stay()
 
-    case Event(fr: ReceiveFiat, d) =>
+    case Event(fr: ReceiveFiat, d) if !isNotary =>
       tradeFSM(fr.id) match {
         case Some(ref) => ref ! fr
         case None => log.error(s"Could not receive fiat ${fr.id}")
@@ -296,27 +146,36 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
     // handle trade events
 
     // add local trade and update latestUpdate
-    case Event(lsco: TradeFSM.LocalSellerCreatedOffer, d) if lsco.posted.isDefined =>
-      stay() applying SellTradeAdded(d.url, lsco.id, lsco.offer, lsco.posted) andThen { ud =>
+    case Event(lsco: TradeFSM.LocalSellerCreatedOffer, ActiveNotary(n, lp, cm, at))
+      if lsco.posted.isDefined && !isNotary =>
+      stay() applying SellTradeAdded(n.url, lsco.id, lsco.offer, lsco.posted) andThen { ud =>
         context.parent ! lsco
       }
 
     // add remote trade and update latestUpdate
-    case Event(sco: TradeFSM.SellerCreatedOffer, d) if sco.posted.isDefined =>
-      stay() applying BuyTradeAdded(d.url, sco.id, sco.offer, sco.posted) andThen { ud =>
+    case Event(sco: TradeFSM.SellerCreatedOffer, ActiveNotary(n, lp, cm, at))
+      if sco.posted.isDefined && !isNotary =>
+      stay() applying BuyTradeAdded(n.url, sco.id, sco.offer, sco.posted) andThen { ud =>
+        context.parent ! sco
+      }
+
+    // add notarized remote trade and update latestUpdate
+    case Event(sco: TradeFSM.SellerCreatedOffer, ActiveNotary(n, lp, cm, at))
+      if sco.posted.isDefined && isNotary =>
+      stay() applying NotarizeTradeAdded(n.url, sco.id, sco.offer, sco.posted) andThen { ud =>
         context.parent ! sco
       }
 
     // remove trade and update latestUpdate
-    case Event(sco: TradeFSM.SellerCanceledOffer, d) if sco.posted.isDefined =>
-      stay() applying TradeRemoved(d.url, sco.id, sco.posted) andThen { ud =>
+    case Event(sco: TradeFSM.SellerCanceledOffer, ActiveNotary(n, lp, cm, at)) if sco.posted.isDefined =>
+      stay() applying TradeRemoved(n.url, sco.id, sco.posted) andThen { ud =>
         context.parent ! sco
         stopTrade(sco.id)
       }
 
     // update latestUpdate for other posted events
-    case Event(te: TradeFSM.PostedEvent, d) if te.posted.isDefined =>
-      stay() applying PostedTradeEventReceived(d.url, te.posted) andThen { ud =>
+    case Event(te: TradeFSM.PostedEvent, ActiveNotary(n, lp, cm, at)) if te.posted.isDefined =>
+      stay() applying PostedTradeEventReceived(n.url, te.posted) andThen { ud =>
         context.parent ! te
       }
 
@@ -327,12 +186,21 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
     // handle receive posted trade events
 
-    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), d) =>
+    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), d) if !isNotary =>
       tradeFSM(sco.id) match {
         case Some(ref) =>
           ref ! sco
         case None =>
           createBuyTrade(sco.id, sco.offer) ! sco
+      }
+      stay()
+
+    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), d) if isNotary =>
+      tradeFSM(sco.id) match {
+        case Some(ref) =>
+          ref ! sco
+        case None =>
+          createNotarizeTrade(sco.id, sco.offer) ! sco
       }
       stay()
 
@@ -348,48 +216,52 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
   when(OFFLINE, stateTimeout = 30 second) {
 
-    case Event(Start, Data(u, Some(a), cm, as, ab, lp)) =>
+    case Event(Start, ActiveNotary(n, lp, cm, at)) =>
       // notify parent notary was created but is offline
-      context.parent ! NotaryCreated(a.url, a)
-      context.parent ! NotaryOffline(a.url)
+      context.parent ! NotaryCreated(n.url, n)
+      context.parent ! NotaryOffline(n.url)
 
       // TODO issue #28, disable trade negotation buttons in trade UI when notary is offline
       // start active trade FSMs and notify parent
-      as.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start)
-      ab.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start)
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start))
+      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeFSM.Start))
 
-      reqNotaryEvents(url, lp)
+      reqNotaryEvents(n.url, Some(lp))
       stay()
 
-    case Event(Start, Data(u, None, _, _, _, None)) =>
+    case Event(Start, AddedNotary(u)) =>
       // notify parent notary is offline, not yet contacted
-      context.parent ! NotaryOffline(url)
+      context.parent ! NotaryOffline(u)
 
-      reqNotaryEvents(url, None)
+      reqNotaryEvents(u, None)
       stay()
 
-    case Event(StateTimeout, d) =>
-      reqNotaryEvents(url, d.latestPosted)
+    case Event(StateTimeout, ActiveNotary(n, lp, cm, at)) =>
+      reqNotaryEvents(n.url, Some(lp))
       stay()
 
-    case Event(NotaryOnline(_), Data(u, Some(a), cm, alt, art, lp)) =>
+    case Event(StateTimeout, AddedNotary(u)) =>
+      reqNotaryEvents(u, None)
+      stay()
+
+    case Event(NotaryOnline(_), ActiveNotary(n, lp, cm, at)) =>
       goto(ONLINE) andThen { ud =>
-        context.parent ! NotaryOnline(u)
+        context.parent ! NotaryOnline(n.url)
         cm.values.foreach(c => context.parent ! ContractAdded(c.notary.url, c))
       }
 
-    case Event(NotaryOnline(_), Data(u, _, cm, alt, art, lp)) =>
+    case Event(NotaryOnline(_), AddedNotary(u)) =>
       goto(ONLINE) andThen { ud =>
         context.parent ! NotaryOnline(u)
-        cm.values.foreach(c => context.parent ! ContractAdded(c.notary.url, c))
       }
 
     case Event(NotaryOffline(_), _) =>
       stay()
 
     // update latestUpdate for other posted events
-    case Event(te: TradeFSM.PostedEvent, d) if te.posted.isDefined =>
-      stay() applying PostedTradeEventReceived(d.url, te.posted) andThen { ud =>
+    case Event(te: TradeFSM.PostedEvent, ActiveNotary(n, lp, cm, at)) if te.posted.isDefined =>
+      stay() applying PostedTradeEventReceived(n.url, te.posted) andThen { ud =>
         context.parent ! te
       }
 
@@ -402,51 +274,6 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
 
   initialize()
 
-  // http flow
-
-  def connectionFlow(url: URL): Flow[HttpRequest, HttpResponse, Future[Http.OutgoingConnection]] =
-    Http().outgoingConnection(host = url.getHost, port = url.getPort)
-
-  // http get events requester and handler
-
-  def reqNotaryEvents(url: URL, since: Option[DateTime]): Unit = {
-
-    val query = since match {
-      case Some(dt) => s"?since=${dt.toString}"
-      case None => ""
-    }
-
-    val notaryUri = s"/notary$query"
-
-    val req = Source.single(HttpRequest(uri = notaryUri, method = HttpMethods.GET))
-      .via(connectionFlow(url))
-
-    req.runWith(Sink.head).onComplete {
-
-      case Success(HttpResponse(StatusCodes.OK, headers, entity, protocol)) =>
-        log.debug(s"Response from ${url.toString} $notaryUri OK")
-        Unmarshal(entity).to[PostedEvents].onSuccess {
-          case PostedEvents(aes, tes) =>
-            self ! NotaryOnline(url)
-            aes.foreach(self ! ReceivePostedNotaryEvent(_))
-            tes.foreach(self ! ReceivePostedTradeEvent(_))
-          case _ =>
-            log.error("No notary events in response.")
-        }
-
-      case Success(HttpResponse(StatusCodes.NoContent, headers, entity, protocol)) =>
-        log.debug(s"No new events from ${url.toString}$notaryUri")
-        self ! NotaryOnline(url)
-
-      case Success(HttpResponse(sc, headers, entity, protocol)) =>
-        log.error(s"Response from ${url.toString}$notaryUri ${sc.toString()}")
-
-      case Failure(failure) =>
-        log.debug(s"No Response from ${url.toString}: $failure")
-        self ! NotaryOffline(url)
-    }
-  }
-
   // create trade FSMs
 
   def createSellTrade(id: UUID, o: Offer): ActorRef = {
@@ -457,10 +284,8 @@ class NotaryClientFSM(url: URL, walletMgr: ActorRef)
     context.actorOf(TradeFSM.buyProps(so, walletMgr), TradeFSM.name(id))
   }
 
-  def stopTrade(id: UUID) = {
-    tradeFSM(id).foreach(context.stop)
+  def createNotarizeTrade(id: UUID, so: SellOffer): ActorRef = {
+    context.actorOf(TradeFSM.notarizeProps(so, walletMgr), TradeFSM.name(id))
   }
 
-  // find trade FSM
-  def tradeFSM(id: UUID): Option[ActorRef] = context.child(TradeFSM.name(id))
 }

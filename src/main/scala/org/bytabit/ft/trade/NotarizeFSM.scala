@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.trade
 
 import java.net.URL
 import java.util.UUID
@@ -22,11 +22,9 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.notary.NotarizeFSM.Start
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.trade.NotarizeFSM.Start
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model.{SellOffer, SignedTakenOffer, TakenOffer}
-import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, BroadcastTx, EscrowTransactionUpdated, RemoveWatchEscrowAddress}
 
 import scala.language.postfixOps
@@ -147,12 +145,12 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
-//    case Event(e: ReceiveFiat, sto: SignedTakenOffer) =>
-//      goto(FIAT_RCVD) andThen {
-//        case usto: SignedTakenOffer =>
-//          walletMgrRef ! BroadcastTx(usto.sellerSignedPayoutTx, Some(usto.buyer.escrowPubKey))
-//          context.parent ! FiatReceived(usto.id)
-//      }
+    //    case Event(e: ReceiveFiat, sto: SignedTakenOffer) =>
+    //      goto(FIAT_RCVD) andThen {
+    //        case usto: SignedTakenOffer =>
+    //          walletMgrRef ! BroadcastTx(usto.sellerSignedPayoutTx, Some(usto.buyer.escrowPubKey))
+    //          context.parent ! FiatReceived(usto.id)
+    //      }
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       stay()

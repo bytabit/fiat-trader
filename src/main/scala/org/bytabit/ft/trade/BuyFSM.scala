@@ -46,8 +46,6 @@ object BuyFSM {
 
 class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
 
-  // logging
-
   override val log = Logging(context.system, this)
 
   startWith(CREATED, sellOffer)
