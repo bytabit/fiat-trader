@@ -87,6 +87,15 @@ object TradeFSM {
 
   final case class SellerReceivedPayout(id: UUID) extends Event
 
+  final case class CertifyFiatRequested(id: UUID, evidence: Option[Array[Byte]] = None,
+                                            posted: Option[DateTime] = None) extends PostedEvent
+
+  final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
+                                            posted: Option[DateTime] = None) extends PostedEvent
+
+  final case class FiatNotSentCertified(id: UUID, payoutSigs: Seq[TxSig],
+                                               posted: Option[DateTime] = None) extends PostedEvent
+
   // states
 
   sealed trait State extends FSMState
@@ -127,12 +136,20 @@ object TradeFSM {
     override val identifier: String = "FIAT RCVD"
   }
 
-  case object BOUGHT extends State {
-    override val identifier: String = "BOUGHT"
+  case object TRADED extends State {
+    override val identifier: String = "TRADED"
   }
 
-  case object SOLD extends State {
-    override val identifier: String = "SOLD"
+  case object CERT_FIAT_REQD extends State {
+    override val identifier: String = "CERT FIAT REQD"
+  }
+
+  case object FIAT_SENT_CERTD extends State {
+    override val identifier: String = "FIAT SENT CERTD"
+  }
+
+  case object FIAT_NOT_SENT_CERTD extends State {
+    override val identifier: String = "FIAT NOT SENT CERTD"
   }
 
 }
@@ -170,6 +187,12 @@ abstract class TradeFSM(id: UUID)
 
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
+
+      case (CertifyFiatRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
+        signedTakenOffer.certifyFiatRequested(e)
+
+      case (CertifyFiatRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
 
       case _ =>
         tradeData

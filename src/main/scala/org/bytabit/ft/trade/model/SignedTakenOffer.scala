@@ -30,21 +30,6 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def sellerSignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(sellerPayoutTxSigs)
 
-  def unsignedFiatSentPayoutTx: PayoutTx = super.unsignedFiatSentPayoutTx(seller, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
-
-  def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(seller, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
-
-  def notarizeFiatSent(implicit notaryWallet: Wallet): NotarizedFiatSent = {
-    val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(notary.escrowPubKey)
-
-    NotarizedFiatSent(this, notarizedFiatSentPayoutTx.inputSigs)
-  }
-
-  def notarizeFiatNotSent(implicit notaryWallet: Wallet): NotarizedFiatNotSent = {
-    val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(notary.escrowPubKey)
-
-    NotarizedFiatNotSent(this, notarizedFiatSentPayoutTx.inputSigs)
-  }
+  def certifyFiatRequested(evidence: Option[Array[Byte]]) =
+    CertifyFiatEvidence(this, evidence.toSeq)
 }

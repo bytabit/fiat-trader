@@ -109,10 +109,10 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
       updateStateTradeUIModel(FIAT_RCVD, id)
 
     case BuyerReceivedPayout(id) =>
-      updateStateTradeUIModel(BOUGHT, id)
+      updateStateTradeUIModel(TRADED, id)
 
     case SellerReceivedPayout(id) =>
-      updateStateTradeUIModel(SOLD, id)
+      updateStateTradeUIModel(TRADED, id)
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)

@@ -116,9 +116,10 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val nfs = sto.notarizeFiatSent(notaryWallet)
+      val cfr = sto.certifyFiatRequested(None)
+      val cfs = cfr.certifyFiatSent(notaryWallet)
 
-      val signedPayoutTx = nfs.notarySignedPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
+      val signedPayoutTx = cfs.notarySignedPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
 
       signedPayoutTx shouldBe 'fullySigned
     }
@@ -129,9 +130,10 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val nfs = sto.notarizeFiatNotSent(notaryWallet)
+      val cfr = sto.certifyFiatRequested(None)
+      val cfns = cfr.certifyFiatNotSent(notaryWallet)
 
-      val signedPayoutTx = nfs.notarySignedPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
+      val signedPayoutTx = cfns.notarySignedPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
 
       signedPayoutTx shouldBe 'fullySigned
     }

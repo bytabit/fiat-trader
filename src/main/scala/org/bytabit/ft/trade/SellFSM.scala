@@ -45,6 +45,8 @@ object SellFSM {
 
   final case class SendFiat(notaryUrl: URL, id: UUID) extends Command
 
+  final case class RequestCertifyFiat(notaryUrl: URL, id: UUID, evidence:Array[Byte]) extends Command
+
 }
 
 class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
@@ -175,7 +177,7 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
 
       if (outputsEqual(sto.sellerSignedPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(SOLD) andThen { usto =>
+        goto(TRADED) andThen { usto =>
           context.parent ! SellerReceivedPayout(usto.id)
           walletMgrRef ! RemoveWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
         }
@@ -184,7 +186,7 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
         stay()
   }
 
-  when(SOLD) {
+  when(TRADED) {
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! SellerReceivedPayout(sto.id)
@@ -192,11 +194,27 @@ class SellFSM(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       stay()
+
+    case e =>
+      log.error(s"Received event after being traded: $e")
+      stay()
   }
 
   when(CANCELED) {
     case e =>
       log.error(s"Received event after being canceled: $e")
+      stay()
+  }
+
+  when(FIAT_SENT_CERTD) {
+    case e =>
+      log.error(s"Received event after fiat sent certified by notary: $e")
+      stay()
+  }
+
+  when(FIAT_NOT_SENT_CERTD) {
+    case e =>
+      log.error(s"Received event after fiat not sent certified by notary: $e")
       stay()
   }
 

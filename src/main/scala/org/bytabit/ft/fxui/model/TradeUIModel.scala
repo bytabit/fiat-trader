@@ -35,6 +35,7 @@ object TradeUIModel {
   case object SELLER extends Role
 
   case object BUYER extends Role
+
 }
 
 case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
@@ -53,7 +54,7 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFee = template.notary.btcNotaryFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
-  val statusProperty = new SimpleStringProperty(stateToString(state, posted.isDefined))
+  val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
   val btcAmountProperty = new SimpleStringProperty(btcAmount.toString)
@@ -64,24 +65,25 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
   val active = (role, state) match {
-    case (SELLER, s) if s != SOLD => true
-    case (BUYER, s) if s != CREATED && s != BOUGHT => true
+    case (SELLER, s) if s != TRADED => true
+    case (BUYER, s) if s != CREATED && s != TRADED => true
     case _ => false
   }
 
   def getId = id
 
-  def stateToString(state: TradeFSM.State, posted: Boolean = false): String = {
-    state match {
-      case CREATED => s"OFFERED"
-      case CANCELED => s"CANCELED"
-      case TAKEN => s"TAKEN"
-      case SIGNED => s"SIGNED"
-      case OPENED => s"OPENED"
-      case FUNDED => s"FUNDED"
-      case FIAT_RCVD => s"FIAT RCVD"
-      case BOUGHT => s"BOUGHT"
-      case SOLD => s"SOLD"
+  def stateToString(state: TradeFSM.State, role: Role): String = {
+    (state, role) match {
+      case (CREATED, _) => s"OFFERED"
+      case (CANCELED, _) => s"CANCELED"
+      case (TAKEN, _) => s"TAKEN"
+      case (SIGNED, _) => s"SIGNED"
+      case (OPENED, _) => s"OPENED"
+      case (FUNDED, _) => s"FUNDED"
+      case (FIAT_RCVD, _) => s"FIAT RCVD"
+      case (TRADED, BUYER) => s"BOUGHT"
+      case (TRADED, SELLER) => s"SOLD"
+      case (TRADED, _) => s"TRADED"
 
       case _ => "ERROR!"
     }

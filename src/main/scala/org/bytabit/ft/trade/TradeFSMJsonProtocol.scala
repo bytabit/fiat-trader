@@ -43,7 +43,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
       case JsString(SIGNED.identifier) => SIGNED
       case JsString(OPENED.identifier) => OPENED
       case JsString(FUNDED.identifier) => FUNDED
-      case JsString(BOUGHT.identifier) => BOUGHT
+      case JsString(TRADED.identifier) => TRADED
 
       case _ => deserializationError("TradeStatus expected")
     }
