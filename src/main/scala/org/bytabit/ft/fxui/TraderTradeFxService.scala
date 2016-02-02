@@ -18,45 +18,36 @@ package org.bytabit.ft.fxui
 
 import java.net.URL
 import java.util.UUID
-import java.util.function.Predicate
-import javafx.beans.property.{SimpleBooleanProperty, SimpleStringProperty}
-import javafx.collections.{FXCollections, ObservableList}
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.collections.ObservableList
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.fxui.model.TradeUIModel
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
-import org.bytabit.ft.fxui.util.ActorFxService
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
+import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{Contract, Offer, SellOffer}
+import org.bytabit.ft.trade.model.{Contract, Offer}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
-import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object TradeFxService {
-  def apply(system: ActorSystem) = new TradeFxService(system)
+object TraderTradeFxService {
+  def apply(system: ActorSystem) = new TraderTradeFxService(system)
 }
 
-class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
+class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
+
+  override val system = actorSystem
 
   val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
   lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
-
-  // UI Data
-
-  val trades: ObservableList[TradeUIModel] = FXCollections.observableArrayList[TradeUIModel]
-  val sellCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
-  val sellDeliveryMethods: ObservableList[String] = FXCollections.observableArrayList[String]
-  val sellBondPercent = new SimpleStringProperty()
-  val sellNotaryFee = new SimpleStringProperty()
 
   val tradeActive: SimpleBooleanProperty = new SimpleBooleanProperty(false)
 
@@ -89,33 +80,43 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
 
     case LocalSellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
+      updateActive()
 
     case SellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
+      updateActive()
 
     case BuyerTookOffer(id, _, _, _, _) =>
       updateStateTradeUIModel(TAKEN, id)
+      updateActive()
 
     case SellerSignedOffer(id, _, _, _, _) =>
       updateStateTradeUIModel(SIGNED, id)
+      updateActive()
 
     case BuyerOpenedEscrow(id, _) =>
       updateStateTradeUIModel(OPENED, id)
+      updateActive()
 
     case BuyerFundedEscrow(id) =>
       updateStateTradeUIModel(FUNDED, id)
+      updateActive()
 
     case FiatReceived(id) =>
       updateStateTradeUIModel(FIAT_RCVD, id)
+      updateActive()
 
     case BuyerReceivedPayout(id) =>
       updateStateTradeUIModel(TRADED, id)
+      updateActive()
 
     case SellerReceivedPayout(id) =>
       updateStateTradeUIModel(TRADED, id)
+      updateActive()
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
+      updateActive()
 
     case e: TradeFSM.Event =>
       log.error(s"unhandled tradeFSM event: $e")
@@ -233,46 +234,13 @@ class TradeFxService(system: ActorSystem) extends ActorFxService(system) {
     tradeActive.set(trades.exists(_.active))
   }
 
-  private def addOrUpdateTradeUIModel(role: Role, state: State, offer: SellOffer,
-                                      posted: Option[DateTime] = None): Unit = {
+  def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryMgrRef, cmd)
 
-    trades.find(t => t.getId == offer.id) match {
-      case Some(t) =>
-        val newTradeUI = t.copy(state = state, offer = offer, posted = posted)
-        trades.set(trades.indexOf(t), newTradeUI)
-      case None =>
-        trades.add(TradeUIModel(role, state, offer, posted))
-    }
-    updateActive()
-  }
+  def sendCmd(cmd: SellFSM.Command) = sendMsg(notaryMgrRef, cmd)
 
-  private def updateStateTradeUIModel(state: State, id: UUID) {
-    trades.find(t => t.getId == id) match {
-      case Some(t) =>
-        val newTradeUI = t.copy(state = state)
-        trades.set(trades.indexOf(t), newTradeUI)
-      case None =>
-        log.error(s"trade error, id not found: $id")
-    }
-    updateActive()
-  }
+  def sendCmd(cmd: BuyFSM.Command) = sendMsg(notaryMgrRef, cmd)
 
-  private def cancelTradeUIModel(id: UUID) = {
-    trades.removeIf(new Predicate[TradeUIModel] {
-      override def test(a: TradeUIModel): Boolean = {
-        a.getId == id
-      }
-    })
-    updateActive()
-  }
-
-  private def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryMgrRef, cmd)
-
-  private def sendCmd(cmd: SellFSM.Command) = sendMsg(notaryMgrRef, cmd)
-
-  private def sendCmd(cmd: BuyFSM.Command) = sendMsg(notaryMgrRef, cmd)
-
-  private def sendCmd(cmd: ListenerUpdater.Command) = {
+  def sendCmd(cmd: ListenerUpdater.Command) = {
     sendMsg(notaryMgrRef, cmd)
   }
 }

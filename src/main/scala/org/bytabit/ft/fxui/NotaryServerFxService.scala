@@ -38,7 +38,9 @@ object NotaryServerFxService {
   def apply(system: ActorSystem) = new NotaryServerFxService(system)
 }
 
-class NotaryServerFxService(system: ActorSystem) extends ActorFxService(system) {
+class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
+
+  override val system = actorSystem
 
   val notaryServerMgrSel = system.actorSelection(s"/user/${NotaryServerManager.name}")
   lazy val notaryServerMgrRef = notaryServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))

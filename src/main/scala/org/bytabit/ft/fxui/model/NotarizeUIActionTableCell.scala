@@ -18,26 +18,24 @@ package org.bytabit.ft.fxui.model
 
 import java.net.URL
 import java.util.UUID
-import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.Pos
-import javafx.scene.control.{Button, TableCell}
+import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.TraderTradeFxService
+import org.bytabit.ft.fxui.NotaryTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.Role
 import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{CREATED, FUNDED}
 
 import scala.collection.JavaConversions._
 
-object TradeUIActionTableCell {
+object NotarizeUIActionTableCell {
 
   case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
 
 }
 
-class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends ActionTableCell {
+class NotarizeUIActionTableCell(tradefxService: NotaryTradeFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)
@@ -49,27 +47,27 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
 
     // possible buttons
 
-    val cancelButton = actionButton("CANCEL", event => {
-      tradefxService.cancelSellOffer(item.url, item.id)
-    })
-
-    val buyButton = actionButton("BUY", event => {
-      tradefxService.takeSellOffer(item.url, item.id)
-    })
-
-    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
-      tradefxService.receiveFiat(item.url, item.id)
-    })
+    //    val cancelButton = actionButton("CANCEL", event => {
+    //      tradefxService.cancelSellOffer(item.url, item.id)
+    //    })
+    //
+    //    val buyButton = actionButton("BUY", event => {
+    //      tradefxService.takeSellOffer(item.url, item.id)
+    //    })
+    //
+    //    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
+    //      tradefxService.receiveFiat(item.url, item.id)
+    //    })
 
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, SELLER, CREATED), false) =>
-        Seq(cancelButton)
-      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
-        Seq(buyButton)
-      case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
-        Seq(fiatReceivedButton)
+      //      case (TradeOriginState(u, i, SELLER, CREATED), false) =>
+      //        Seq(cancelButton)
+      //      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
+      //        Seq(buyButton)
+      //      case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
+      //        Seq(fiatReceivedButton)
       case _ =>
         setText(null)
         setStyle("")
