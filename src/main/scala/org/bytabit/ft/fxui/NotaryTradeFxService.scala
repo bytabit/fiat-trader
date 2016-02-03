@@ -37,8 +37,8 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
 
   override val system = actorSystem
 
-  val notaryClientSel = system.actorSelection(s"/user/${NotaryFSM.name(serverUrl)}")
-  lazy val notaryClientRef = notaryClientSel.resolveOne(FiniteDuration(5, "seconds"))
+  val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
+  lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
     super.start()
@@ -75,8 +75,11 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
 
+    case e: NotaryFSM.Event =>
+      log.debug(s"unhandled NotaryFSM event: $e")
+
     case e: TradeFSM.Event =>
-      log.error(s"unhandled tradeFSM event: $e")
+      log.error(s"unhandled TradeFSM event: $e")
 
     // TODO cases to notarize trades
 
@@ -86,9 +89,9 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
 
   // TODO functions to notarize trades
 
-  def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryClientRef, cmd)
+  def sendCmd(cmd: NotaryClientManager.Command) = sendMsg(notaryMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(notaryClientRef, cmd)
+    sendMsg(notaryMgrRef, cmd)
   }
 }

@@ -34,6 +34,8 @@ trait NotaryFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def buyTradeAddedJsonFormat = jsonFormat4(BuyTradeAdded)
 
+  implicit def notarizeTradeAddedJsonFormat = jsonFormat4(NotarizeTradeAdded)
+
   implicit def tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
 
   implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
@@ -44,6 +46,7 @@ trait NotaryFSMJsonProtocol extends TradeFSMJsonProtocol {
     simpleName(classOf[ContractRemoved]) -> contractRemovedJsonFormat,
     simpleName(classOf[SellTradeAdded]) -> sellTradeAddedJsonFormat,
     simpleName(classOf[BuyTradeAdded]) -> buyTradeAddedJsonFormat,
+    simpleName(classOf[NotarizeTradeAdded]) -> notarizeTradeAddedJsonFormat,
     simpleName(classOf[TradeRemoved]) -> tradeRemovedJsonFormat,
     simpleName(classOf[PostedTradeEventReceived]) -> postedTradeEventReceivedJsonFormat
   )

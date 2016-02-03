@@ -57,9 +57,8 @@ public class MainUI extends ActorController {
         notaryTradesTab.setDisable(!Config.serverEnabled());
         notaryServerTab.setDisable(!Config.serverEnabled());
 
-        // remove trades and notaries tabs if notary is enabled
+        // remove trader trades tab if notary is enabled
         traderTradesTab.setDisable(Config.serverEnabled());
-        notariesTab.setDisable(Config.serverEnabled());
 
         tabPane.getTabs().removeIf(Tab::isDisable);
     }

@@ -19,22 +19,25 @@ package org.bytabit.ft.notary
 import java.net.URL
 import java.util.UUID
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
-import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, SELLER}
 import org.bytabit.ft.notary.NotaryClientFSM._
 import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
 import org.bytabit.ft.trade.model.{Offer, SellOffer}
-import org.bytabit.ft.trade.{NotarizeFSM, BuyFSM, SellFSM, TradeFSM}
+import org.bytabit.ft.trade.{BuyFSM, NotarizeFSM, SellFSM, TradeFSM}
 import org.bytabit.ft.util.Config
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object NotaryClientFSM {
+
+  def actorOf(serverURL: URL, walletMgr: ActorRef)(implicit system: ActorSystem) =
+    system.actorOf(props(serverURL, walletMgr), name(serverURL))
 
   // commands
 

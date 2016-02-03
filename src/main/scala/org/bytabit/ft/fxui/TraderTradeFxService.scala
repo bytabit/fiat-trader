@@ -76,7 +76,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
 
     case e: NotaryFSM.Event =>
-      log.debug(s"unhandled NotaryFSM event: $e")
+      log.debug(s"Unhandled NotaryFSM event: $e")
 
     case LocalSellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
@@ -119,7 +119,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateActive()
 
     case e: TradeFSM.Event =>
-      log.error(s"unhandled tradeFSM event: $e")
+      log.error(s"Unhandled TradeFSM event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")

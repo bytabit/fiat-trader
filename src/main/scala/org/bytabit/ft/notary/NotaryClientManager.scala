@@ -59,9 +59,9 @@ object NotaryClientManager {
 
   // data
 
-  case class Data(notaries: Seq[URL] = Seq()) {
+  case class Data(notaries: Set[URL] = Set()) {
     def notaryAdded(url: URL): Data = {
-      this.copy(notaries = notaries :+ url)
+      this.copy(notaries = notaries + url)
     }
 
     def notaryRemoved(url: URL): Data = {

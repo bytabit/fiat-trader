@@ -28,7 +28,7 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, Role, SELLER}
 import org.bytabit.ft.notary.NotaryClientFSM.{ReceivePostedNotaryEvent, ReceivePostedTradeEvent}
 import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.notary.server.PostedEvents
@@ -83,7 +83,7 @@ object NotaryFSM {
                                  posted: Option[DateTime] = None) extends Event
 
   final case class NotarizeTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                 posted: Option[DateTime] = None) extends Event
+                                      posted: Option[DateTime] = None) extends Event
 
   final case class TradeRemoved(url: URL, tradeId: UUID,
                                 posted: Option[DateTime]) extends Event
@@ -190,7 +190,7 @@ trait NotaryFSM extends PersistentFSM[NotaryFSM.State, NotaryFSM.NotaryData, Not
       case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveNotary) =>
         an.tradeAdded(BUYER, i, o, p)
 
-      case (NotarizeTradeAdded(u,i,o, Some(p)), an:ActiveNotary) =>
+      case (NotarizeTradeAdded(u, i, o, Some(p)), an: ActiveNotary) =>
         an.tradeAdded(NOTARY, i, o, p)
 
       case (TradeRemoved(u, i, Some(p)), an: ActiveNotary) =>
