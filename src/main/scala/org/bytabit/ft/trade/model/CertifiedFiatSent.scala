@@ -5,18 +5,20 @@ import java.util.UUID
 import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
 
-case class CertifiedFiatSent(certifyFiatRequested: CertifyFiatEvidence,
+case class CertifiedFiatSent(certifyFiatEvidence: CertifyFiatEvidence,
                              notaryPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
 
-  override val id: UUID = certifyFiatRequested.id
-  override val btcAmount: Money = certifyFiatRequested.btcAmount
-  override val fiatAmount: Money = certifyFiatRequested.fiatAmount
-  override val contract: Contract = certifyFiatRequested.contract
+  override val id: UUID = certifyFiatEvidence.id
+  override val btcAmount: Money = certifyFiatEvidence.btcAmount
+  override val fiatAmount: Money = certifyFiatEvidence.fiatAmount
+  override val contract: Contract = certifyFiatEvidence.contract
 
-  override val text: String = certifyFiatRequested.text
-  override val keyValues: Map[String, Option[String]] = certifyFiatRequested.keyValues
+  override val text: String = certifyFiatEvidence.text
+  override val keyValues: Map[String, Option[String]] = certifyFiatEvidence.keyValues
 
-  def unsignedPayoutTx: PayoutTx = certifyFiatRequested.unsignedFiatSentPayoutTx
+  val sellOffer = certifyFiatEvidence.sellOffer
+
+  def unsignedPayoutTx: PayoutTx = certifyFiatEvidence.unsignedFiatSentPayoutTx
 
   def notarySignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(notaryPayoutTxSigs)
 

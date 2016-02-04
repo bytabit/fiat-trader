@@ -88,7 +88,7 @@ public class TraderTradeUI extends AbstractTradeUI {
 
         // handle change events
 
-        tradeFxService.tradeActive().addListener((observable1, oldValue1, newValue1) -> {
+        tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
             sellButton.disableProperty().setValue(newValue1);
         });
 

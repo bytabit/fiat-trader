@@ -87,7 +87,7 @@ object TradeFSM {
 
   final case class SellerReceivedPayout(id: UUID) extends Event
 
-  final case class CertifyFiatRequested(id: UUID, evidence: Option[Array[Byte]] = None,
+  final case class CertifyDeliveryRequested(id: UUID, evidence: Option[Array[Byte]] = None,
                                             posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
@@ -140,8 +140,8 @@ object TradeFSM {
     override val identifier: String = "TRADED"
   }
 
-  case object CERT_FIAT_REQD extends State {
-    override val identifier: String = "CERT FIAT REQD"
+  case object CERT_DELIVERY_REQD extends State {
+    override val identifier: String = "CERT DELIVERY REQD"
   }
 
   case object FIAT_SENT_CERTD extends State {
@@ -188,11 +188,17 @@ abstract class TradeFSM(id: UUID)
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
-      case (CertifyFiatRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
+      case (CertifyDeliveryRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
         signedTakenOffer.certifyFiatRequested(e)
 
-      case (CertifyFiatRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
         certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
+
+      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.withNotarizedFiatSentSigs(ps)
+
+      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
 
       case _ =>
         tradeData

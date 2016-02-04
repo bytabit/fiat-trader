@@ -24,8 +24,9 @@ import javafx.scene.layout.VBox
 
 import org.bytabit.ft.fxui.NotaryTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.Role
+import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, Role}
 import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.trade.TradeFSM.CERT_DELIVERY_REQD
 
 import scala.collection.JavaConversions._
 
@@ -47,27 +48,20 @@ class NotarizeUIActionTableCell(tradefxService: NotaryTradeFxService) extends Ac
 
     // possible buttons
 
-    //    val cancelButton = actionButton("CANCEL", event => {
-    //      tradefxService.cancelSellOffer(item.url, item.id)
-    //    })
-    //
-    //    val buyButton = actionButton("BUY", event => {
-    //      tradefxService.takeSellOffer(item.url, item.id)
-    //    })
-    //
-    //    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
-    //      tradefxService.receiveFiat(item.url, item.id)
-    //    })
+    val certifySentButton = actionButton("SENT", event => {
+      tradefxService.certifyFiatSent(item.url, item.id)
+    })
+
+    val certifyNotSentButton = actionButton("NOT SENT", event => {
+      tradefxService.certifyFiatNotSent(item.url, item.id)
+    })
 
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      //      case (TradeOriginState(u, i, SELLER, CREATED), false) =>
-      //        Seq(cancelButton)
-      //      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
-      //        Seq(buyButton)
-      //      case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
-      //        Seq(fiatReceivedButton)
+      case (TradeOriginState(u, i, NOTARY, CERT_DELIVERY_REQD), false) =>
+        Seq(certifySentButton, certifyNotSentButton)
+
       case _ =>
         setText(null)
         setStyle("")

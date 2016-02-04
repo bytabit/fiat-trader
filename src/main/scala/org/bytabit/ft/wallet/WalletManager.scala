@@ -28,7 +28,7 @@ import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
-import org.bytabit.ft.trade.model.{Offer, SellOffer, SignedTakenOffer, TakenOffer}
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{Config, ListenerUpdater}
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
@@ -64,6 +64,10 @@ object WalletManager {
 
   case class SignTakenOffer(takenOffer: TakenOffer) extends Command
 
+  case class CertifyFiatSent(certifyFiatEvidence: CertifyFiatEvidence) extends Command
+
+  case class CertifyFiatNotSent(certifyFiatEvidence: CertifyFiatEvidence) extends Command
+
   case class AddWatchEscrowAddress(escrowAddress: Address) extends Command
 
   case class RemoveWatchEscrowAddress(escrowAddress: Address) extends Command
@@ -95,6 +99,10 @@ object WalletManager {
   case class SellOfferTaken(takenOffer: TakenOffer) extends Event
 
   case class TakenOfferSigned(signedTakenOffer: SignedTakenOffer) extends Event
+
+  case class FiatSentCertified(certifiedFiatSent: CertifiedFiatSent) extends Event
+
+  case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedFiatNotSent) extends Event
 
 }
 
@@ -140,6 +148,12 @@ class WalletManager extends Actor with ListenerUpdater {
 
     case SignTakenOffer(takenOffer: TakenOffer) =>
       sender ! TakenOfferSigned(takenOffer.sign)
+
+    case CertifyFiatSent(fiatEvidence) =>
+      sender ! FiatSentCertified(fiatEvidence.certifyFiatSent)
+
+    case CertifyFiatNotSent(fiatEvidence) =>
+      sender ! FiatNotSentCertified(fiatEvidence.certifyFiatNotSent)
 
     case AddWatchEscrowAddress(escrowAddress: Address) =>
       assert(escrowAddress.isP2SHAddress)

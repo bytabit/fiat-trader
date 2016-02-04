@@ -22,9 +22,9 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, Start, TakeSellOffer}
+import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
-import org.bytabit.ft.trade.model.{SellOffer, SignedTakenOffer, TakenOffer}
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, BroadcastTx, EscrowTransactionUpdated, RemoveWatchEscrowAddress}
 
@@ -42,7 +42,7 @@ object BuyFSM {
 
   final case class ReceiveFiat(notaryUrl: URL, id: UUID) extends Command
 
-  final case class RequestCertifyFiat(notaryUrl: URL, id: UUID, evidence:Array[Byte]) extends Command
+  final case class RequestCertifyDelivery(notaryUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
@@ -75,8 +75,9 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
 
       if (to.amountOk) {
         val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo)
-        stay applying bto andThen { case to: TakenOffer =>
-          postTradeEvent(to.url, bto, self)
+        stay applying bto andThen {
+          case to: TakenOffer =>
+            postTradeEvent(to.url, bto, self)
         }
       } else {
         log.error(s"Insufficient btc amount to take offer ${so.id}")
@@ -186,6 +187,16 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
           context.parent ! FiatReceived(usto.id)
       }
 
+    case Event(rcf: RequestCertifyDelivery, sto: SignedTakenOffer) =>
+      postTradeEvent(rcf.notaryUrl, CertifyDeliveryRequested(sto.id, rcf.evidence), self)
+      stay()
+
+    case Event(cdr: CertifyDeliveryRequested, sto: SignedTakenOffer) if cdr.posted.isDefined =>
+      goto(CERT_DELIVERY_REQD) applying cdr andThen {
+        case cfe: CertifyFiatEvidence =>
+          context.parent ! cdr
+      }
+
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       stay()
   }
@@ -210,6 +221,27 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
         stay()
   }
 
+  when(CERT_DELIVERY_REQD) {
+
+    case Event(Start, sto: CertifyFiatEvidence) =>
+      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
+      context.parent ! CertifyDeliveryRequested(sto.id)
+      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+      stay()
+
+    case Event(fsc:FiatSentCertified, cfe:CertifyFiatEvidence) if fsc.posted.isDefined =>
+      goto(FIAT_SENT_CERTD) applying fsc andThen {
+        case cfs:CertifiedFiatSent =>
+          context.parent ! fsc
+      }
+
+    case Event(fnsc:FiatNotSentCertified, cfe:CertifyFiatEvidence) if fnsc.posted.isDefined =>
+      goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
+        case cfns:CertifiedFiatNotSent =>
+          context.parent ! fnsc
+      }
+  }
+
   when(TRADED) {
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
@@ -231,12 +263,22 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
   }
 
   when(FIAT_SENT_CERTD) {
+    case Event(Start, cfs: CertifiedFiatSent) =>
+      context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
+      context.parent ! FiatSentCertified(cfs.id, Seq())
+      stay()
+
     case e =>
       log.error(s"Received event after fiat sent certified by notary: $e")
       stay()
   }
 
   when(FIAT_NOT_SENT_CERTD) {
+    case Event(Start, cfns: CertifiedFiatNotSent) =>
+      context.parent ! SellerCreatedOffer(cfns.id, cfns.sellOffer)
+      context.parent ! FiatNotSentCertified(cfns.id, Seq())
+      stay()
+
     case e =>
       log.error(s"Received event after fiat not sent certified by notary: $e")
       stay()

@@ -22,10 +22,10 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.NotarizeFSM.Start
+import org.bytabit.ft.trade.NotarizeFSM._
 import org.bytabit.ft.trade.TradeFSM._
-import org.bytabit.ft.trade.model.{CertifyFiatEvidence, SellOffer, SignedTakenOffer, TakenOffer}
-import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, EscrowTransactionUpdated, RemoveWatchEscrowAddress}
+import org.bytabit.ft.trade.model._
+import org.bytabit.ft.wallet.WalletManager
 
 import scala.language.postfixOps
 
@@ -81,7 +81,7 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
     case Event(sso: SellerSignedOffer, to: TakenOffer) if sso.posted.isDefined =>
       goto(SIGNED) applying sso andThen {
         case sto: SignedTakenOffer =>
-          walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+          walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
           context.parent ! sso
       }
   }
@@ -90,10 +90,10 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
-      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
-    case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
+    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedOpenTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(OPENED) andThen {
@@ -109,10 +109,10 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! BuyerOpenedEscrow(sto.id, Seq())
-      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
-    case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
+    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedFundTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(FUNDED) andThen {
@@ -128,34 +128,62 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
       context.parent ! BuyerFundedEscrow(sto.id)
-      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
-    case Event(cfr: CertifyFiatRequested, sto: SignedTakenOffer) if cfr.posted.isDefined =>
-      goto(CERT_FIAT_REQD) applying cfr andThen {
+    case Event(cfr: CertifyDeliveryRequested, sto: SignedTakenOffer) if cfr.posted.isDefined =>
+      goto(CERT_DELIVERY_REQD) applying cfr andThen {
         case sto: CertifyFiatEvidence =>
           context.parent ! cfr
       }
 
-    case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
+    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(TRADED) andThen {
           case usto: SignedTakenOffer =>
             context.parent ! BuyerReceivedPayout(sto.id)
-            walletMgrRef ! RemoveWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+            walletMgrRef ! WalletManager.RemoveWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
         }
       }
       else
         stay()
   }
 
-  when(CERT_FIAT_REQD) {
-    case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id)
-      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+  when(CERT_DELIVERY_REQD) {
+    case Event(Start, cfe: CertifyFiatEvidence) =>
+      context.parent ! SellerCreatedOffer(cfe.id, cfe.takenOffer.sellOffer)
+      context.parent ! CertifyDeliveryRequested(cfe.id)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
       stay()
+
+    case Event(cfs:CertifyFiatSent, cfe: CertifyFiatEvidence) =>
+      walletMgrRef ! WalletManager.CertifyFiatSent(cfe)
+      stay()
+
+    case Event(WalletManager.FiatSentCertified(cfs), cfe:CertifyFiatEvidence) =>
+      postTradeEvent(cfs.url, FiatSentCertified(cfs.id, cfs.notaryPayoutTxSigs), self)
+      stay()
+
+    case Event(fsc:FiatSentCertified, cfe:CertifyFiatEvidence) if fsc.posted.isDefined =>
+      goto(FIAT_SENT_CERTD) applying fsc andThen {
+        case cfs:CertifiedFiatSent =>
+          context.parent ! fsc
+      }
+
+    case Event(cfns:CertifyFiatNotSent, cfe: CertifyFiatEvidence) =>
+      walletMgrRef ! WalletManager.CertifyFiatNotSent(cfe)
+      stay()
+
+    case Event(WalletManager.FiatNotSentCertified(cfns), cfe:CertifyFiatEvidence) =>
+      postTradeEvent(cfns.url, FiatNotSentCertified(cfns.id, cfns.notaryPayoutTxSigs), self)
+      stay()
+
+    case Event(fnsc:FiatNotSentCertified, cfe:CertifyFiatEvidence) if fnsc.posted.isDefined =>
+      goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
+        case cfns:CertifiedFiatNotSent =>
+          context.parent ! fnsc
+      }
   }
 
   when(TRADED) {
@@ -164,7 +192,7 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
       context.parent ! SellerReceivedPayout(sto.id)
       stay()
 
-    case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
+    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       stay()
 
     case e =>
@@ -179,12 +207,22 @@ class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM
   }
 
   when(FIAT_SENT_CERTD) {
+    case Event(Start, cfs: CertifiedFiatSent) =>
+      context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
+      context.parent ! FiatSentCertified(cfs.id, Seq())
+      stay()
+
     case e =>
       log.error(s"Received event after fiat sent certified by notary: $e")
       stay()
   }
 
   when(FIAT_NOT_SENT_CERTD) {
+    case Event(Start, cfns: CertifiedFiatNotSent) =>
+      context.parent ! SellerCreatedOffer(cfns.id, cfns.sellOffer)
+      context.parent ! FiatNotSentCertified(cfns.id, Seq())
+      stay()
+
     case e =>
       log.error(s"Received event after fiat not sent certified by notary: $e")
       stay()

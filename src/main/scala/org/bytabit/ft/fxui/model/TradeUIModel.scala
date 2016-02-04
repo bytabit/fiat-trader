@@ -64,9 +64,10 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
-  val active = (role, state) match {
-    case (SELLER, s) if s != TRADED => true
-    case (BUYER, s) if s != CREATED && s != TRADED => true
+  val uncommitted = (role, state) match {
+    case (SELLER, s) if Seq(CREATED,TAKEN,SIGNED,OPENED).contains(s) => true
+    case (BUYER, s) if Seq(TAKEN,SIGNED,OPENED).contains(s) => true
+
     case _ => false
   }
 
@@ -80,6 +81,9 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
       case (SIGNED, _) => s"SIGNED"
       case (OPENED, _) => s"OPENED"
       case (FUNDED, _) => s"FUNDED"
+      case (CERT_DELIVERY_REQD, _) => s"CERT REQD"
+      case (FIAT_SENT_CERTD, _) => s"SENT CERTD"
+      case (FIAT_NOT_SENT_CERTD, _) => s"NOT SENT CERTD"
       case (FIAT_RCVD, _) => s"FIAT RCVD"
       case (TRADED, BUYER) => s"BOUGHT"
       case (TRADED, SELLER) => s"SOLD"

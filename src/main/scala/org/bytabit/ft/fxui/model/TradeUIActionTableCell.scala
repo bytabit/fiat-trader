@@ -61,6 +61,15 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       tradefxService.receiveFiat(item.url, item.id)
     })
 
+    // TODO need to only enable buttons after timeout to deliver fiat
+    val sellerReqCertDeliveryButton = actionButton("REQ CERT", event => {
+      tradefxService.sellerReqCertDelivery(item.url, item.id)
+    })
+
+    val buyerReqCertDeliveryButton = actionButton("REQ CERT", event => {
+      tradefxService.buyerReqCertDelivery(item.url, item.id)
+    })
+
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
@@ -69,7 +78,9 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       case (TradeOriginState(u, i, BUYER, CREATED), false) =>
         Seq(buyButton)
       case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
-        Seq(fiatReceivedButton)
+        Seq(fiatReceivedButton, buyerReqCertDeliveryButton)
+      case (TradeOriginState(u, i, SELLER, FUNDED), false) =>
+        Seq(sellerReqCertDeliveryButton)
       case _ =>
         setText(null)
         setStyle("")

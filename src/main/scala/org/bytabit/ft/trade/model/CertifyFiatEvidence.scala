@@ -19,7 +19,7 @@ package org.bytabit.ft.trade.model
 import java.util.UUID
 
 import org.bitcoinj.core.Wallet
-import org.bytabit.ft.wallet.model.PayoutTx
+import org.bytabit.ft.wallet.model.{TxSig, PayoutTx}
 import org.joda.money.Money
 
 case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
@@ -34,6 +34,7 @@ case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
   override val keyValues: Map[String, Option[String]] = signedTakenOffer.keyValues
 
   val takenOffer = signedTakenOffer.takenOffer
+  val sellOffer = takenOffer.sellOffer
   val seller = signedTakenOffer.seller
   val buyer = signedTakenOffer.buyer
   val fullySignedOpenTx = signedTakenOffer.fullySignedOpenTx
@@ -43,6 +44,12 @@ case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
 
   def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(seller, buyer, fullySignedOpenTx,
     takenOffer.buyerFundPayoutTxo)
+
+  def withNotarizedFiatSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
+    CertifiedFiatSent(this, notaryPayoutTxSigs)
+
+  def withNotarizedFiatNotSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
+    CertifiedFiatNotSent(this, notaryPayoutTxSigs)
 
   def certifyFiatSent(implicit notaryWallet: Wallet): CertifiedFiatSent = {
     val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(notary.escrowPubKey)

@@ -146,6 +146,20 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       }
       stay()
 
+    case Event(rcd: BuyFSM.RequestCertifyDelivery, d) if !isNotary =>
+      tradeFSM(rcd.id) match {
+        case Some(ref) => ref ! rcd
+        case None => log.error(s"Could not request certify delivery ${rcd.id}")
+      }
+      stay()
+
+    case Event(rcd: SellFSM.RequestCertifyDelivery, d) if !isNotary =>
+      tradeFSM(rcd.id) match {
+        case Some(ref) => ref ! rcd
+        case None => log.error(s"Could not request certify delivery ${rcd.id}")
+      }
+      stay()
+
     // handle trade events
 
     // add local trade and update latestUpdate
@@ -184,6 +198,26 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
 
     // forward all other trade events to parent
     case Event(te: TradeFSM.Event, _) =>
+      context.parent ! te
+      stay()
+
+    // handle notary commands
+    case Event(cfs: NotarizeFSM.CertifyFiatSent, d) if isNotary =>
+      tradeFSM(cfs.id) match {
+        case Some(ref) => ref ! cfs
+        case None => log.error(s"Could not notarize fiat sent ${cfs.id}")
+      }
+      stay()
+
+    case Event(cfns: NotarizeFSM.CertifyFiatNotSent, d) if isNotary =>
+      tradeFSM(cfns.id) match {
+        case Some(ref) => ref ! cfns
+        case None => log.error(s"Could not notarize fiat not sent ${cfns.id}")
+      }
+      stay()
+
+    // forward all other notary events to parent
+    case Event(te: NotaryFSM.Event, _) =>
       context.parent ! te
       stay()
 

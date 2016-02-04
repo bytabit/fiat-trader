@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui
 
 import java.net.URL
+import java.util.UUID
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.fxui.model.TradeUIModel.NOTARY
@@ -41,8 +42,10 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
-    super.start()
-    sendCmd(AddListener(inbox.getRef()))
+    if (Config.serverEnabled) {
+      super.start()
+      sendCmd(AddListener(inbox.getRef()))
+    }
   }
 
   @Override
@@ -62,6 +65,15 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
 
     case BuyerFundedEscrow(id) =>
       updateStateTradeUIModel(FUNDED, id)
+
+    case CertifyDeliveryRequested(id, _, _) =>
+      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+
+    case FiatSentCertified(id, _, _) =>
+      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+
+    case FiatNotSentCertified(id, _, _) =>
+      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
 
     case FiatReceived(id) =>
       updateStateTradeUIModel(FIAT_RCVD, id)
@@ -87,9 +99,15 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  // TODO functions to notarize trades
+  def certifyFiatSent(url:URL, tradeId:UUID): Unit = {
+    sendCmd(NotarizeFSM.CertifyFiatSent(url,tradeId))
+  }
 
-  def sendCmd(cmd: NotaryClientManager.Command) = sendMsg(notaryMgrRef, cmd)
+  def certifyFiatNotSent(url:URL, tradeId:UUID): Unit = {
+    sendCmd(NotarizeFSM.CertifyFiatNotSent(url,tradeId))
+  }
+
+  def sendCmd(cmd: NotarizeFSM.Command) = sendMsg(notaryMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
     sendMsg(notaryMgrRef, cmd)

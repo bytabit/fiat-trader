@@ -236,6 +236,21 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
       persist(tep)(updateData)
       sender ! tep
 
+    case PostTradeEvent(evt: TradeFSM.CertifyDeliveryRequested) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
+    case PostTradeEvent(evt: TradeFSM.FiatSentCertified) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
+    case PostTradeEvent(evt: TradeFSM.FiatNotSentCertified) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
     case "snap" => saveSnapshot(data)
 
     case "print" => println(data)

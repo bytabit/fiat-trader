@@ -49,7 +49,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
   lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  val tradeActive: SimpleBooleanProperty = new SimpleBooleanProperty(false)
+  // TODO if trade active buy buttons should also be disabled
+  val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
 
   // Private Data
   private var contracts: Seq[Contract] = Seq()
@@ -57,8 +58,10 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   private var sellContractSelected: Option[Contract] = None
 
   override def start() {
-    super.start()
-    sendCmd(AddListener(inbox.getRef()))
+    if (!Config.serverEnabled) {
+      super.start()
+      sendCmd(AddListener(inbox.getRef()))
+    }
   }
 
   @Override
@@ -80,43 +83,55 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     case LocalSellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
-      updateActive()
+      updateUncommitted()
 
     case SellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
-      updateActive()
+      updateUncommitted()
 
     case BuyerTookOffer(id, _, _, _, _) =>
       updateStateTradeUIModel(TAKEN, id)
-      updateActive()
+      updateUncommitted()
 
     case SellerSignedOffer(id, _, _, _, _) =>
       updateStateTradeUIModel(SIGNED, id)
-      updateActive()
+      updateUncommitted()
 
     case BuyerOpenedEscrow(id, _) =>
       updateStateTradeUIModel(OPENED, id)
-      updateActive()
+      updateUncommitted()
 
     case BuyerFundedEscrow(id) =>
       updateStateTradeUIModel(FUNDED, id)
-      updateActive()
+      updateUncommitted()
+
+    case CertifyDeliveryRequested(id, _, _) =>
+      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+      updateUncommitted()
+
+    case FiatSentCertified(id, _, _) =>
+      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+      updateUncommitted()
+
+    case FiatNotSentCertified(id, _, _) =>
+      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
+      updateUncommitted()
 
     case FiatReceived(id) =>
       updateStateTradeUIModel(FIAT_RCVD, id)
-      updateActive()
+      updateUncommitted()
 
     case BuyerReceivedPayout(id) =>
       updateStateTradeUIModel(TRADED, id)
-      updateActive()
+      updateUncommitted()
 
     case SellerReceivedPayout(id) =>
       updateStateTradeUIModel(TRADED, id)
-      updateActive()
+      updateUncommitted()
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
-      updateActive()
+      updateUncommitted()
 
     case e: TradeFSM.Event =>
       log.error(s"Unhandled TradeFSM event: $e")
@@ -230,8 +245,18 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     sendCmd(ReceiveFiat(url, tradeId))
   }
 
-  def updateActive() = {
-    tradeActive.set(trades.exists(_.active))
+  // TODO collect evidence
+  def sellerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
+    sendCmd(SellFSM.RequestCertifyDelivery(url,tradeId))
+  }
+
+  // TODO collect evidence
+  def buyerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
+    sendCmd(BuyFSM.RequestCertifyDelivery(url,tradeId))
+  }
+
+  def updateUncommitted() = {
+    tradeUncommitted.set(trades.exists(_.uncommitted))
   }
 
   def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryMgrRef, cmd)
