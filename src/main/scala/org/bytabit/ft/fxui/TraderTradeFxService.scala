@@ -49,7 +49,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
   lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  // TODO if trade active buy buttons should also be disabled
+  // TODO if trade uncommitted buy buttons should also be disabled
   val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
 
   // Private Data
@@ -127,6 +127,14 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     case SellerReceivedPayout(id) =>
       updateStateTradeUIModel(TRADED, id)
+      updateUncommitted()
+
+    case SellerFunded(id) =>
+      updateStateTradeUIModel(SELLER_FUNDED, id)
+      updateUncommitted()
+
+    case BuyerRefunded(id) =>
+      updateStateTradeUIModel(BUYER_REFUNDED, id)
       updateUncommitted()
 
     case SellerCanceledOffer(id, p) =>

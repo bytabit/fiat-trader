@@ -87,13 +87,17 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
 
+    case SellerFunded(id) =>
+      updateStateTradeUIModel(SELLER_FUNDED, id)
+
+    case BuyerRefunded(id) =>
+      updateStateTradeUIModel(BUYER_REFUNDED, id)
+
     case e: NotaryFSM.Event =>
       log.debug(s"unhandled NotaryFSM event: $e")
 
     case e: TradeFSM.Event =>
       log.error(s"unhandled TradeFSM event: $e")
-
-    // TODO cases to notarize trades
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")

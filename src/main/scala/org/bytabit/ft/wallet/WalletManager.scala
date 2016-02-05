@@ -100,9 +100,9 @@ object WalletManager {
 
   case class TakenOfferSigned(signedTakenOffer: SignedTakenOffer) extends Event
 
-  case class FiatSentCertified(certifiedFiatSent: CertifiedFiatSent) extends Event
+  case class FiatSentCertified(certifiedFiatSent: CertifiedFiatDelivery) extends Event
 
-  case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedFiatNotSent) extends Event
+  case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedFiatDelivery) extends Event
 
 }
 

@@ -132,6 +132,10 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
       goto(CANCELED) andThen { case uto: TakenOffer =>
         context.parent ! SellerCanceledOffer(uto.id, sso.posted)
       }
+
+    case e =>
+      log.error(s"Received unexpected event in TAKEN: $e")
+      stay()
   }
 
   when(SIGNED) {
@@ -231,14 +235,15 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
 
     case Event(fsc:FiatSentCertified, cfe:CertifyFiatEvidence) if fsc.posted.isDefined =>
       goto(FIAT_SENT_CERTD) applying fsc andThen {
-        case cfs:CertifiedFiatSent =>
+        case cfd:CertifiedFiatDelivery =>
           context.parent ! fsc
       }
 
     case Event(fnsc:FiatNotSentCertified, cfe:CertifyFiatEvidence) if fnsc.posted.isDefined =>
       goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
-        case cfns:CertifiedFiatNotSent =>
+        case cfd:CertifiedFiatDelivery =>
           context.parent ! fnsc
+          walletMgrRef ! WalletManager.BroadcastTx(cfd.notarySignedFiatNotSentPayoutTx, Some(cfd.buyer.escrowPubKey))
       }
   }
 
@@ -263,10 +268,22 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
   }
 
   when(FIAT_SENT_CERTD) {
-    case Event(Start, cfs: CertifiedFiatSent) =>
+    case Event(Start, cfs: CertifiedFiatDelivery) =>
       context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
       context.parent ! FiatSentCertified(cfs.id, Seq())
       stay()
+
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
+        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        goto(SELLER_FUNDED) andThen {
+          case cfd:CertifiedFiatDelivery =>
+            context.parent ! SellerFunded(cfd.id)
+            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        }
+      }
+      else
+        stay()
 
     case e =>
       log.error(s"Received event after fiat sent certified by notary: $e")
@@ -274,13 +291,47 @@ class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sell
   }
 
   when(FIAT_NOT_SENT_CERTD) {
-    case Event(Start, cfns: CertifiedFiatNotSent) =>
-      context.parent ! SellerCreatedOffer(cfns.id, cfns.sellOffer)
-      context.parent ! FiatNotSentCertified(cfns.id, Seq())
+    case Event(Start, cfd: CertifiedFiatDelivery) =>
+      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! FiatNotSentCertified(cfd.id, Seq())
       stay()
+
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
+        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        goto(BUYER_REFUNDED) andThen {
+          case cfd:CertifiedFiatDelivery =>
+            context.parent ! BuyerRefunded(cfd.id)
+            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        }
+      }
+      else
+        stay()
 
     case e =>
       log.error(s"Received event after fiat not sent certified by notary: $e")
+      stay()
+  }
+
+  when(SELLER_FUNDED) {
+    case Event(Start, cfd: CertifiedFiatDelivery) =>
+      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! SellerFunded(cfd.id)
+      stay()
+
+    case e =>
+      log.error(s"Received event after seller funded: $e")
+      stay()
+  }
+
+  when(BUYER_REFUNDED) {
+    case Event(Start, cfd: CertifiedFiatDelivery) =>
+      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! BuyerRefunded(cfd.id)
+      stay()
+
+    case e =>
+      log.error(s"Received event after buyer refunded: $e")
       stay()
   }
 

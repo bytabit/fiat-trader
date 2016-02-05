@@ -119,7 +119,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
       val cfr = sto.certifyFiatRequested(None)
       val cfs = cfr.certifyFiatSent(notaryWallet)
 
-      val signedPayoutTx = cfs.notarySignedPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
+      val signedPayoutTx = cfs.notarySignedFiatSentPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
 
       signedPayoutTx shouldBe 'fullySigned
     }
@@ -133,7 +133,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
       val cfr = sto.certifyFiatRequested(None)
       val cfns = cfr.certifyFiatNotSent(notaryWallet)
 
-      val signedPayoutTx = cfns.notarySignedPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
+      val signedPayoutTx = cfns.notarySignedFiatSentPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
 
       signedPayoutTx shouldBe 'fullySigned
     }

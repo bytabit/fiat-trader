@@ -46,20 +46,20 @@ case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
     takenOffer.buyerFundPayoutTxo)
 
   def withNotarizedFiatSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatSent(this, notaryPayoutTxSigs)
+    CertifiedFiatDelivery(this, notaryPayoutTxSigs)
 
   def withNotarizedFiatNotSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatNotSent(this, notaryPayoutTxSigs)
+    CertifiedFiatDelivery(this, notaryPayoutTxSigs)
 
-  def certifyFiatSent(implicit notaryWallet: Wallet): CertifiedFiatSent = {
+  def certifyFiatSent(implicit notaryWallet: Wallet): CertifiedFiatDelivery = {
     val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(notary.escrowPubKey)
 
-    CertifiedFiatSent(this, notarizedFiatSentPayoutTx.inputSigs)
+    CertifiedFiatDelivery(this, notarizedFiatSentPayoutTx.inputSigs)
   }
 
-  def certifyFiatNotSent(implicit notaryWallet: Wallet): CertifiedFiatNotSent = {
+  def certifyFiatNotSent(implicit notaryWallet: Wallet): CertifiedFiatDelivery = {
     val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(notary.escrowPubKey)
 
-    CertifiedFiatNotSent(this, notarizedFiatSentPayoutTx.inputSigs)
+    CertifiedFiatDelivery(this, notarizedFiatSentPayoutTx.inputSigs)
   }
 }

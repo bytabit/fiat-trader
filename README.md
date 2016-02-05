@@ -73,3 +73,7 @@ Note: Don't use the IntelliJ scala plugin project import, I found it doesn't wor
     ```
 
 3. Follow README.md instructions
+
+### Versioning
+
+We follow the [Semantic Versioning 2.0](http://semver.org/spec/v2.0.0.html) specification for this project.

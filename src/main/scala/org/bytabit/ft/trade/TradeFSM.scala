@@ -96,6 +96,10 @@ object TradeFSM {
   final case class FiatNotSentCertified(id: UUID, payoutSigs: Seq[TxSig],
                                                posted: Option[DateTime] = None) extends PostedEvent
 
+  final case class SellerFunded(id: UUID) extends Event
+
+  final case class BuyerRefunded(id: UUID) extends Event
+
   // states
 
   sealed trait State extends FSMState
@@ -152,6 +156,14 @@ object TradeFSM {
     override val identifier: String = "FIAT NOT SENT CERTD"
   }
 
+  case object SELLER_FUNDED extends State {
+    override val identifier: String = "SELLER FUNDED"
+  }
+
+  case object BUYER_REFUNDED extends State {
+    override val identifier: String = "BUYER REFUNDED"
+  }
+
 }
 
 abstract class TradeFSM(id: UUID)
@@ -185,6 +197,9 @@ abstract class TradeFSM(id: UUID)
       case (BuyerTookOffer(_, b, bots, bfpt, _), sellOffer: SellOffer) =>
         sellOffer.withBuyer(b, bots, bfpt)
 
+      case (BuyerTookOffer(_, b, bots, bfpt, _), takenOffer: TakenOffer) =>
+        takenOffer
+
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
@@ -201,6 +216,7 @@ abstract class TradeFSM(id: UUID)
         certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
 
       case _ =>
+        log.error(s"No transition for event: $event\nwith trade data: ${tradeData.getClass.getSimpleName}")
         tradeData
     }
 

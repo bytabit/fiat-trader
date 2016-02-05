@@ -217,8 +217,8 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       stay()
 
     // forward all other notary events to parent
-    case Event(te: NotaryFSM.Event, _) =>
-      context.parent ! te
+    case Event(ne: NotaryFSM.Event, _) =>
+      context.parent ! ne
       stay()
 
     // handle receive posted trade events
