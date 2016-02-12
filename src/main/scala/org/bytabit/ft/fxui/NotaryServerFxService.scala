@@ -25,9 +25,9 @@ import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved, NotaryCreated}
-import org.bytabit.ft.notary.NotaryServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
-import org.bytabit.ft.notary._
+import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved, NotaryCreated}
+import org.bytabit.ft.notary.server.NotaryServerManager
+import org.bytabit.ft.notary.server.NotaryServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 
@@ -38,7 +38,9 @@ object NotaryServerFxService {
   def apply(system: ActorSystem) = new NotaryServerFxService(system)
 }
 
-class NotaryServerFxService(system: ActorSystem) extends ActorFxService(system) {
+class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
+
+  override val system = actorSystem
 
   val notaryServerMgrSel = system.actorSelection(s"/user/${NotaryServerManager.name}")
   lazy val notaryServerMgrRef = notaryServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))

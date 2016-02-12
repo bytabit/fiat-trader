@@ -18,58 +18,21 @@ package org.bytabit.ft.fxui.trade;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import org.bytabit.ft.fxui.TradeFxService;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import org.bytabit.ft.fxui.TraderTradeFxService;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState;
-import org.bytabit.ft.fxui.model.TradeUIModel;
-import org.bytabit.ft.fxui.util.ActorController;
+import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.BTCMoney;
 import org.bytabit.ft.util.FiatMoney;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
-import java.util.ResourceBundle;
+public class TraderTradeUI extends AbstractTradeUI {
 
-public class TradeUI extends ActorController {
-
-    private TradeFxService tradeFxService;
-
-    @FXML
-    private ResourceBundle resources;
-
-    // table
-
-    @FXML
-    private TableView<TradeUIModel> tradeTable;
-
-    @FXML
-    private TableColumn<TradeUIModel, TradeOriginState> actionColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> statusColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> fiatCurrencyColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> fiatAmountColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> btcAmountColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> exchRateColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> deliveryMethodColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> bondPercentColumn;
-
-    @FXML
-    private TableColumn<TradeUIModel, String> notaryFeeColumn;
-
+    private TraderTradeFxService tradeFxService;
 
     // sell row
 
@@ -97,30 +60,22 @@ public class TradeUI extends ActorController {
     @FXML
     private Label sellNotaryFeeLabel;
 
-
-    public TradeUI(ActorSystem system) {
+    public TraderTradeUI(ActorSystem system) {
 
         super(system);
-        tradeFxService = new TradeFxService(system);
+        tradeFxService = new TraderTradeFxService(system);
         tradeFxService.start();
     }
 
     @FXML
-    void initialize() {
+    protected void initialize() {
+
+        super.initialize();
 
         // setup trade table
 
         actionColumn.setCellValueFactory(t -> t.getValue().actionProperty());
         actionColumn.setCellFactory(column -> new TradeUIActionTableCell(tradeFxService));
-
-        statusColumn.setCellValueFactory(t -> t.getValue().statusProperty());
-        fiatCurrencyColumn.setCellValueFactory(t -> t.getValue().fiatCurrencyUnitProperty());
-        fiatAmountColumn.setCellValueFactory(t -> t.getValue().fiatAmountProperty());
-        btcAmountColumn.setCellValueFactory(t -> t.getValue().btcAmountProperty());
-        exchRateColumn.setCellValueFactory(t -> t.getValue().exchangeRateProperty());
-        deliveryMethodColumn.setCellValueFactory(t -> t.getValue().deliveryMethodProperty());
-        bondPercentColumn.setCellValueFactory(t -> t.getValue().bondPercentProperty());
-        notaryFeeColumn.setCellValueFactory(t -> t.getValue().notaryFeeProperty());
 
         tradeTable.setItems(tradeFxService.trades());
 
@@ -133,7 +88,7 @@ public class TradeUI extends ActorController {
 
         // handle change events
 
-        tradeFxService.tradeActive().addListener((observable1, oldValue1, newValue1) -> {
+        tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
             sellButton.disableProperty().setValue(newValue1);
         });
 

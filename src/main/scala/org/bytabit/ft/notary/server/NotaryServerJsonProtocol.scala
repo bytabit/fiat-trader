@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
-import org.bytabit.ft.notary.NotaryServerManager.{NotaryEventPosted, TradeEventPosted}
+import org.bytabit.ft.notary.NotaryFSMJsonProtocol
+import org.bytabit.ft.notary.server.NotaryServerManager.{TradeEventPosted, NotaryEventPosted}
 import org.bytabit.ft.util.EventJsonFormat
 
-trait NotaryServerJsonProtocol extends NotaryClientFSMJsonProtocol {
+trait NotaryServerJsonProtocol extends NotaryFSMJsonProtocol {
 
   implicit def notaryEventPostedJsonFormat = jsonFormat1(NotaryEventPosted)
 

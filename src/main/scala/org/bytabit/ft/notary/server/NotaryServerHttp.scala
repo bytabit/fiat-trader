@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
@@ -22,12 +22,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import org.bytabit.ft.notary.NotaryFSMJsonProtocol
 import org.bytabit.ft.trade.TradeFSM
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
 
-trait NotaryServerHttp extends NotaryClientFSMJsonProtocol {
+trait NotaryServerHttp extends NotaryFSMJsonProtocol {
 
   implicit val system: ActorSystem
 

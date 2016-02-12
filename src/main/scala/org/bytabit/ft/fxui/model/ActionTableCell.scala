@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.fxui.model
 
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.util.DateTimeOrdering
+import javafx.event.{ActionEvent, EventHandler}
+import javafx.scene.control.{Button, TableCell}
 
-final case class PostedEvents(notaryEvents: Seq[NotaryClientFSM.PostedEvent],
-                              tradeEvents: Seq[TradeFSM.PostedEvent]) {
+import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
 
-  val latestUpdate = (notaryEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))
-    .reduceOption(DateTimeOrdering.max)
+trait ActionTableCell extends TableCell[TradeUIModel, TradeOriginState] {
+
+  def actionButton(text: String, handler: ActionEvent => Unit): Button = {
+    val actionButton: Button = new Button
+    actionButton.setText(text)
+    actionButton.setOnAction(new EventHandler[ActionEvent] {
+      override def handle(event: ActionEvent): Unit = handler(event)
+    })
+    actionButton
+  }
 }

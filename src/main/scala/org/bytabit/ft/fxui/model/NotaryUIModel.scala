@@ -19,10 +19,10 @@ package org.bytabit.ft.fxui.model
 import java.net.URL
 import javafx.beans.property.SimpleStringProperty
 
-import org.bytabit.ft.notary.NotaryClientFSM
+import org.bytabit.ft.notary.NotaryFSM
 import org.bytabit.ft.wallet.model.Notary
 
-case class NotaryUIModel(status: NotaryClientFSM.State, url: URL, notary: Option[Notary]) {
+case class NotaryUIModel(status: NotaryFSM.State, url: URL, notary: Option[Notary]) {
 
   val statusProperty = new SimpleStringProperty(status.identifier)
   val urlProperty = new SimpleStringProperty(url.toString)

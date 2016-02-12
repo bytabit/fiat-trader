@@ -21,11 +21,10 @@ import java.net.URL
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import org.bytabit.ft.notary.NotaryClientFSM.AddSellOffer
 import org.bytabit.ft.notary.NotaryClientManager._
-import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.CancelSellOffer
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.trade.BuyFSM.{RequestCertifyDelivery, ReceiveFiat, TakeSellOffer}
+import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.{NotarizeFSM, BuyFSM, SellFSM, TradeFSM}
 import org.bytabit.ft.util.ListenerUpdater
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 
@@ -60,9 +59,9 @@ object NotaryClientManager {
 
   // data
 
-  case class Data(notaries: Seq[URL] = Seq()) {
+  case class Data(notaries: Set[URL] = Set()) {
     def notaryAdded(url: URL): Data = {
-      this.copy(notaries = notaries :+ url)
+      this.copy(notaries = notaries + url)
     }
 
     def notaryRemoved(url: URL): Data = {
@@ -148,7 +147,19 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
     case ReceiveFiat(url, oid) =>
       notaryClientFSM(url).foreach(_ ! ReceiveFiat(url, oid))
 
-    case evt: NotaryClientFSM.Event =>
+    case rcd:SellFSM.RequestCertifyDelivery =>
+      notaryClientFSM(rcd.notaryUrl).foreach(_ ! rcd)
+
+    case rcd:BuyFSM.RequestCertifyDelivery =>
+      notaryClientFSM(rcd.notaryUrl).foreach(_ ! rcd)
+
+    case cfs:NotarizeFSM.CertifyFiatSent =>
+      notaryClientFSM(cfs.notaryUrl).foreach(_ ! cfs)
+
+    case cfns:NotarizeFSM.CertifyFiatNotSent =>
+      notaryClientFSM(cfns.notaryUrl).foreach(_ ! cfns)
+
+    case evt: NotaryFSM.Event =>
       sendToListeners(evt)
 
     case evt: TradeFSM.Event =>
@@ -163,7 +174,7 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
   // start/stop notary client FSMs
 
   def startNotaryClientFSM(url: URL) = {
-    val notaryClientRef = context.actorOf(NotaryClientFSM.props(url, walletMgr), NotaryClientFSM.name(url))
+    val notaryClientRef = context.actorOf(NotaryFSM.props(url, walletMgr), NotaryFSM.name(url))
     notaryClientRef ! NotaryClientFSM.Start
   }
 
@@ -172,5 +183,5 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
   }
 
   // find notary client FSM
-  def notaryClientFSM(url: URL): Option[ActorRef] = context.child(NotaryClientFSM.name(url))
+  def notaryClientFSM(url: URL): Option[ActorRef] = context.child(NotaryFSM.name(url))
 }

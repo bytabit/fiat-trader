@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
 import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer

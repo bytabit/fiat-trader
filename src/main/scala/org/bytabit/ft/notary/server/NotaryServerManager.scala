@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.notary.server
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
@@ -23,8 +23,9 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.notary.NotaryClientFSM.{ContractAdded, ContractRemoved, NotaryCreated}
-import org.bytabit.ft.notary.NotaryServerManager._
+import org.bytabit.ft.notary.NotaryFSM
+import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved, NotaryCreated}
+import org.bytabit.ft.notary.server.NotaryServerManager._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
@@ -68,7 +69,7 @@ object NotaryServerManager {
 
   sealed trait Event
 
-  case class NotaryEventPosted(event: NotaryClientFSM.PostedEvent) extends Event {
+  case class NotaryEventPosted(event: NotaryFSM.PostedEvent) extends Event {
     assert(event.posted.isDefined)
   }
 
@@ -79,7 +80,7 @@ object NotaryServerManager {
   // data
 
   case class Data(notary: Option[Notary] = None, contract: Seq[Contract] = Seq(),
-                  postedNotaryEvents: Seq[NotaryClientFSM.PostedEvent] = Seq(),
+                  postedNotaryEvents: Seq[NotaryFSM.PostedEvent] = Seq(),
                   postedTradeEvents: Seq[TradeFSM.PostedEvent] = Seq()) {
 
     def notaryCreated(n: Notary) =
@@ -91,7 +92,7 @@ object NotaryServerManager {
     def contractTemplateRemoved(id: Sha256Hash) =
       this.copy(contract = contract.filterNot(_.id == id))
 
-    def notaryEventPosted(event: NotaryClientFSM.PostedEvent) =
+    def notaryEventPosted(event: NotaryFSM.PostedEvent) =
       this.copy(postedNotaryEvents = postedNotaryEvents :+ event)
 
     def tradeEventPosted(event: TradeFSM.PostedEvent) =
@@ -145,13 +146,13 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
   // apply events to data
 
   def applyEvent(event: NotaryServerManager.Event, data: Data): Data = event match {
-    case NotaryEventPosted(ac: NotaryClientFSM.NotaryCreated) =>
+    case NotaryEventPosted(ac: NotaryFSM.NotaryCreated) =>
       data.notaryEventPosted(ac).notaryCreated(ac.notary)
 
-    case NotaryEventPosted(ca: NotaryClientFSM.ContractAdded) if data.notary.isDefined =>
+    case NotaryEventPosted(ca: NotaryFSM.ContractAdded) if data.notary.isDefined =>
       data.notaryEventPosted(ca).contractTemplateAdded(ca.contract)
 
-    case NotaryEventPosted(ctr: NotaryClientFSM.ContractRemoved) =>
+    case NotaryEventPosted(ctr: NotaryFSM.ContractRemoved) =>
       data.notaryEventPosted(ctr).contractTemplateRemoved(ctr.id)
 
     case TradeEventPosted(te: TradeFSM.PostedEvent) =>
@@ -192,7 +193,7 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
       walletMgr ! WalletManager.CreateNotary(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcNotaryFee))
 
     case WalletManager.NotaryCreated(a) =>
-      val ac = NotaryClientFSM.NotaryCreated(a.url, a)
+      val ac = NotaryFSM.NotaryCreated(a.url, a)
       persist(NotaryEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
       sendToListeners(ac)
 
@@ -231,6 +232,21 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
       sender ! tep
 
     case PostTradeEvent(evt: TradeFSM.SellerSignedOffer) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
+    case PostTradeEvent(evt: TradeFSM.CertifyDeliveryRequested) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
+    case PostTradeEvent(evt: TradeFSM.FiatSentCertified) =>
+      val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(tep)(updateData)
+      sender ! tep
+
+    case PostTradeEvent(evt: TradeFSM.FiatNotSentCertified) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep

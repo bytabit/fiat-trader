@@ -2,6 +2,7 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
+import org.bitcoinj.core.Wallet
 import org.bytabit.ft.wallet.model.{FundTx, OpenTx, PayoutTx, TxSig}
 import org.joda.money.Money
 
@@ -29,4 +30,6 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def sellerSignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(sellerPayoutTxSigs)
 
+  def certifyFiatRequested(evidence: Option[Array[Byte]]) =
+    CertifyFiatEvidence(this, evidence.toSeq)
 }

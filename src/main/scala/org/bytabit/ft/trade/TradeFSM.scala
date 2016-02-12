@@ -47,6 +47,8 @@ object TradeFSM {
 
   def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyFSM(sellOffer, walletMgrRef))
 
+  def notarizeProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new NotarizeFSM(sellOffer, walletMgrRef))
+
   def name(id: UUID) = s"tradeFSM-${id.toString}"
 
   // events
@@ -84,6 +86,19 @@ object TradeFSM {
   final case class BuyerReceivedPayout(id: UUID) extends Event
 
   final case class SellerReceivedPayout(id: UUID) extends Event
+
+  final case class CertifyDeliveryRequested(id: UUID, evidence: Option[Array[Byte]] = None,
+                                            posted: Option[DateTime] = None) extends PostedEvent
+
+  final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
+                                            posted: Option[DateTime] = None) extends PostedEvent
+
+  final case class FiatNotSentCertified(id: UUID, payoutSigs: Seq[TxSig],
+                                               posted: Option[DateTime] = None) extends PostedEvent
+
+  final case class SellerFunded(id: UUID) extends Event
+
+  final case class BuyerRefunded(id: UUID) extends Event
 
   // states
 
@@ -125,12 +140,28 @@ object TradeFSM {
     override val identifier: String = "FIAT RCVD"
   }
 
-  case object BOUGHT extends State {
-    override val identifier: String = "BOUGHT"
+  case object TRADED extends State {
+    override val identifier: String = "TRADED"
   }
 
-  case object SOLD extends State {
-    override val identifier: String = "SOLD"
+  case object CERT_DELIVERY_REQD extends State {
+    override val identifier: String = "CERT DELIVERY REQD"
+  }
+
+  case object FIAT_SENT_CERTD extends State {
+    override val identifier: String = "FIAT SENT CERTD"
+  }
+
+  case object FIAT_NOT_SENT_CERTD extends State {
+    override val identifier: String = "FIAT NOT SENT CERTD"
+  }
+
+  case object SELLER_FUNDED extends State {
+    override val identifier: String = "SELLER FUNDED"
+  }
+
+  case object BUYER_REFUNDED extends State {
+    override val identifier: String = "BUYER REFUNDED"
   }
 
 }
@@ -139,8 +170,6 @@ abstract class TradeFSM(id: UUID)
   extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
 
   import spray.json._
-
-  //val log: LoggingAdapter
 
   // implicits
 
@@ -168,10 +197,26 @@ abstract class TradeFSM(id: UUID)
       case (BuyerTookOffer(_, b, bots, bfpt, _), sellOffer: SellOffer) =>
         sellOffer.withBuyer(b, bots, bfpt)
 
+      case (BuyerTookOffer(_, b, bots, bfpt, _), takenOffer: TakenOffer) =>
+        takenOffer
+
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
+      case (CertifyDeliveryRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
+        signedTakenOffer.certifyFiatRequested(e)
+
+      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
+
+      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.withNotarizedFiatSentSigs(ps)
+
+      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+        certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
+
       case _ =>
+        log.error(s"No transition for event: $event\nwith trade data: ${tradeData.getClass.getSimpleName}")
         tradeData
     }
 

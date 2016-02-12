@@ -20,21 +20,21 @@ import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer
 import spray.json._
 
-class NotaryClientFSMJsonSerializer(override val system: ExtendedActorSystem)
-  extends AbstractSprayJsonSerializer[NotaryClientFSM.Event](system)
-  with NotaryClientFSMJsonProtocol {
+class NotaryFSMJsonSerializer(override val system: ExtendedActorSystem)
+  extends AbstractSprayJsonSerializer[NotaryFSM.Event](system)
+  with NotaryFSMJsonProtocol {
 
   override val identifier = hashId(this.getClass.getSimpleName)
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
-      bytesToString(bytes).parseJson.convertTo[NotaryClientFSM.Event]
+      bytesToString(bytes).parseJson.convertTo[NotaryFSM.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
   def toBinary(obj: AnyRef) = obj match {
-    case o: NotaryClientFSM.Event =>
+    case o: NotaryFSM.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>
       throw new IllegalArgumentException("Wrong type found")

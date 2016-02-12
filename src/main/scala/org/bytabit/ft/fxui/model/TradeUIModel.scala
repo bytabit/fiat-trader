@@ -35,6 +35,7 @@ object TradeUIModel {
   case object SELLER extends Role
 
   case object BUYER extends Role
+
 }
 
 case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
@@ -53,7 +54,7 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFee = template.notary.btcNotaryFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
-  val statusProperty = new SimpleStringProperty(stateToString(state, posted.isDefined))
+  val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
   val btcAmountProperty = new SimpleStringProperty(btcAmount.toString)
@@ -63,25 +64,32 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
-  val active = (role, state) match {
-    case (SELLER, s) if s != SOLD => true
-    case (BUYER, s) if s != CREATED && s != BOUGHT => true
+  val uncommitted = (role, state) match {
+    case (SELLER, s) if Seq(CREATED,TAKEN,SIGNED,OPENED).contains(s) => true
+    case (BUYER, s) if Seq(TAKEN,SIGNED,OPENED).contains(s) => true
+
     case _ => false
   }
 
   def getId = id
 
-  def stateToString(state: TradeFSM.State, posted: Boolean = false): String = {
-    state match {
-      case CREATED => s"OFFERED"
-      case CANCELED => s"CANCELED"
-      case TAKEN => s"TAKEN"
-      case SIGNED => s"SIGNED"
-      case OPENED => s"OPENED"
-      case FUNDED => s"FUNDED"
-      case FIAT_RCVD => s"FIAT RCVD"
-      case BOUGHT => s"BOUGHT"
-      case SOLD => s"SOLD"
+  def stateToString(state: TradeFSM.State, role: Role): String = {
+    (state, role) match {
+      case (CREATED, _) => "OFFERED"
+      case (CANCELED, _) => "CANCELED"
+      case (TAKEN, _) => "TAKEN"
+      case (SIGNED, _) => "SIGNED"
+      case (OPENED, _) => "OPENED"
+      case (FUNDED, _) => "FUNDED"
+      case (CERT_DELIVERY_REQD, _) => "CERT REQD"
+      case (FIAT_SENT_CERTD, _) => "SENT"
+      case (FIAT_NOT_SENT_CERTD, _) => "NOT SENT"
+      case (FIAT_RCVD, _) => "FIAT RCVD"
+      case (TRADED, BUYER) => "BOUGHT"
+      case (TRADED, SELLER) => "SOLD"
+      case (TRADED, _) => "TRADED"
+      case (BUYER_REFUNDED, _) => "*REFUNDED"
+      case (SELLER_FUNDED, _) => "*SOLD"
 
       case _ => "ERROR!"
     }

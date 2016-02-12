@@ -49,7 +49,9 @@ object WalletFxService {
   def apply(system: ActorSystem) = new WalletFxService(system)
 }
 
-class WalletFxService(system: ActorSystem) extends ActorFxService(system) {
+class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
+
+  override val system = actorSystem
 
   val walletMgrSel = system.actorSelection(s"/user/${WalletManager.name}")
   lazy val walletMgrRef = walletMgrSel.resolveOne(FiniteDuration(5, "seconds"))

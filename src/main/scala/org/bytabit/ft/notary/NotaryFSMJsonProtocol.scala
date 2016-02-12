@@ -16,12 +16,13 @@
 
 package org.bytabit.ft.notary
 
-import org.bytabit.ft.notary.NotaryClientFSM._
+import org.bytabit.ft.notary.NotaryFSM._
+import org.bytabit.ft.notary.server.PostedEvents
 import org.bytabit.ft.trade.TradeFSMJsonProtocol
 import org.bytabit.ft.util.EventJsonFormat
 import spray.json._
 
-trait NotaryClientFSMJsonProtocol extends TradeFSMJsonProtocol {
+trait NotaryFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def notaryCreatedJsonFormat = jsonFormat3(NotaryCreated)
 
@@ -33,31 +34,34 @@ trait NotaryClientFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def buyTradeAddedJsonFormat = jsonFormat4(BuyTradeAdded)
 
+  implicit def notarizeTradeAddedJsonFormat = jsonFormat4(NotarizeTradeAdded)
+
   implicit def tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
 
   implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
 
-  val notaryClientEventJsonFormatMap: Map[String, RootJsonFormat[_ <: NotaryClientFSM.Event]] = Map(
+  val notaryEventJsonFormatMap: Map[String, RootJsonFormat[_ <: NotaryFSM.Event]] = Map(
     simpleName(classOf[NotaryCreated]) -> notaryCreatedJsonFormat,
     simpleName(classOf[ContractAdded]) -> contractAddedJsonFormat,
     simpleName(classOf[ContractRemoved]) -> contractRemovedJsonFormat,
     simpleName(classOf[SellTradeAdded]) -> sellTradeAddedJsonFormat,
     simpleName(classOf[BuyTradeAdded]) -> buyTradeAddedJsonFormat,
+    simpleName(classOf[NotarizeTradeAdded]) -> notarizeTradeAddedJsonFormat,
     simpleName(classOf[TradeRemoved]) -> tradeRemovedJsonFormat,
     simpleName(classOf[PostedTradeEventReceived]) -> postedTradeEventReceivedJsonFormat
   )
 
-  implicit def notaryEventJsonFormat = new EventJsonFormat[NotaryClientFSM.Event](notaryClientEventJsonFormatMap)
+  implicit def notaryEventJsonFormat = new EventJsonFormat[NotaryFSM.Event](notaryEventJsonFormatMap)
 
-  implicit def notaryPostedEventJsonFormat = new RootJsonFormat[NotaryClientFSM.PostedEvent] {
+  implicit def notaryPostedEventJsonFormat = new RootJsonFormat[NotaryFSM.PostedEvent] {
 
-    override def read(json: JsValue): PostedEvent =
+    override def read(json: JsValue): NotaryFSM.PostedEvent =
       notaryEventJsonFormat.read(json) match {
-        case pe: PostedEvent => pe
+        case pe: NotaryFSM.PostedEvent => pe
         case _ => throw new DeserializationException("NotaryClientFSM PostedEvent expected")
       }
 
-    override def write(obj: PostedEvent): JsValue =
+    override def write(obj: NotaryFSM.PostedEvent): JsValue =
       notaryEventJsonFormat.write(obj)
   }
 

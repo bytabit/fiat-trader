@@ -24,22 +24,22 @@ sbt run
 1. From the project directory run command:
 
 ```
-sbt '; set javaOptions += "-Dconfig.file=./config/notary1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
-sbt '; set javaOptions += "-Dconfig.file=./config/trader1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
+sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/notary1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
+sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
 ```
 
 ### Run From IntelliJ with Custom Config 
 
 ```
 Main class: org.bytabit.ft.fxui.FiatTrader
-VM options: -Dconfig.file=./config/notary1.conf
+VM options: -Dconfig.file=./src/test/resources/notary1.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
 
 ```
 Main class: org.bytabit.fxui.FiatTrader
-VM options: -Dconfig.file=./config/trader1.conf
+VM options: -Dconfig.file=./src/test/resources/trader1.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
@@ -73,3 +73,7 @@ Note: Don't use the IntelliJ scala plugin project import, I found it doesn't wor
     ```
 
 3. Follow README.md instructions
+
+### Versioning
+
+We follow the [Semantic Versioning 2.0](http://semver.org/spec/v2.0.0.html) specification for this project.

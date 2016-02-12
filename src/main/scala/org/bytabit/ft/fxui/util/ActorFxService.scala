@@ -36,13 +36,15 @@ object JavaFXExecutionContext {
   })
 }
 
-abstract class ActorFxService(system: ActorSystem) extends Service[Unit] {
+trait ActorFxService extends Service[Unit] {
 
-  final val log: LoggingAdapter = Logging.getLogger(system, this)
-  final val inbox: Inbox = Inbox.create(system)
+  val system:ActorSystem
 
-  implicit val sys = system
-  implicit val dis = system.dispatcher
+  final lazy val log: LoggingAdapter = Logging.getLogger(system, this)
+  final lazy val inbox: Inbox = Inbox.create(system)
+
+  implicit lazy val sys = system
+  implicit lazy val dis = system.dispatcher
 
   def sendMsg[T <: AnyRef](fRef: Future[ActorRef], msg: T) = {
     for {

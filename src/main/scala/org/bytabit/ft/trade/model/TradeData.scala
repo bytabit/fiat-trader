@@ -82,12 +82,12 @@ trait TradeData {
       None, signedOpenTx, None)
 
   // unsigned seller wins dispute path payout escrow tx
-  def unsignedSellerWinsDisputePayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: List[TransactionOutput]) =
+  def unsignedFiatSentPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
     PayoutTx(notary, seller, buyer, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), None, BTCMoney.toCoin(Some(btcNotaryFee)),
       signedOpenTx, Some(signedFundTxOutputs))
 
   // unsigned buyer wins dispute path payout escrow tx
-  def unsignedBuyerWinsDisputePayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: List[TransactionOutput]) =
+  def unsignedFiatNotSentPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
     PayoutTx(notary, seller, buyer, None, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), BTCMoney.toCoin(Some(btcNotaryFee)),
       signedOpenTx, Some(signedFundTxOutputs))
 }

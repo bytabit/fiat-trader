@@ -18,26 +18,25 @@ package org.bytabit.ft.fxui.model
 
 import java.net.URL
 import java.util.UUID
-import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.Pos
-import javafx.scene.control.{Button, TableCell}
+import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.TraderTradeFxService
+import org.bytabit.ft.fxui.NotaryTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, Role}
 import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{CREATED, FUNDED}
+import org.bytabit.ft.trade.TradeFSM.CERT_DELIVERY_REQD
 
 import scala.collection.JavaConversions._
 
-object TradeUIActionTableCell {
+object NotarizeUIActionTableCell {
 
   case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
 
 }
 
-class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends ActionTableCell {
+class NotarizeUIActionTableCell(tradefxService: NotaryTradeFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)
@@ -49,38 +48,20 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
 
     // possible buttons
 
-    val cancelButton = actionButton("CANCEL", event => {
-      tradefxService.cancelSellOffer(item.url, item.id)
+    val certifySentButton = actionButton("SENT", event => {
+      tradefxService.certifyFiatSent(item.url, item.id)
     })
 
-    val buyButton = actionButton("BUY", event => {
-      tradefxService.takeSellOffer(item.url, item.id)
-    })
-
-    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
-      tradefxService.receiveFiat(item.url, item.id)
-    })
-
-    // TODO need to only enable buttons after timeout to deliver fiat
-    val sellerReqCertDeliveryButton = actionButton("REQ CERT", event => {
-      tradefxService.sellerReqCertDelivery(item.url, item.id)
-    })
-
-    val buyerReqCertDeliveryButton = actionButton("REQ CERT", event => {
-      tradefxService.buyerReqCertDelivery(item.url, item.id)
+    val certifyNotSentButton = actionButton("NOT SENT", event => {
+      tradefxService.certifyFiatNotSent(item.url, item.id)
     })
 
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, SELLER, CREATED), false) =>
-        Seq(cancelButton)
-      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
-        Seq(buyButton)
-      case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
-        Seq(fiatReceivedButton, buyerReqCertDeliveryButton)
-      case (TradeOriginState(u, i, SELLER, FUNDED), false) =>
-        Seq(sellerReqCertDeliveryButton)
+      case (TradeOriginState(u, i, NOTARY, CERT_DELIVERY_REQD), false) =>
+        Seq(certifySentButton, certifyNotSentButton)
+
       case _ =>
         setText(null)
         setStyle("")

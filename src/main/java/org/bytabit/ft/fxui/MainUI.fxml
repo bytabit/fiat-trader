@@ -25,13 +25,19 @@
     <center>
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
             <tabs>
-                <Tab fx:id="tradesTab" text="Trades">
+                <Tab fx:id="traderTradesTab" text="Trades">
                     <content>
-                        <fx:include source="trade/TradeUI.fxml"/>
+                        <fx:include source="trade/TraderTradeUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab text="Wallet">
+                <Tab fx:id="notaryTradesTab" text="Notary Trades">
+                    <content>
+                        <fx:include source="notary/NotaryTradeUI.fxml"/>
+                    </content>
+                </Tab>
+
+                <Tab fx:id="walletTab" text="Wallet">
                     <content>
                         <fx:include source="wallet/WalletUI.fxml"/>
                     </content>

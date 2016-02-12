@@ -34,6 +34,12 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "sellerOpenTxSigs", "sellerPayoutTxSigs")
 
+  implicit def certifyDeliveryRequestedJsonFormat = jsonFormat(CertifyDeliveryRequested.apply, "id", "evidence", "posted")
+
+  implicit def fiatSentCertifiedJsonFormat = jsonFormat(FiatSentCertified.apply, "id", "payoutSigs", "posted")
+
+  implicit def fiatNotSentCertifiedJsonFormat = jsonFormat(FiatNotSentCertified.apply, "id", "payoutSigs", "posted")
+
   implicit object tradeStateJsonFormat extends JsonFormat[TradeFSM.State] {
 
     def read(value: JsValue) = value match {
@@ -43,7 +49,10 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
       case JsString(SIGNED.identifier) => SIGNED
       case JsString(OPENED.identifier) => OPENED
       case JsString(FUNDED.identifier) => FUNDED
-      case JsString(BOUGHT.identifier) => BOUGHT
+      case JsString(TRADED.identifier) => TRADED
+      case JsString(CERT_DELIVERY_REQD.identifier) => CERT_DELIVERY_REQD
+      case JsString(FIAT_SENT_CERTD.identifier) => FIAT_SENT_CERTD
+      case JsString(FIAT_NOT_SENT_CERTD.identifier) => FIAT_NOT_SENT_CERTD
 
       case _ => deserializationError("TradeStatus expected")
     }
@@ -80,6 +89,9 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[SellerSignedOffer]) -> sellerSignedOfferJsonFormat,
     simpleName(classOf[BuyerOpenedEscrow]) -> buyerOpenedEscrowJsonFormat,
     simpleName(classOf[BuyerFundedEscrow]) -> buyerFundedEscrowJsonFormat,
+    simpleName(classOf[CertifyDeliveryRequested]) -> certifyDeliveryRequestedJsonFormat,
+    simpleName(classOf[FiatSentCertified]) -> fiatSentCertifiedJsonFormat,
+    simpleName(classOf[FiatNotSentCertified]) -> fiatNotSentCertifiedJsonFormat,
     simpleName(classOf[BuyerReceivedPayout]) -> buyerReceivedPayoutJsonFormat
   )
 
@@ -87,9 +99,9 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def tradePostedEventJsonFormat = new RootJsonFormat[TradeFSM.PostedEvent] {
 
-    override def read(json: JsValue): PostedEvent =
+    override def read(json: JsValue): TradeFSM.PostedEvent =
       tradeEventJsonFormat.read(json) match {
-        case pe: PostedEvent => pe
+        case pe: TradeFSM.PostedEvent => pe
         case _ => throw new DeserializationException("TradeFSM PostedEvent expected")
       }
 
