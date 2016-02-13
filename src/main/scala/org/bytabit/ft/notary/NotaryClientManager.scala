@@ -175,7 +175,7 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
 
   def startNotaryClientFSM(url: URL) = {
     val notaryClientRef = context.actorOf(NotaryFSM.props(url, walletMgr), NotaryFSM.name(url))
-    notaryClientRef ! NotaryClientFSM.Start
+    notaryClientRef ! NotaryClient.Start
   }
 
   def stopNotaryClientFSM(url: URL) = {

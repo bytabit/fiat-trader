@@ -22,7 +22,7 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, SELLER}
-import org.bytabit.ft.notary.NotaryClientFSM._
+import org.bytabit.ft.notary.NotaryClient._
 import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
@@ -34,7 +34,7 @@ import org.bytabit.ft.util.Config
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object NotaryClientFSM {
+object NotaryClient {
 
   def actorOf(serverURL: URL, walletMgr: ActorRef)(implicit system: ActorSystem) =
     system.actorOf(props(serverURL, walletMgr), name(serverURL))
@@ -51,7 +51,7 @@ object NotaryClientFSM {
 
 }
 
-class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
+class NotaryClient(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
 
   override val log = Logging(context.system, this)
 

@@ -267,7 +267,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     tradeUncommitted.set(trades.exists(_.uncommitted))
   }
 
-  def sendCmd(cmd: NotaryClientFSM.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: NotaryClient.Command) = sendMsg(notaryMgrRef, cmd)
 
   def sendCmd(cmd: SellFSM.Command) = sendMsg(notaryMgrRef, cmd)
 
