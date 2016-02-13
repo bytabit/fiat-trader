@@ -22,7 +22,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
@@ -30,7 +30,7 @@ import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, BroadcastTx, 
 
 import scala.language.postfixOps
 
-object BuyFSM {
+object BuyProcess {
 
   // commands
 
@@ -46,7 +46,7 @@ object BuyFSM {
 
 }
 
-class BuyFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
+class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
 
   override val log = Logging(context.system, this)
 

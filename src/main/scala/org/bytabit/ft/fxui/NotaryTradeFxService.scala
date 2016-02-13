@@ -104,14 +104,14 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   }
 
   def certifyFiatSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeFSM.CertifyFiatSent(url,tradeId))
+    sendCmd(NotarizeProcess.CertifyFiatSent(url,tradeId))
   }
 
   def certifyFiatNotSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeFSM.CertifyFiatNotSent(url,tradeId))
+    sendCmd(NotarizeProcess.CertifyFiatNotSent(url,tradeId))
   }
 
-  def sendCmd(cmd: NotarizeFSM.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: NotarizeProcess.Command) = sendMsg(notaryMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
     sendMsg(notaryMgrRef, cmd)

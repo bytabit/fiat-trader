@@ -26,8 +26,8 @@ import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
-import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer}
@@ -255,12 +255,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   // TODO collect evidence
   def sellerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(SellFSM.RequestCertifyDelivery(url,tradeId))
+    sendCmd(SellProcess.RequestCertifyDelivery(url,tradeId))
   }
 
   // TODO collect evidence
   def buyerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(BuyFSM.RequestCertifyDelivery(url,tradeId))
+    sendCmd(BuyProcess.RequestCertifyDelivery(url,tradeId))
   }
 
   def updateUncommitted() = {
@@ -269,9 +269,9 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def sendCmd(cmd: NotaryClient.Command) = sendMsg(notaryMgrRef, cmd)
 
-  def sendCmd(cmd: SellFSM.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: SellProcess.Command) = sendMsg(notaryMgrRef, cmd)
 
-  def sendCmd(cmd: BuyFSM.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: BuyProcess.Command) = sendMsg(notaryMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
     sendMsg(notaryMgrRef, cmd)

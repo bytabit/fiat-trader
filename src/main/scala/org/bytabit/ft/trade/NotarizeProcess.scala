@@ -22,7 +22,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.NotarizeFSM._
+import org.bytabit.ft.trade.NotarizeProcess._
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
@@ -30,7 +30,7 @@ import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, RemoveWatc
 
 import scala.language.postfixOps
 
-object NotarizeFSM {
+object NotarizeProcess {
 
   // commands
 
@@ -44,7 +44,7 @@ object NotarizeFSM {
 
 }
 
-class NotarizeFSM(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
+class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
 
   // logging
 
