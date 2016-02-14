@@ -22,19 +22,19 @@ import java.util.UUID
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, SELLER}
-import org.bytabit.ft.notary.NotaryClientFSM._
+import org.bytabit.ft.notary.NotaryClient._
 import org.bytabit.ft.notary.NotaryFSM._
-import org.bytabit.ft.trade.BuyFSM.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
 import org.bytabit.ft.trade.model.{Offer, SellOffer}
-import org.bytabit.ft.trade.{BuyFSM, NotarizeFSM, SellFSM, TradeFSM}
+import org.bytabit.ft.trade.{BuyProcess, NotarizeProcess, SellProcess, TradeFSM}
 import org.bytabit.ft.util.Config
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object NotaryClientFSM {
+object NotaryClient {
 
   def actorOf(serverURL: URL, walletMgr: ActorRef)(implicit system: ActorSystem) =
     system.actorOf(props(serverURL, walletMgr), name(serverURL))
@@ -51,7 +51,7 @@ object NotaryClientFSM {
 
 }
 
-class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
+class NotaryClient(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
 
   override val log = Logging(context.system, this)
 
@@ -91,9 +91,9 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       cm.values.foreach(c => context.parent ! ContractAdded(c.notary.url, c))
 
       // start active trade FSMs and notify parent
-      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start))
-      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start))
-      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeFSM.Start))
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeProcess.Start))
 
       // request new events from event server
       reqNotaryEvents(url, Some(lp))
@@ -122,7 +122,7 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
     // handle trade commands
 
     case Event(AddSellOffer(o), d) if !isNotary =>
-      createSellTrade(o.id, o) ! SellFSM.Start
+      createSellTrade(o.id, o) ! SellProcess.Start
       stay()
 
     case Event(cso: CancelSellOffer, d) if !isNotary =>
@@ -146,14 +146,14 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       }
       stay()
 
-    case Event(rcd: BuyFSM.RequestCertifyDelivery, d) if !isNotary =>
+    case Event(rcd: BuyProcess.RequestCertifyDelivery, d) if !isNotary =>
       tradeFSM(rcd.id) match {
         case Some(ref) => ref ! rcd
         case None => log.error(s"Could not request certify delivery ${rcd.id}")
       }
       stay()
 
-    case Event(rcd: SellFSM.RequestCertifyDelivery, d) if !isNotary =>
+    case Event(rcd: SellProcess.RequestCertifyDelivery, d) if !isNotary =>
       tradeFSM(rcd.id) match {
         case Some(ref) => ref ! rcd
         case None => log.error(s"Could not request certify delivery ${rcd.id}")
@@ -202,14 +202,14 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       stay()
 
     // handle notary commands
-    case Event(cfs: NotarizeFSM.CertifyFiatSent, d) if isNotary =>
+    case Event(cfs: NotarizeProcess.CertifyFiatSent, d) if isNotary =>
       tradeFSM(cfs.id) match {
         case Some(ref) => ref ! cfs
         case None => log.error(s"Could not notarize fiat sent ${cfs.id}")
       }
       stay()
 
-    case Event(cfns: NotarizeFSM.CertifyFiatNotSent, d) if isNotary =>
+    case Event(cfns: NotarizeProcess.CertifyFiatNotSent, d) if isNotary =>
       tradeFSM(cfns.id) match {
         case Some(ref) => ref ! cfns
         case None => log.error(s"Could not notarize fiat not sent ${cfns.id}")
@@ -260,9 +260,9 @@ class NotaryClientFSM(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
 
       // TODO issue #28, disable trade negotation buttons in trade UI when notary is offline
       // start active trade FSMs and notify parent
-      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellFSM.Start))
-      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyFSM.Start))
-      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeFSM.Start))
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+      at.get(NOTARY).foreach(_.foreach(t => createNotarizeTrade(t._1, t._2) ! NotarizeProcess.Start))
 
       reqNotaryEvents(n.url, Some(lp))
       stay()

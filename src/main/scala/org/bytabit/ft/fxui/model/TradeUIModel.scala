@@ -19,7 +19,7 @@ package org.bytabit.ft.fxui.model
 import javafx.beans.property._
 
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model.SellOffer
@@ -87,9 +87,11 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
       case (FIAT_RCVD, _) => "FIAT RCVD"
       case (TRADED, BUYER) => "BOUGHT"
       case (TRADED, SELLER) => "SOLD"
-      case (TRADED, _) => "TRADED"
+      case (TRADED, NOTARY) => "TRADED"
       case (BUYER_REFUNDED, _) => "*REFUNDED"
-      case (SELLER_FUNDED, _) => "*SOLD"
+      case (SELLER_FUNDED, BUYER) => "*BOUGHT"
+      case (SELLER_FUNDED, SELLER) => "*SOLD"
+      case (SELLER_FUNDED, NOTARY) => "*TRADED"
 
       case _ => "ERROR!"
     }

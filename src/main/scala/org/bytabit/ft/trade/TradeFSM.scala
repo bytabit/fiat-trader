@@ -43,11 +43,11 @@ object TradeFSM {
 
   // actor setup
 
-  def sellProps(offer: Offer, walletMgrRef: ActorRef) = Props(new SellFSM(offer, walletMgrRef))
+  def sellProps(offer: Offer, walletMgrRef: ActorRef) = Props(new SellProcess(offer, walletMgrRef))
 
-  def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyFSM(sellOffer, walletMgrRef))
+  def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyProcess(sellOffer, walletMgrRef))
 
-  def notarizeProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new NotarizeFSM(sellOffer, walletMgrRef))
+  def notarizeProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new NotarizeProcess(sellOffer, walletMgrRef))
 
   def name(id: UUID) = s"tradeFSM-${id.toString}"
 
@@ -166,6 +166,7 @@ object TradeFSM {
 
 }
 
+// TODO convert to trait?
 abstract class TradeFSM(id: UUID)
   extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
 

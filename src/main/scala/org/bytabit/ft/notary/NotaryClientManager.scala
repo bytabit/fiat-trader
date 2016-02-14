@@ -22,9 +22,9 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import org.bytabit.ft.notary.NotaryClientManager._
-import org.bytabit.ft.trade.BuyFSM.{RequestCertifyDelivery, ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellFSM.{AddSellOffer, CancelSellOffer}
-import org.bytabit.ft.trade.{NotarizeFSM, BuyFSM, SellFSM, TradeFSM}
+import org.bytabit.ft.trade.BuyProcess.{RequestCertifyDelivery, ReceiveFiat, TakeSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.{NotarizeProcess, BuyProcess, SellProcess, TradeFSM}
 import org.bytabit.ft.util.ListenerUpdater
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 
@@ -147,16 +147,16 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
     case ReceiveFiat(url, oid) =>
       notaryClientFSM(url).foreach(_ ! ReceiveFiat(url, oid))
 
-    case rcd:SellFSM.RequestCertifyDelivery =>
+    case rcd:SellProcess.RequestCertifyDelivery =>
       notaryClientFSM(rcd.notaryUrl).foreach(_ ! rcd)
 
-    case rcd:BuyFSM.RequestCertifyDelivery =>
+    case rcd:BuyProcess.RequestCertifyDelivery =>
       notaryClientFSM(rcd.notaryUrl).foreach(_ ! rcd)
 
-    case cfs:NotarizeFSM.CertifyFiatSent =>
+    case cfs:NotarizeProcess.CertifyFiatSent =>
       notaryClientFSM(cfs.notaryUrl).foreach(_ ! cfs)
 
-    case cfns:NotarizeFSM.CertifyFiatNotSent =>
+    case cfns:NotarizeProcess.CertifyFiatNotSent =>
       notaryClientFSM(cfns.notaryUrl).foreach(_ ! cfns)
 
     case evt: NotaryFSM.Event =>
@@ -175,7 +175,7 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
 
   def startNotaryClientFSM(url: URL) = {
     val notaryClientRef = context.actorOf(NotaryFSM.props(url, walletMgr), NotaryFSM.name(url))
-    notaryClientRef ! NotaryClientFSM.Start
+    notaryClientRef ! NotaryClient.Start
   }
 
   def stopNotaryClientFSM(url: URL) = {

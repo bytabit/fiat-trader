@@ -29,7 +29,7 @@ import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, Role, SELLER}
-import org.bytabit.ft.notary.NotaryClientFSM.{ReceivePostedNotaryEvent, ReceivePostedTradeEvent}
+import org.bytabit.ft.notary.NotaryClient.{ReceivePostedNotaryEvent, ReceivePostedTradeEvent}
 import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.notary.server.PostedEvents
 import org.bytabit.ft.trade.TradeFSM
@@ -47,7 +47,7 @@ object NotaryFSM {
 
   // actor setup
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new NotaryClientFSM(url, walletMgr))
+  def props(url: URL, walletMgr: ActorRef) = Props(new NotaryClient(url, walletMgr))
 
   def name(url: URL) = s"${NotaryFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 
