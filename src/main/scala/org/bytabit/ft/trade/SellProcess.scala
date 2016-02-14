@@ -236,7 +236,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.i
 
   when(FIAT_SENT_CERTD) {
     case Event(Start, cfs: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
+      context.parent ! LocalSellerCreatedOffer(cfs.id, cfs.sellOffer)
       context.parent ! FiatSentCertified(cfs.id, Seq())
       stay()
 
@@ -259,7 +259,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.i
 
   when(FIAT_NOT_SENT_CERTD) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
       context.parent ! FiatNotSentCertified(cfd.id, Seq())
       stay()
 
@@ -278,7 +278,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.i
 
   when(SELLER_FUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
       context.parent ! SellerFunded(cfd.id)
       stay()
 
@@ -289,7 +289,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.i
 
   when(BUYER_REFUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
+      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
       context.parent ! BuyerRefunded(cfd.id)
       stay()
 

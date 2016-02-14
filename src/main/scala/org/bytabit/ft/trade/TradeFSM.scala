@@ -166,6 +166,7 @@ object TradeFSM {
 
 }
 
+// TODO convert to trait?
 abstract class TradeFSM(id: UUID)
   extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
 
