@@ -26,6 +26,7 @@ sbt run
 ```
 sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/notary1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
 sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
+sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader2.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
 ```
 
 ### Run From IntelliJ with Custom Config 
