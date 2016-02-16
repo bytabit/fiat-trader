@@ -46,7 +46,9 @@ object BuyProcess {
 
 }
 
-class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
+class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
+
+  override val id = sellOffer.id
 
   override val log = Logging(context.system, this)
 
@@ -233,15 +235,15 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
-    case Event(fsc:FiatSentCertified, cfe:CertifyFiatEvidence) if fsc.posted.isDefined =>
+    case Event(fsc: FiatSentCertified, cfe: CertifyFiatEvidence) if fsc.posted.isDefined =>
       goto(FIAT_SENT_CERTD) applying fsc andThen {
-        case cfd:CertifiedFiatDelivery =>
+        case cfd: CertifiedFiatDelivery =>
           context.parent ! fsc
       }
 
-    case Event(fnsc:FiatNotSentCertified, cfe:CertifyFiatEvidence) if fnsc.posted.isDefined =>
+    case Event(fnsc: FiatNotSentCertified, cfe: CertifyFiatEvidence) if fnsc.posted.isDefined =>
       goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
-        case cfd:CertifiedFiatDelivery =>
+        case cfd: CertifiedFiatDelivery =>
           context.parent ! fnsc
           walletMgrRef ! WalletManager.BroadcastTx(cfd.notarySignedFiatNotSentPayoutTx, Some(cfd.buyer.escrowPubKey))
       }
@@ -277,7 +279,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(
       if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(SELLER_FUNDED) andThen {
-          case cfd:CertifiedFiatDelivery =>
+          case cfd: CertifiedFiatDelivery =>
             context.parent ! SellerFunded(cfd.id)
             walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
         }
@@ -300,7 +302,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(
       if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(BUYER_REFUNDED) andThen {
-          case cfd:CertifiedFiatDelivery =>
+          case cfd: CertifiedFiatDelivery =>
             context.parent ! BuyerRefunded(cfd.id)
             walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
         }

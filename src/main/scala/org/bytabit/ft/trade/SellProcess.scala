@@ -48,7 +48,9 @@ object SellProcess {
 
 }
 
-class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM(offer.id) {
+class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
+
+  override val id = offer.id
 
   override val log = Logging(context.system, this)
 
