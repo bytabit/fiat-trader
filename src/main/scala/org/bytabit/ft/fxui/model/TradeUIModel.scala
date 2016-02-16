@@ -54,6 +54,7 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFee = template.notary.btcNotaryFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
+  val roleProperty = new SimpleStringProperty(role.toString)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)

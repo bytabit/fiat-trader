@@ -18,12 +18,10 @@ package org.bytabit.ft.fxui.trade;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import org.bytabit.ft.fxui.TraderTradeFxService;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
+import org.bytabit.ft.fxui.model.TradeUIModel;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.BTCMoney;
 import org.bytabit.ft.util.FiatMoney;
@@ -33,6 +31,9 @@ import org.joda.money.Money;
 public class TraderTradeUI extends AbstractTradeUI {
 
     private TraderTradeFxService tradeFxService;
+
+    @FXML
+    protected TableColumn<TradeUIModel, String> roleColumn;
 
     // sell row
 
@@ -76,6 +77,7 @@ public class TraderTradeUI extends AbstractTradeUI {
 
         actionColumn.setCellValueFactory(t -> t.getValue().actionProperty());
         actionColumn.setCellFactory(column -> new TradeUIActionTableCell(tradeFxService));
+        roleColumn.setCellValueFactory(t -> t.getValue().roleProperty());
 
         tradeTable.setItems(tradeFxService.trades());
 
