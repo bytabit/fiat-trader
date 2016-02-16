@@ -44,7 +44,9 @@ object NotarizeProcess {
 
 }
 
-class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM(sellOffer.id) {
+class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
+
+  override val id = sellOffer.id
 
   // logging
 

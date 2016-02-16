@@ -166,11 +166,11 @@ object TradeFSM {
 
 }
 
-// TODO convert to trait?
-abstract class TradeFSM(id: UUID)
-  extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
+trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
 
   import spray.json._
+
+  val id:UUID
 
   // implicits
 
