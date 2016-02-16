@@ -171,6 +171,8 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"OpenTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(ft: FundTx, None) =>
       val signed = ft.sign
@@ -178,6 +180,8 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"FundTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)) =>
       val signed = pt.sign(pk)
@@ -185,6 +189,8 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"PayoutTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
 
     // handlers for wallet generated events
 
