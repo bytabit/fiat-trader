@@ -7,7 +7,7 @@ Bytabit Fiat Trader
 git clone git@bitbucket.org:bytabit/fiat-trader.git 
 ```
 
-### Run From Command Line
+### Run From Command Line with Default Config
 
 1. Install [JDK 8u73](https://jdk8.java.net/download.html)
 2. Install [Scala version  2.11.5](http://www.scala-lang.org/download/)
@@ -19,7 +19,7 @@ git clone git@bitbucket.org:bytabit/fiat-trader.git
 sbt run
 ```
 
-### Run From Command Line with Custom Config
+### Run From Command Line with Custom Configs
 
 1. From the project directory run command:
 
@@ -29,7 +29,7 @@ sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader1.conf" ; ru
 sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader2.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
 ```
 
-### Run From IntelliJ with Custom Config 
+### Run From IntelliJ with Custom Configs 
 
 ```
 Main class: org.bytabit.ft.fxui.FiatTrader
@@ -41,6 +41,13 @@ Use classpath of module: fiat-trader
 ```
 Main class: org.bytabit.fxui.FiatTrader
 VM options: -Dconfig.file=./src/test/resources/trader1.conf
+Working directory: <project directory>
+Use classpath of module: fiat-trader
+```
+
+```
+Main class: org.bytabit.fxui.FiatTrader
+VM options: -Dconfig.file=./src/test/resources/trader2.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
