@@ -198,7 +198,7 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
       sendToListeners(ac)
 
     case AddContractTemplate(cu, dm) =>
-      // TODO issue #31, send back errors if notary not initialized or contract already exists
+      // TODO FT-26: send back errors if notary not initialized or contract already exists
       data.notary.foreach { a =>
         val c = Contract(a, cu, dm)
         val ca = ContractAdded(a.url, c)
@@ -207,7 +207,7 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
       }
 
     case RemoveContractTemplate(id) =>
-      // TODO issue #31, send back errors if notary not initialized or contract doesn't exists
+      // TODO FT-26: send back errors if notary not initialized or contract doesn't exists
       data.notary.foreach { a =>
         val ctr = ContractRemoved(a.url, id)
         persist(NotaryEventPosted(ctr.copy(posted = Some(DateTime.now))))(updateData)

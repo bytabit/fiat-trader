@@ -61,7 +61,7 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       tradefxService.receiveFiat(item.url, item.id)
     })
 
-    // TODO need to only enable buttons after timeout to deliver fiat
+    // TODO FT-98: only enable buttons after timeout to deliver fiat
     val sellerReqCertDeliveryButton = actionButton("REQ CERT", event => {
       tradefxService.sellerReqCertDelivery(item.url, item.id)
     })

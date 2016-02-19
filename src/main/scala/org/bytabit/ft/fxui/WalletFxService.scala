@@ -120,7 +120,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
       override def handle(event: MouseEvent): Unit = {
         copyAddress(a)
         if (Config.walletNet == NetworkParameters.ID_MAINNET)
-        // TODO issue #27, warn user bitcoin wallet will be launched
+        // TODO FT-22: warn user bitcoin wallet will be launched
           requestMoney(a)
       }
     })
@@ -156,10 +156,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
       override def call(bt: ButtonType): (String, Money) = {
         if (bt == okButtonType) {
           val addr = addrTextField.getText
-          // TODO validate wallet withdraw destination address format
+          // TODO FT-100: validate wallet withdraw destination address format
           val amt = BTCMoney(amtTextField.getText)
-          // TODO validate wallet withdraw amount
-          // TODO require PIN to withdraw money from wallet
+          // TODO FT-101: validate wallet withdraw amount
+          // TODO FT-102: require password or PIN to withdraw money from wallet
           (addr, amt)
         } else {
           null

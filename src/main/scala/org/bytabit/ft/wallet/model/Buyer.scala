@@ -25,7 +25,7 @@ object Buyer extends WalletTools {
 
     val allUnspent = unspent
 
-    // TODO issue #32, need to make sure deposits are broken into multiple outputs for each tx
+    // TODO FT-27: need to make sure deposits are broken into multiple outputs for each tx
     val openTxUtxo = selected(coinToOpenEscrow, allUnspent)
     val fundTxUtxo = selected(coinToFundEscrow, unselected(allUnspent, openTxUtxo))
 
