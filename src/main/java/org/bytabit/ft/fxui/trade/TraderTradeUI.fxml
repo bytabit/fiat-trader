@@ -16,20 +16,23 @@
   ~ limitations under the License.
   -->
 
+<?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.trade.TraderTradeUI">
     <children>
         <TableView fx:id="tradeTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action" />
+            <TableColumn fx:id="roleColumn" maxWidth="100.0" prefWidth="100.0" text="Role" />
                 <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status" />
                 <TableColumn fx:id="fiatCurrencyColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Currency" />
                 <TableColumn fx:id="fiatAmountColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Amount" />
                 <TableColumn fx:id="exchRateColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat / XBT" />
                 <TableColumn fx:id="btcAmountColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Amount" />
-                <TableColumn fx:id="deliveryMethodColumn" maxWidth="300.0" prefWidth="300.0" text="Fiat Delivery Method" />
+                <TableColumn fx:id="deliveryMethodColumn" maxWidth="200.0" prefWidth="200.0" text="Fiat Delivery Method" />
                 <TableColumn fx:id="bondPercentColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Bond %" />
                 <TableColumn fx:id="notaryFeeColumn" maxWidth="100.0" prefWidth="100.0" text="Notary Fee" />
             </columns>
@@ -43,12 +46,12 @@
         <GridPane fx:id="sellGrid">
             <columnConstraints>
                 <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="200.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints hgrow="ALWAYS" maxWidth="300.0" minWidth="10.0" prefWidth="300.0" />
+                <ColumnConstraints hgrow="ALWAYS" maxWidth="200.0" minWidth="10.0" prefWidth="200.0" />
                 <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
             </columnConstraints>

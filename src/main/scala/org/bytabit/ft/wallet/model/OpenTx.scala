@@ -63,9 +63,9 @@ case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
     tx.addOutput(coinBuyerChg, buyerChangeAddr)
   }
 
-  // TODO issue #33, add hash of contract details in op return?
+  // TODO FT-28: add hash of contract details in op return?
 
-  // TODO issue #34, add fee or tip to notary for publishing offer?
+  // TODO FT-29: add fee or tip to notary for publishing offer?
 
   assert(verified)
 

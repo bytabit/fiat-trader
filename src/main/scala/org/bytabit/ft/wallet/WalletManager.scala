@@ -21,21 +21,23 @@ import java.net.URL
 import java.util
 import java.util.Date
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.event.Logging
-import org.bitcoinj.core._
+import org.bitcoinj.core.Wallet.SendRequest
+import org.bitcoinj.core.{Address, _}
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.{Config, ListenerUpdater}
+import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater, Monies}
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
 import org.joda.time.LocalDateTime
 
 import scala.collection.JavaConversions._
+import scala.util.Try
 
 object WalletManager {
 
@@ -73,6 +75,8 @@ object WalletManager {
   case class RemoveWatchEscrowAddress(escrowAddress: Address) extends Command
 
   case class BroadcastTx(tx: Tx, escrowPubKey: Option[PubECKey] = None) extends Command
+
+  case class WithdrawXBT(toAddress: String, amount: Money) extends Command
 
   // wallet events
 
@@ -112,6 +116,8 @@ class WalletManager extends Actor with ListenerUpdater {
 
   val dispatcher = context.system.dispatcher
 
+  var addressListeners = Map[Address, ActorRef]()
+
   override def receive: Receive = {
 
     // handlers for listener registration
@@ -122,7 +128,7 @@ class WalletManager extends Actor with ListenerUpdater {
 
     case Start =>
       self ! FindTransactions
-      startWallet(downloadProgressTracker, walletEventListener)
+      startWallet(downloadProgressTracker, walletEventListener, escrowWalletEventListener)
 
     case FindBalance =>
       val c = wallet.getBalance
@@ -157,13 +163,17 @@ class WalletManager extends Actor with ListenerUpdater {
 
     case AddWatchEscrowAddress(escrowAddress: Address) =>
       assert(escrowAddress.isP2SHAddress)
+      addressListeners = addressListeners + (escrowAddress -> context.sender())
       escrowWallet.addWatchedAddress(escrowAddress)
-      escrowWallet.addEventListener(escrowAddressWalletEventListener(context.sender()))
+    //log.info(s"ADDED event listener for address: $escrowAddress listener: ${context.sender()}")
 
     case RemoveWatchEscrowAddress(escrowAddress: Address) =>
       assert(escrowAddress.isP2SHAddress)
-      escrowWallet.removeWatchedAddress(escrowAddress)
-      escrowWallet.removeEventListener(escrowAddressWalletEventListener(context.sender()))
+      addressListeners.get(escrowAddress).foreach { ar =>
+        escrowWallet.removeWatchedAddress(escrowAddress)
+        addressListeners = addressListeners - escrowAddress
+        //log.info(s"REMOVED event listener for address: $escrowAddress listener: $ar")
+      }
 
     case BroadcastTx(ot: OpenTx, None) =>
       val signed = ot.sign
@@ -171,6 +181,8 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"OpenTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(ft: FundTx, None) =>
       val signed = ft.sign
@@ -178,6 +190,8 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"FundTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)) =>
       val signed = pt.sign(pk)
@@ -185,6 +199,19 @@ class WalletManager extends Actor with ListenerUpdater {
       wallet.commitTx(signed.tx)
       kit.peerGroup.broadcastTransaction(signed.tx)
       escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+      log.info(s"PayoutTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
+        s"size ${signed.tx.getMessageSize} bytes")
+
+    case WithdrawXBT(withdrawAddress, withdrawAmount) =>
+      assert(Monies.isBTC(withdrawAmount))
+      val coinAmt = BTCMoney.toCoin(withdrawAmount)
+      val btcAddr: Option[Address] = Try(new Address(netParams, withdrawAddress)).toOption
+      if (btcAddr.isEmpty) log.error(s"Can't withdraw XBT, invalid address: $withdrawAddress")
+      btcAddr.map { a =>
+        val sr = SendRequest.to(a, coinAmt)
+        sr.memo = s"Withdraw to $a"
+        sr
+      }.foreach(wallet.sendCoins)
 
     // handlers for wallet generated events
 
@@ -202,13 +229,29 @@ class WalletManager extends Actor with ListenerUpdater {
     case _ => Unit
   }
 
-  def escrowAddressWalletEventListener(listenerRef: ActorRef) = new WalletEventListener {
+  val escrowWalletEventListener = new WalletEventListener {
 
     override def onCoinsReceived(wallet: Wallet, tx: Transaction, prevBalance: Coin, newBalance: Coin): Unit = {}
 
     override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
-      listenerRef ! EscrowTransactionUpdated(tx: Transaction)
+
+      // find P2SH addresses in inputs and outputs
+      val foundAddrs: List[Address] = (tx.getInputs.toList.map(i => p2shAddress(i.getConnectedOutput))
+        ++ tx.getOutputs.toList.map(o => p2shAddress(o))).flatten
+
+      // send TX to actor ref listening for that P2SH address
+      foundAddrs.foreach { a =>
+        addressListeners.get(a) match {
+          case Some(ar) =>
+            ar ! EscrowTransactionUpdated(tx: Transaction)
+          //log.info(s"EscrowTransactionUpdated for $a sent to $ar")
+          case _ =>
+          // do nothing
+        }
+      }
     }
+
+    def p2shAddress(output: TransactionOutput): Option[Address] = Try(output.getAddressFromP2SH(netParams)).toOption
 
     override def onWalletChanged(wallet: Wallet): Unit = {}
 
@@ -284,20 +327,20 @@ class WalletManager extends Actor with ListenerUpdater {
   private val escrowKit = new WalletAppKit(netParams, new File(Config.walletDir), s"${Config.config}-escrow")
   protected[this] lazy val escrowWallet = escrowKit.wallet()
 
-  def startWallet(downloadProgressTracker: DownloadProgressTracker, walletEventListener: WalletEventListener) = {
+  def startWallet(dpt: DownloadProgressTracker, wel: WalletEventListener, ewel: WalletEventListener) = {
 
     // setup wallet app kit
     kit.setAutoSave(true)
     kit.setBlockingStartup(false)
     kit.setUserAgent(Config.config, Config.version)
-    kit.setDownloadListener(downloadProgressTracker)
+    kit.setDownloadListener(dpt)
     if (netParams == RegTestParams.get) kit.connectToLocalHost()
 
     // start wallet app kit
 
     kit.startAsync()
     kit.awaitRunning()
-    kit.wallet().addEventListener(walletEventListener)
+    kit.wallet().addEventListener(wel)
 
     // setup escrow wallet app kit
 
@@ -310,6 +353,7 @@ class WalletManager extends Actor with ListenerUpdater {
 
     escrowKit.startAsync()
     escrowKit.awaitRunning()
+    escrowKit.wallet().addEventListener(ewel)
   }
 
   def stopWallet(): Unit = {

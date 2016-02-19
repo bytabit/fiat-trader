@@ -214,6 +214,26 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
         case cfd: CertifiedFiatDelivery =>
           context.parent ! fnsc
       }
+
+    case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
+      if (outputsEqual(cfe.unsignedFiatSentPayoutTx, etu.tx) &&
+        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        goto(SELLER_FUNDED) andThen {
+          case cfd: CertifiedFiatDelivery =>
+            context.parent ! SellerFunded(cfd.id)
+            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        }
+      }
+      else if (outputsEqual(cfe.unsignedFiatNotSentPayoutTx, etu.tx) &&
+        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        goto(BUYER_REFUNDED) andThen {
+          case cfd: CertifiedFiatDelivery =>
+            context.parent ! BuyerRefunded(cfd.id)
+            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        }
+      }
+      else
+        stay()
   }
 
   when(TRADED) {

@@ -49,7 +49,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
   lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  // TODO if trade uncommitted buy buttons should also be disabled
+  // TODO FT-99: disable buy buttons if current trade is uncommitted
   val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
 
   // Private Data
@@ -161,7 +161,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def setSelectedContract(dm: String) = {
-    // TODO issue #26, allow user to rank notaries in notary client screen so UI can auto pick top ranked one
+    // TODO FT-21: allow user to rank notaries in notary client screen so UI can auto pick top ranked one
     // for now pick lowest fee contract template that matches currency and delivery method
     sellContractSelected = for {
       fcu <- sellCurrencyUnitSelected
@@ -245,7 +245,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def takeSellOffer(url: URL, tradeId: UUID): Unit = {
-    // TODO issue #15, get delivery details from delivery details preferences
+    // TODO FT-10: get delivery details from delivery details preferences
     sendCmd(TakeSellOffer(url, tradeId, "Test Delivery Details"))
   }
 
@@ -253,12 +253,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     sendCmd(ReceiveFiat(url, tradeId))
   }
 
-  // TODO collect evidence
+  // TODO FT-91: collect evidence
   def sellerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
     sendCmd(SellProcess.RequestCertifyDelivery(url,tradeId))
   }
 
-  // TODO collect evidence
+  // TODO FT-91: collect evidence
   def buyerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
     sendCmd(BuyProcess.RequestCertifyDelivery(url,tradeId))
   }

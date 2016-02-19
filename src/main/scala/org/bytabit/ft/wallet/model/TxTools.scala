@@ -24,10 +24,10 @@ import scala.collection.JavaConversions._
 
 object TxTools {
 
-  // TODO issue #35, currently fixed at 0.0001, should be calculated
+  // TODO FT-30: user should be able to configure default transaction fee
   val COIN_MINER_FEE = Coin.COIN.divide(10000)
 
-  val COIN_OP_RETURN_FEE = Transaction.MIN_NONDUST_OUTPUT
+  val COIN_OP_RETURN_FEE = Coin.ZERO //Transaction.MIN_NONDUST_OUTPUT
 
   val BTC_MINER_FEE = BTCMoney(COIN_MINER_FEE)
 

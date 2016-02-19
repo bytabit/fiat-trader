@@ -258,7 +258,7 @@ class NotaryClient(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       context.parent ! NotaryCreated(n.url, n)
       context.parent ! NotaryOffline(n.url)
 
-      // TODO issue #28, disable trade negotation buttons in trade UI when notary is offline
+      // TODO FT-23: disable trade negotation buttons in trade UI when notary is offline
       // start active trade FSMs and notify parent
       at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
       at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
