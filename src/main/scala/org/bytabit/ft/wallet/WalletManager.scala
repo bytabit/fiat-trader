@@ -21,15 +21,16 @@ import java.net.URL
 import java.util
 import java.util.Date
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.event.Logging
-import org.bitcoinj.core._
+import org.bitcoinj.core.Wallet.SendRequest
+import org.bitcoinj.core.{Address, _}
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.{Config, ListenerUpdater}
+import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater, Monies}
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
@@ -74,6 +75,8 @@ object WalletManager {
   case class RemoveWatchEscrowAddress(escrowAddress: Address) extends Command
 
   case class BroadcastTx(tx: Tx, escrowPubKey: Option[PubECKey] = None) extends Command
+
+  case class WithdrawXBT(toAddress: String, amount: Money) extends Command
 
   // wallet events
 
@@ -162,7 +165,7 @@ class WalletManager extends Actor with ListenerUpdater {
       assert(escrowAddress.isP2SHAddress)
       addressListeners = addressListeners + (escrowAddress -> context.sender())
       escrowWallet.addWatchedAddress(escrowAddress)
-      //log.info(s"ADDED event listener for address: $escrowAddress listener: ${context.sender()}")
+    //log.info(s"ADDED event listener for address: $escrowAddress listener: ${context.sender()}")
 
     case RemoveWatchEscrowAddress(escrowAddress: Address) =>
       assert(escrowAddress.isP2SHAddress)
@@ -199,6 +202,17 @@ class WalletManager extends Actor with ListenerUpdater {
       log.info(s"PayoutTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
         s"size ${signed.tx.getMessageSize} bytes")
 
+    case WithdrawXBT(withdrawAddress, withdrawAmount) =>
+      assert(Monies.isBTC(withdrawAmount))
+      val coinAmt = BTCMoney.toCoin(withdrawAmount)
+      val btcAddr: Option[Address] = Try(new Address(netParams, withdrawAddress)).toOption
+      if (btcAddr.isEmpty) log.error(s"Can't withdraw XBT, invalid address: $withdrawAddress")
+      btcAddr.map { a =>
+        val sr = SendRequest.to(a, coinAmt)
+        sr.memo = s"Withdraw to $a"
+        sr
+      }.foreach(wallet.sendCoins)
+
     // handlers for wallet generated events
 
     case e: DownloadProgress =>
@@ -230,7 +244,7 @@ class WalletManager extends Actor with ListenerUpdater {
         addressListeners.get(a) match {
           case Some(ar) =>
             ar ! EscrowTransactionUpdated(tx: Transaction)
-            //log.info(s"EscrowTransactionUpdated for $a sent to $ar")
+          //log.info(s"EscrowTransactionUpdated for $a sent to $ar")
           case _ =>
           // do nothing
         }

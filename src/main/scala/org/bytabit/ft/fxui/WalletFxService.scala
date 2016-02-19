@@ -22,10 +22,13 @@ import java.net.URI
 import javafx.beans.property.{SimpleDoubleProperty, SimpleStringProperty}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.event.EventHandler
-import javafx.scene.control.Alert
 import javafx.scene.control.Alert.AlertType
+import javafx.scene.control.ButtonBar.ButtonData
+import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.{Clipboard, ClipboardContent, MouseEvent}
+import javafx.scene.layout.GridPane
+import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import net.glxn.qrgen.QRCode
@@ -39,6 +42,7 @@ import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater}
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager._
+import org.joda.money.Money
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
@@ -105,6 +109,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
   }
 
   def alertInfoNewReceiveAddress(a: Address): Unit = {
+
     // popup info
     val alert = new Alert(AlertType.INFORMATION)
     alert.setTitle(null)
@@ -121,6 +126,52 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     })
 
     alert.showAndWait
+  }
+
+  def dialogWithdrawBtc(): Unit = {
+
+    val dialog = new Dialog[(String, Money)]()
+    dialog.setTitle("Withdraw")
+    dialog.setHeaderText("Enter destination bitcoin address and amount to withdraw.")
+
+    val addrLabel = new Label("Address: ")
+    val addrTextField = new TextField()
+
+    val amtLabel = new Label("Amount (XBT): ")
+    val amtTextField = new TextField()
+
+    val grid = new GridPane()
+    grid.add(addrLabel, 1, 1)
+    grid.add(addrTextField, 2, 1)
+    grid.add(amtLabel, 1, 2)
+    grid.add(amtTextField, 2, 2)
+    dialog.getDialogPane.setContent(grid)
+
+    val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
+    val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+
+    dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+
+    dialog.setResultConverter(new Callback[ButtonType, (String, Money)]() {
+      override def call(bt: ButtonType): (String, Money) = {
+        if (bt == okButtonType) {
+          val addr = addrTextField.getText
+          // TODO validate wallet withdraw destination address format
+          val amt = BTCMoney(amtTextField.getText)
+          // TODO validate wallet withdraw amount
+          // TODO require PIN to withdraw money from wallet
+          (addr, amt)
+        } else {
+          null
+        }
+      }
+    })
+
+    val result = dialog.showAndWait()
+    if (result.isPresent) {
+      log.info(s"Requested withdraw info: ${result.get}")
+      sendCmd(WithdrawXBT(result.get._1, result.get._2))
+    }
   }
 
   def depositAddressUri(a: Address): String = BitcoinURI.convertToBitcoinURI(a, null, Config.config, "Deposit")

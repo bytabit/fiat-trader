@@ -104,4 +104,9 @@ public class WalletUI extends ActorController {
     private void handleRequestFunds() {
         walletFxService.findNewReceiveAddress();
     }
+
+    @FXML
+    private void handleWithdrawFunds() {
+        walletFxService.dialogWithdrawBtc();
+    }
 }
