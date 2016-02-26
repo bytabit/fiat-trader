@@ -58,8 +58,8 @@ case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
   }
 
   def certifyFiatNotSent(implicit notaryWallet: Wallet): CertifiedFiatDelivery = {
-    val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(notary.escrowPubKey)
+    val notarizedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(notary.escrowPubKey)
 
-    CertifiedFiatDelivery(this, notarizedFiatSentPayoutTx.inputSigs)
+    CertifiedFiatDelivery(this, notarizedFiatNotSentPayoutTx.inputSigs)
   }
 }
