@@ -108,7 +108,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
   when(TAKEN) {
     case Event(Start, to: TakenOffer) =>
       context.parent ! LocalSellerCreatedOffer(to.id, to.sellOffer)
-      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq())
+      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq(), Array())
       stay()
 
     case Event(WalletManager.TakenOfferSigned(sto), to: TakenOffer) =>
@@ -152,11 +152,11 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
 
-      if (outputsEqual(sto.unsignedFundTx, etu.tx) &&
+      if (outputsEqual(sto.unsignedFundTx, etu.tx, 0, etu.tx.getOutputs.size()-1) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-
-        goto(FUNDED) andThen { usto =>
-          context.parent ! BuyerFundedEscrow(usto.id)
+        goto(FUNDED) applying BuyerSetFiatDeliveryDetailsKey(sto.id, fiatDeliveryDetailsKey(etu.tx)) andThen {
+          case usto: SignedTakenOffer =>
+            context.parent ! BuyerFundedEscrow(usto.id, usto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
         }
       }
       else
@@ -167,7 +167,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id)
+      context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 

@@ -54,7 +54,7 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     case SellerCreatedOffer(id, offer, p) =>
       addOrUpdateTradeUIModel(NOTARY, CREATED, offer, p)
 
-    case BuyerTookOffer(id, _, _, _, _) =>
+    case BuyerTookOffer(id, _, _, _, _, _) =>
       updateStateTradeUIModel(TAKEN, id)
 
     case SellerSignedOffer(id, _, _, _, _) =>
@@ -63,7 +63,7 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     case BuyerOpenedEscrow(id, _) =>
       updateStateTradeUIModel(OPENED, id)
 
-    case BuyerFundedEscrow(id) =>
+    case BuyerFundedEscrow(id, fdd) =>
       updateStateTradeUIModel(FUNDED, id)
 
     case CertifyDeliveryRequested(id, _, _) =>
@@ -103,12 +103,12 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  def certifyFiatSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatSent(url,tradeId))
+  def certifyFiatSent(url: URL, tradeId: UUID): Unit = {
+    sendCmd(NotarizeProcess.CertifyFiatSent(url, tradeId))
   }
 
-  def certifyFiatNotSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatNotSent(url,tradeId))
+  def certifyFiatNotSent(url: URL, tradeId: UUID): Unit = {
+    sendCmd(NotarizeProcess.CertifyFiatNotSent(url, tradeId))
   }
 
   def sendCmd(cmd: NotarizeProcess.Command) = sendMsg(notaryMgrRef, cmd)

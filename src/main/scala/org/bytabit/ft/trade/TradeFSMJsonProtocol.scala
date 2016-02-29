@@ -30,7 +30,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def sellOfferJsonFormat = jsonFormat(SellOffer.apply, "offer", "seller")
 
-  implicit def takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "sellOffer", "buyer", "buyerOpenTxSigs", "buyerFundPayoutTxo")
+  implicit def takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "sellOffer", "buyer", "buyerOpenTxSigs", "buyerFundPayoutTxo", "cipherFiatDeliveryDetails", "fiatDeliveryDetailsKey")
 
   implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "sellerOpenTxSigs", "sellerPayoutTxSigs")
 
@@ -70,13 +70,15 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def sellerCanceledOfferJsonFormat = jsonFormat2(SellerCanceledOffer)
 
-  implicit def buyerTookOfferJsonFormat = jsonFormat5(BuyerTookOffer)
+  implicit def buyerSetFiatDeliveryDetailsKeyJsonFormat = jsonFormat2(BuyerSetFiatDeliveryDetailsKey)
+
+  implicit def buyerTookOfferJsonFormat = jsonFormat6(BuyerTookOffer)
 
   implicit def sellerSignedOfferJsonFormat = jsonFormat5(SellerSignedOffer)
 
   implicit def buyerOpenedEscrowJsonFormat = jsonFormat2(BuyerOpenedEscrow)
 
-  implicit def buyerFundedEscrowJsonFormat = jsonFormat1(BuyerFundedEscrow)
+  implicit def buyerFundedEscrowJsonFormat = jsonFormat2(BuyerFundedEscrow)
 
   implicit def buyerReceivedPayoutJsonFormat = jsonFormat1(BuyerReceivedPayout)
 
@@ -85,6 +87,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[SellerCreatedOffer]) -> sellerCreatedOfferJsonFormat,
     simpleName(classOf[SellerCanceledOffer]) -> sellerCanceledOfferJsonFormat,
     simpleName(classOf[BuyerTookOffer]) -> buyerTookOfferJsonFormat,
+    simpleName(classOf[BuyerSetFiatDeliveryDetailsKey]) -> buyerSetFiatDeliveryDetailsKeyJsonFormat,
     simpleName(classOf[SellerAddedToOffer]) -> sellerAddedToOfferJsonFormat,
     simpleName(classOf[SellerSignedOffer]) -> sellerSignedOfferJsonFormat,
     simpleName(classOf[BuyerOpenedEscrow]) -> buyerOpenedEscrowJsonFormat,

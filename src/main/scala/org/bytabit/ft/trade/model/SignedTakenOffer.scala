@@ -2,7 +2,7 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bitcoinj.core.Wallet
+import org.bytabit.ft.util.AESCipher
 import org.bytabit.ft.wallet.model.{FundTx, OpenTx, PayoutTx, TxSig}
 import org.joda.money.Money
 
@@ -24,7 +24,8 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
 
-  def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer)
+  def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer,
+    takenOffer.fiatDeliveryDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
 
   def unsignedPayoutTx: PayoutTx = takenOffer.unsignedPayoutTx(fullySignedOpenTx)
 
@@ -32,4 +33,7 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def certifyFiatRequested(evidence: Option[Array[Byte]]) =
     CertifyFiatEvidence(this, evidence.toSeq)
+
+  def withFiatDeliveryDetailsKey(fiatDeliveryDetailsKey: Array[Byte]) =
+    this.copy(takenOffer = takenOffer.withFiatDeliveryDetailsKey(fiatDeliveryDetailsKey))
 }

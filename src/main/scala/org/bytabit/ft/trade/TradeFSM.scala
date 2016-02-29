@@ -41,6 +41,9 @@ import scala.util.{Failure, Success}
 
 object TradeFSM {
 
+  // TODO FT-104: replace hardcoded strings with localized values
+  val NO_DELIVERY_DETAILS = "NO DELIVERY DETAILS!"
+
   // actor setup
 
   def sellProps(offer: Offer, walletMgrRef: ActorRef) = Props(new SellProcess(offer, walletMgrRef))
@@ -70,8 +73,11 @@ object TradeFSM {
   final case class SellerCanceledOffer(id: UUID,
                                        posted: Option[DateTime] = None) extends PostedEvent
 
+  final case class BuyerSetFiatDeliveryDetailsKey(id: UUID, fiatDeliveryDetailsKey: Array[Byte]) extends Event
+
   final case class BuyerTookOffer(id: UUID, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
                                   buyerFundPayoutTxo: Seq[TransactionOutput],
+                                  cipherBuyerDeliveryDetails: Array[Byte],
                                   posted: Option[DateTime] = None) extends PostedEvent
 
   final case class SellerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
@@ -79,7 +85,7 @@ object TradeFSM {
 
   final case class BuyerOpenedEscrow(id: UUID, openSigs: Seq[TxSig]) extends Event
 
-  final case class BuyerFundedEscrow(id: UUID) extends Event
+  final case class BuyerFundedEscrow(id: UUID, fiatDeliveryDetails: String) extends Event
 
   final case class FiatReceived(id: UUID) extends Event
 
@@ -91,10 +97,10 @@ object TradeFSM {
                                             posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
-                                            posted: Option[DateTime] = None) extends PostedEvent
+                                     posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatNotSentCertified(id: UUID, payoutSigs: Seq[TxSig],
-                                               posted: Option[DateTime] = None) extends PostedEvent
+                                        posted: Option[DateTime] = None) extends PostedEvent
 
   final case class SellerFunded(id: UUID) extends Event
 
@@ -170,7 +176,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   import spray.json._
 
-  val id:UUID
+  val id: UUID
 
   // implicits
 
@@ -195,25 +201,31 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
       case (SellerCreatedOffer(_, so, Some(_)), offer: Offer) =>
         so
 
-      case (BuyerTookOffer(_, b, bots, bfpt, _), sellOffer: SellOffer) =>
-        sellOffer.withBuyer(b, bots, bfpt)
+      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), sellOffer: SellOffer) =>
+        sellOffer.withBuyer(b, bots, bfpt, cdd)
 
-      case (BuyerTookOffer(_, b, bots, bfpt, _), takenOffer: TakenOffer) =>
+      case (BuyerSetFiatDeliveryDetailsKey(_, dk), takenOffer: TakenOffer) =>
+        takenOffer.withFiatDeliveryDetailsKey(dk)
+
+      case (BuyerSetFiatDeliveryDetailsKey(_, dk), signedTakenOffer: SignedTakenOffer) =>
+        signedTakenOffer.withFiatDeliveryDetailsKey(dk)
+
+      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), takenOffer: TakenOffer) =>
         takenOffer
 
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
+      case (CertifyDeliveryRequested(_, e, Some(_)), signedTakenOffer: SignedTakenOffer) =>
         signedTakenOffer.certifyFiatRequested(e)
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
         certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
 
-      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
         certifyFiatEvidence.withNotarizedFiatSentSigs(ps)
 
-      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
         certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
 
       case _ =>
@@ -259,7 +271,18 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
     }
   }
 
+  def outputsEqual(tx1: Tx, tx2: Transaction, from:Int, until:Int): Boolean = {
+    tx1.outputs.slice(from,until).toSet == tx2.getOutputs.slice(from,until).toSet
+  }
+
   def outputsEqual(tx1: Tx, tx2: Transaction): Boolean = {
-    tx1.outputs.toSet == tx2.getOutputs.toSet
+    val until:Int = Seq(tx1.outputs.length-1, tx2.getOutputs.length-1).min
+    outputsEqual(tx1, tx2, 0, until)
+  }
+
+  def fiatDeliveryDetailsKey(tx: Transaction): Array[Byte] = {
+    val outputs = tx.getOutputs
+    val lastOutputScript = outputs.get(outputs.size - 1).getScriptPubKey
+    lastOutputScript.getChunks.get(1).data
   }
 }

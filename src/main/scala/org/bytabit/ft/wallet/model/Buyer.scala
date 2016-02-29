@@ -17,11 +17,10 @@
 package org.bytabit.ft.wallet.model
 
 import org.bitcoinj.core._
-import org.bytabit.ft.util.AESCipher
 
 object Buyer extends WalletTools {
 
-  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin, fiatDeliveryDetails: String)(implicit w: Wallet): Buyer = {
+  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin)(implicit w: Wallet): Buyer = {
 
     val allUnspent = unspent
 
@@ -29,18 +28,15 @@ object Buyer extends WalletTools {
     val openTxUtxo = selected(coinToOpenEscrow, allUnspent)
     val fundTxUtxo = selected(coinToFundEscrow, unselected(allUnspent, openTxUtxo))
 
-    apply(coinToOpenEscrow, coinToFundEscrow, fiatDeliveryDetails, openTxUtxo, fundTxUtxo)
+    apply(coinToOpenEscrow, coinToFundEscrow, openTxUtxo, fundTxUtxo)
   }
 
-  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin, fiatDeliveryDetails: String,
-            openTxUtxo: List[TransactionOutput], fundTxUtxo: List[TransactionOutput])(implicit w: Wallet): Buyer =
+  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin, openTxUtxo: List[TransactionOutput],
+            fundTxUtxo: List[TransactionOutput])(implicit w: Wallet): Buyer =
 
-    new Buyer(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo,
-      fiatDeliveryDetails, AESCipher.newAesKey)
+    new Buyer(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo)
 }
 
 case class Buyer(netParams: NetworkParameters, escrowPubKey: PubECKey,
                  changeAddr: Address, payoutAddr: Address,
-                 openTxUtxo: Seq[TransactionOutput], fundTxUtxo: Seq[TransactionOutput],
-                 fiatDeliveryDetails: String, fiatDeliveryDetailsKey: Array[Byte])
-  extends ParticipantDetails
+                 openTxUtxo: Seq[TransactionOutput], fundTxUtxo: Seq[TransactionOutput]) extends ParticipantDetails

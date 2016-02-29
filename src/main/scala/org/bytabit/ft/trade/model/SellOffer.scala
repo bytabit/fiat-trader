@@ -24,17 +24,21 @@ case class SellOffer(offer: Offer, seller: Seller) extends Template with TradeDa
 
   def unsignedOpenTx(buyer: Buyer): OpenTx = super.unsignedOpenTx(seller, buyer)
 
-  def unsignedFundTx(buyer: Buyer): FundTx = super.unsignedFundTx(seller, buyer)
+  def unsignedFundTx(buyer: Buyer, deliveryDetailsKey:Array[Byte]): FundTx = super.unsignedFundTx(seller, buyer, deliveryDetailsKey)
 
-  def withBuyer(buyer: Buyer, buyerOpenTxSigs: Seq[TxSig], buyerFundPayoutTxo: Seq[TransactionOutput]) =
-    TakenOffer(this, buyer, buyerOpenTxSigs, buyerFundPayoutTxo)
+  def withBuyer(buyer: Buyer, buyerOpenTxSigs: Seq[TxSig], buyerFundPayoutTxo: Seq[TransactionOutput],
+                cipherFiatDeliveryDetails: Array[Byte], fiatDeliveryDetailsKey: Option[Array[Byte]] = None) =
+    TakenOffer(this, buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherFiatDeliveryDetails, fiatDeliveryDetailsKey)
 
-  def take(deliveryDetails: String)(implicit buyerWallet: Wallet): TakenOffer = {
+  def take(fiatDeliveryDetails: String, fiatDeliveryDetailsKey: Array[Byte])(implicit buyerWallet: Wallet): TakenOffer = {
 
-    val buyer = Buyer(coinToOpenEscrow, coinToFundEscrow, deliveryDetails)(buyerWallet)
+    val buyer = Buyer(coinToOpenEscrow, coinToFundEscrow)(buyerWallet)
     val buyerOpenTxSigs: Seq[TxSig] = unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
-    val buyerFundPayoutTxo: Seq[TransactionOutput] = unsignedFundTx(buyer).sign(buyerWallet).outputsToEscrow
+    val buyerFundPayoutTxo: Seq[TransactionOutput] = unsignedFundTx(buyer, fiatDeliveryDetailsKey).sign(buyerWallet).outputsToEscrow
+    val cipherFiatDeliveryDetails: Array[Byte] =
+      cipher(fiatDeliveryDetailsKey, seller, buyer).encrypt(fiatDeliveryDetails.map(_.toByte).toArray)
 
-    withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo)
+    withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherFiatDeliveryDetails, Some(fiatDeliveryDetailsKey))
   }
+
 }

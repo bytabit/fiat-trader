@@ -89,7 +89,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
       updateUncommitted()
 
-    case BuyerTookOffer(id, _, _, _, _) =>
+    case BuyerTookOffer(id, _, _, _, _, _) =>
       updateStateTradeUIModel(TAKEN, id)
       updateUncommitted()
 
@@ -101,7 +101,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateStateTradeUIModel(OPENED, id)
       updateUncommitted()
 
-    case BuyerFundedEscrow(id) =>
+    // TODO FT-7: display fiat delivery details
+    case BuyerFundedEscrow(id, fdd) =>
       updateStateTradeUIModel(FUNDED, id)
       updateUncommitted()
 
@@ -254,13 +255,13 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   // TODO FT-91: collect evidence
-  def sellerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(SellProcess.RequestCertifyDelivery(url,tradeId))
+  def sellerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
+    sendCmd(SellProcess.RequestCertifyDelivery(url, tradeId))
   }
 
   // TODO FT-91: collect evidence
-  def buyerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(BuyProcess.RequestCertifyDelivery(url,tradeId))
+  def buyerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
+    sendCmd(BuyProcess.RequestCertifyDelivery(url, tradeId))
   }
 
   def updateUncommitted() = {

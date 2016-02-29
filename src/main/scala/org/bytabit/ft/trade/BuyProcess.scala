@@ -73,11 +73,12 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
       walletMgrRef ! WalletManager.TakeSellOffer(so, tso.fiatDeliveryDetails)
       stay()
 
-    case Event(WalletManager.SellOfferTaken(to), so: SellOffer) =>
+    case Event(WalletManager.SellOfferTaken(to), so: SellOffer) if to.fiatDeliveryDetailsKey.isDefined =>
 
       if (to.amountOk) {
-        val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo)
-        stay applying bto andThen {
+        val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherFiatDeliveryDetails)
+        val bsk = BuyerSetFiatDeliveryDetailsKey(to.id, to.fiatDeliveryDetailsKey.get)
+        stay applying bto applying bsk andThen {
           case to: TakenOffer =>
             postTradeEvent(to.url, bto, self)
         }
@@ -117,7 +118,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
   when(TAKEN) {
     case Event(Start, to: TakenOffer) =>
       context.parent ! SellerCreatedOffer(to.id, to.sellOffer)
-      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq())
+      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq(), Array())
       stay()
 
     // seller signed my take
@@ -172,7 +173,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(FUNDED) andThen {
           case usto: SignedTakenOffer =>
-            context.parent ! BuyerFundedEscrow(sto.id)
+            context.parent ! BuyerFundedEscrow(sto.id, usto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
         }
       }
       else
@@ -182,7 +183,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
   when(FUNDED) {
     case Event(Start, sto: SignedTakenOffer) =>
       context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id)
+      context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
