@@ -15,16 +15,13 @@ case class SellOffer(offer: Offer, seller: Seller) extends Template with TradeDa
   override val contract: Contract = offer.contract
 
   override val text: String = offer.text
-  override val keyValues = offer.keyValues ++ Map[String, Option[String]](
-    "sellerId" -> Some(seller.id.toString),
-    "sellerPayoutAddress" -> Some(seller.payoutAddr.toString)
-  )
+  override val keyValues = offer.keyValues ++ sellerKeyValues(seller)
 
   val amountOK = Tx.coinTotalOutputValue(seller.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
 
   def unsignedOpenTx(buyer: Buyer): OpenTx = super.unsignedOpenTx(seller, buyer)
 
-  def unsignedFundTx(buyer: Buyer, deliveryDetailsKey:Array[Byte]): FundTx = super.unsignedFundTx(seller, buyer, deliveryDetailsKey)
+  def unsignedFundTx(buyer: Buyer, deliveryDetailsKey: Array[Byte]): FundTx = super.unsignedFundTx(seller, buyer, deliveryDetailsKey)
 
   def withBuyer(buyer: Buyer, buyerOpenTxSigs: Seq[TxSig], buyerFundPayoutTxo: Seq[TransactionOutput],
                 cipherFiatDeliveryDetails: Array[Byte], fiatDeliveryDetailsKey: Option[Array[Byte]] = None) =

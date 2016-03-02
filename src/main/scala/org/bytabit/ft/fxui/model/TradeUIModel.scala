@@ -19,12 +19,11 @@ package org.bytabit.ft.fxui.model
 import javafx.beans.property._
 
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.TradeFSM._
-import org.bytabit.ft.trade.model.SellOffer
+import org.bytabit.ft.trade.model.TradeData
 import org.bytabit.ft.util.Monies
-import org.joda.time.DateTime
 
 object TradeUIModel {
 
@@ -38,20 +37,18 @@ object TradeUIModel {
 
 }
 
-case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
-                        posted: Option[DateTime] = None) {
+case class TradeUIModel(role: Role, state: TradeFSM.State, trade: TradeData) {
 
-  val url = offer.contract.notary.url
-  val id = offer.id
-  val contract = offer
-  val template = contract.contract
-  val fiatCurrencyUnit = template.fiatCurrencyUnit
-  val deliveryMethod = template.fiatDeliveryMethod
-  val fiatAmount = contract.fiatAmount
-  val btcAmount = contract.btcAmount
+  val url = trade.contract.notary.url
+  val id = trade.id
+  val contract = trade.contract
+  val fiatCurrencyUnit = contract.fiatCurrencyUnit
+  val deliveryMethod = contract.fiatDeliveryMethod
+  val fiatAmount = trade.fiatAmount
+  val btcAmount = trade.btcAmount
   val exchangeRate = fiatAmount.dividedBy(btcAmount.getAmount, Monies.roundingMode)
-  val bondPercent = template.notary.bondPercent
-  val notaryFee = template.notary.btcNotaryFee
+  val bondPercent = contract.notary.bondPercent
+  val notaryFee = contract.notary.btcNotaryFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
   val roleProperty = new SimpleStringProperty(role.toString)
@@ -66,8 +63,8 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
   val uncommitted = (role, state) match {
-    case (SELLER, s) if Seq(CREATED,TAKEN,SIGNED,OPENED).contains(s) => true
-    case (BUYER, s) if Seq(TAKEN,SIGNED,OPENED).contains(s) => true
+    case (SELLER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BUYER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
 
     case _ => false
   }

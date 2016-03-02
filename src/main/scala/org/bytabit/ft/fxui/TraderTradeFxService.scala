@@ -67,6 +67,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   @Override
   def handler = {
 
+    // Handle Notary Events
+
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
       updateCurrencyUnits(contracts, sellCurrencyUnits)
@@ -81,61 +83,63 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     case e: NotaryFSM.Event =>
       log.debug(s"Unhandled NotaryFSM event: $e")
 
-    case LocalSellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
+    // Handle Trade Events
+
+    case LocalSellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(SELLER, sellOffer)
       updateUncommitted()
 
-    case SellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
+    case SellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(BUYER, sellOffer)
       updateUncommitted()
 
-    case BuyerTookOffer(id, _, _, _, _, _) =>
-      updateStateTradeUIModel(TAKEN, id)
+    case bto:BuyerTookOffer =>
+      takeOffer(bto)
       updateUncommitted()
 
     case SellerSignedOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(SIGNED, id)
+      updateTradeState(SIGNED, id)
       updateUncommitted()
 
-    case BuyerOpenedEscrow(id, _) =>
-      updateStateTradeUIModel(OPENED, id)
+    case BuyerOpenedEscrow(id) =>
+      updateTradeState(OPENED, id)
       updateUncommitted()
 
     // TODO FT-7: display fiat delivery details
     case BuyerFundedEscrow(id, fdd) =>
-      updateStateTradeUIModel(FUNDED, id)
+      updateTradeState(FUNDED, id)
       updateUncommitted()
 
     case CertifyDeliveryRequested(id, _, _) =>
-      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+      updateTradeState(CERT_DELIVERY_REQD, id)
       updateUncommitted()
 
     case FiatSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+      updateTradeState(FIAT_SENT_CERTD, id)
       updateUncommitted()
 
     case FiatNotSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
+      updateTradeState(FIAT_NOT_SENT_CERTD, id)
       updateUncommitted()
 
     case FiatReceived(id) =>
-      updateStateTradeUIModel(FIAT_RCVD, id)
+      updateTradeState(FIAT_RCVD, id)
       updateUncommitted()
 
     case BuyerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+      updateTradeState(TRADED, id)
       updateUncommitted()
 
     case SellerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+      updateTradeState(TRADED, id)
       updateUncommitted()
 
     case SellerFunded(id) =>
-      updateStateTradeUIModel(SELLER_FUNDED, id)
+      updateTradeState(SELLER_FUNDED, id)
       updateUncommitted()
 
     case BuyerRefunded(id) =>
-      updateStateTradeUIModel(BUYER_REFUNDED, id)
+      updateTradeState(BUYER_REFUNDED, id)
       updateUncommitted()
 
     case SellerCanceledOffer(id, p) =>

@@ -82,10 +82,14 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       }
   }
 
+  override def startCreate(so: SellOffer) = {
+    context.parent ! LocalSellerCreatedOffer(so.id, so)
+  }
+
   when(CREATED) {
 
     case Event(Start, so: SellOffer) =>
-      context.parent ! LocalSellerCreatedOffer(so.id, so)
+      startCreate(so)
       stay()
 
     case Event(cso: CancelSellOffer, so: SellOffer) =>
@@ -107,8 +111,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(TAKEN) {
     case Event(Start, to: TakenOffer) =>
-      context.parent ! LocalSellerCreatedOffer(to.id, to.sellOffer)
-      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq(), Array())
+      startTaken(to)
       stay()
 
     case Event(WalletManager.TakenOfferSigned(sto), to: TakenOffer) =>
@@ -125,8 +128,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
+      startSigned(sto)
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -136,7 +138,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
 
         goto(OPENED) andThen { usto =>
-          context.parent ! BuyerOpenedEscrow(usto.id, Seq())
+          context.parent ! BuyerOpenedEscrow(usto.id)
         }
       }
       else
@@ -145,14 +147,13 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(OPENED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerOpenedEscrow(sto.id, Seq())
+      startOpened(sto)
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
 
-      if (outputsEqual(sto.unsignedFundTx, etu.tx, 0, etu.tx.getOutputs.size()-1) &&
+      if (outputsEqual(sto.unsignedFundTx, etu.tx, 0, etu.tx.getOutputs.size() - 1) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(FUNDED) applying BuyerSetFiatDeliveryDetailsKey(sto.id, fiatDeliveryDetailsKey(etu.tx)) andThen {
           case usto: SignedTakenOffer =>
@@ -166,8 +167,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
   when(FUNDED) {
 
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+      startFunded(sto)
       walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -196,10 +196,9 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(CERT_DELIVERY_REQD) {
 
-    case Event(Start, sto: CertifyFiatEvidence) =>
-      context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! CertifyDeliveryRequested(sto.id)
-      walletMgrRef ! AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+    case Event(Start, cfe: CertifyFiatEvidence) =>
+      startCertDeliveryReqd(cfe)
+      walletMgrRef ! AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
       stay()
 
     case Event(fsc: FiatSentCertified, cfe: CertifyFiatEvidence) if fsc.posted.isDefined =>
@@ -238,8 +237,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(TRADED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! LocalSellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerReceivedPayout(sto.id)
+      startTraded(sto)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, sto: SignedTakenOffer) =>
@@ -258,8 +256,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(FIAT_SENT_CERTD) {
     case Event(Start, cfs: CertifiedFiatDelivery) =>
-      context.parent ! LocalSellerCreatedOffer(cfs.id, cfs.sellOffer)
-      context.parent ! FiatSentCertified(cfs.id, Seq())
+      startFiatSentCertd(cfs)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
@@ -281,8 +278,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(FIAT_NOT_SENT_CERTD) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! FiatNotSentCertified(cfd.id, Seq())
+      startFiatNotSentCertd(cfd)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
@@ -300,8 +296,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(SELLER_FUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! SellerFunded(cfd.id)
+      startSellerFunded(cfd)
       stay()
 
     case e =>
@@ -311,8 +306,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
   when(BUYER_REFUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! LocalSellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! BuyerRefunded(cfd.id)
+      startBuyerRefunded(cfd)
       stay()
 
     case e =>

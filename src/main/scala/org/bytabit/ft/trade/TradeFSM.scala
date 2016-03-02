@@ -83,7 +83,7 @@ object TradeFSM {
   final case class SellerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
                                      posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BuyerOpenedEscrow(id: UUID, openSigs: Seq[TxSig]) extends Event
+  final case class BuyerOpenedEscrow(id: UUID) extends Event
 
   final case class BuyerFundedEscrow(id: UUID, fiatDeliveryDetails: String) extends Event
 
@@ -233,6 +233,62 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
         tradeData
     }
 
+  // send start events for each state
+
+  def startCreate(so: SellOffer): Unit = {
+    context.parent ! SellerCreatedOffer(so.id, so)
+  }
+
+  def startTaken(to: TakenOffer): Unit = {
+    startCreate(to.sellOffer)
+    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyer.fundTxUtxo, to.cipherFiatDeliveryDetails)
+  }
+
+  def startSigned(sto: SignedTakenOffer): Unit = {
+    startTaken(sto.takenOffer)
+    context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, sto.sellerOpenTxSigs, sto.sellerPayoutTxSigs)
+  }
+
+  def startOpened(sto: SignedTakenOffer): Unit = {
+    startSigned(sto)
+    context.parent ! BuyerOpenedEscrow(sto.id)
+  }
+
+  def startFunded(sto: SignedTakenOffer): Unit = {
+    startOpened(sto)
+    context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+  }
+
+  def startCertDeliveryReqd(cfe: CertifyFiatEvidence): Unit = {
+    startFunded(cfe.signedTakenOffer)
+    context.parent ! CertifyDeliveryRequested(cfe.id)
+  }
+
+  def startTraded(sto: SignedTakenOffer): Unit = {
+    startFunded(sto)
+    context.parent ! SellerReceivedPayout(sto.id)
+  }
+
+  def startFiatSentCertd(cfd: CertifiedFiatDelivery): Unit = {
+    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+    context.parent ! FiatSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+  }
+
+  def startFiatNotSentCertd(cfd: CertifiedFiatDelivery): Unit = {
+    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+    context.parent ! FiatNotSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+  }
+
+  def startSellerFunded(cfd: CertifiedFiatDelivery): Unit = {
+    startFiatSentCertd(cfd)
+    context.parent ! SellerFunded(cfd.id)
+  }
+
+  def startBuyerRefunded(cfd: CertifiedFiatDelivery): Unit = {
+    startFiatNotSentCertd(cfd)
+    context.parent ! BuyerRefunded(cfd.id)
+  }
+
   // http flow
 
   def connectionFlow(url: URL) = Http().outgoingConnection(host = url.getHost, port = url.getPort)
@@ -271,12 +327,12 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
     }
   }
 
-  def outputsEqual(tx1: Tx, tx2: Transaction, from:Int, until:Int): Boolean = {
-    tx1.outputs.slice(from,until).toSet == tx2.getOutputs.slice(from,until).toSet
+  def outputsEqual(tx1: Tx, tx2: Transaction, from: Int, until: Int): Boolean = {
+    tx1.outputs.slice(from, until).toSet == tx2.getOutputs.slice(from, until).toSet
   }
 
   def outputsEqual(tx1: Tx, tx2: Transaction): Boolean = {
-    val until:Int = Seq(tx1.outputs.length-1, tx2.getOutputs.length-1).min
+    val until: Int = Seq(tx1.outputs.length - 1, tx2.getOutputs.length - 1).min
     outputsEqual(tx1, tx2, 0, until)
   }
 

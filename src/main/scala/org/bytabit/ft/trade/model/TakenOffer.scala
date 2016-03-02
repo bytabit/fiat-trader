@@ -22,11 +22,7 @@ case class TakenOffer(sellOffer: SellOffer, buyer: Buyer, buyerOpenTxSigs: Seq[T
   }
 
   override val text: String = sellOffer.text
-  override val keyValues = sellOffer.keyValues ++ Map[String, Option[String]](
-    "buyerId" -> Some(buyer.id.toString),
-    "buyerPayoutAddress" -> Some(buyer.payoutAddr.toString),
-    "buyerFiatDeliveryDetails" -> fiatDeliveryDetails
-  )
+  override val keyValues = sellOffer.keyValues ++ buyerKeyValues(buyer) ++ fiatDeliveryDetailsKeyValues(fiatDeliveryDetails)
 
   val seller = sellOffer.seller
 

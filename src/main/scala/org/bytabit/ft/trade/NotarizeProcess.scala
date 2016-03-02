@@ -57,7 +57,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   when(CREATED) {
 
     case Event(Start, so: SellOffer) =>
-      context.parent ! SellerCreatedOffer(so.id, so)
+      startCreate(so)
       stay()
 
     case Event(sco: SellerCreatedOffer, so: SellOffer) if sco.posted.isDefined =>
@@ -76,8 +76,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(TAKEN) {
     case Event(Start, to: TakenOffer) =>
-      context.parent ! SellerCreatedOffer(to.id, to.sellOffer)
-      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq(), Array())
+      startTaken(to)
       stay()
 
     // seller signed
@@ -91,8 +90,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
+      startSigned(sto)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -101,7 +99,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
         goto(OPENED) andThen {
           case usto: SignedTakenOffer =>
-            context.parent ! BuyerOpenedEscrow(sto.id, Seq())
+            context.parent ! BuyerOpenedEscrow(sto.id)
         }
       }
       else
@@ -110,8 +108,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(OPENED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerOpenedEscrow(sto.id, Seq())
+      startOpened(sto)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -129,8 +126,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(FUNDED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+      startFunded(sto)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -155,8 +151,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(CERT_DELIVERY_REQD) {
     case Event(Start, cfe: CertifyFiatEvidence) =>
-      context.parent ! SellerCreatedOffer(cfe.id, cfe.takenOffer.sellOffer)
-      context.parent ! CertifyDeliveryRequested(cfe.id)
+      startCertDeliveryReqd(cfe)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
       stay()
 
@@ -191,8 +186,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(TRADED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerReceivedPayout(sto.id)
+      startTraded(sto)
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
@@ -211,8 +205,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(FIAT_SENT_CERTD) {
     case Event(Start, cfs: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
-      context.parent ! FiatSentCertified(cfs.id, Seq())
+      startFiatSentCertd(cfs)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
@@ -234,8 +227,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(FIAT_NOT_SENT_CERTD) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! FiatNotSentCertified(cfd.id, Seq())
+      startFiatNotSentCertd(cfd)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
@@ -253,8 +245,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(SELLER_FUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! SellerFunded(cfd.id)
+      startSellerFunded(cfd)
       stay()
 
     case e =>
@@ -264,8 +255,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(BUYER_REFUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! BuyerRefunded(cfd.id)
+      startBuyerRefunded(cfd)
       stay()
 
     case e =>

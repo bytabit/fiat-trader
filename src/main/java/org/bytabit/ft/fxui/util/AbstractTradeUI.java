@@ -18,7 +18,9 @@ package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
@@ -73,6 +75,22 @@ public abstract class AbstractTradeUI extends ActorController {
     protected void initialize() {
 
         // setup trade table
+
+        tradeTable.setRowFactory(tv -> {
+            TableRow row = new TableRow<TradeUIModel>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2) {
+                    TradeUIModel rowData = (TradeUIModel)row.getItem();
+                    // TODO show dialog with all trade data
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setHeaderText("Trade ID: "+rowData.getId());
+                    alert.setContentText(rowData.toString());
+
+                    alert.showAndWait();
+                }
+            });
+            return row;
+        });
 
         statusColumn.setCellValueFactory(t -> t.getValue().statusProperty());
         fiatCurrencyColumn.setCellValueFactory(t -> t.getValue().fiatCurrencyUnitProperty());

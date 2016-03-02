@@ -46,18 +46,7 @@ case class Contract(text: String, notary: Notary,
 
   val btcNetworkName = netParams.getId.split('.')(2).toUpperCase
 
-  val keyValues = Map[String, Option[String]](
-    "contractId" -> Some(id.toString),
-    "fiatCurrencyUnit" -> Some(fiatCurrencyUnit.toString),
-    "fiatDeliveryMethod" -> Some(fiatDeliveryMethod),
-
-    "notaryId" -> Some(notary.id.toString),
-    "btcNetworkName" -> Some(btcNetworkName),
-    "notaryFeeAddress" -> Some(notary.feesAddr.toString),
-    "notaryURL" -> Some(notary.url.toString),
-    "bondPercent" -> Some(notary.bondPercent.toString),
-    "btcNotaryFee" -> Some(notary.btcNotaryFee.toString)
-  )
+  val keyValues = contractKeyValues(id, fiatCurrencyUnit, fiatDeliveryMethod, notary, btcNetworkName)
 
   def offer(id: UUID, fiatAmount: Money, btcAmount: Money): Offer =
     Offer(id, this, fiatAmount, btcAmount)

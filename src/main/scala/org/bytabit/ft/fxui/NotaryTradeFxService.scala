@@ -51,47 +51,47 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   @Override
   def handler = {
 
-    case SellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(NOTARY, CREATED, offer, p)
+    case SellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(NOTARY, sellOffer)
 
-    case BuyerTookOffer(id, _, _, _, _, _) =>
-      updateStateTradeUIModel(TAKEN, id)
+    case bto:BuyerTookOffer =>
+      takeOffer(bto)
 
     case SellerSignedOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(SIGNED, id)
+      updateTradeState(SIGNED, id)
 
-    case BuyerOpenedEscrow(id, _) =>
-      updateStateTradeUIModel(OPENED, id)
+    case BuyerOpenedEscrow(id) =>
+      updateTradeState(OPENED, id)
 
     case BuyerFundedEscrow(id, fdd) =>
-      updateStateTradeUIModel(FUNDED, id)
+      updateTradeState(FUNDED, id)
 
     case CertifyDeliveryRequested(id, _, _) =>
-      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+      updateTradeState(CERT_DELIVERY_REQD, id)
 
     case FiatSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+      updateTradeState(FIAT_SENT_CERTD, id)
 
     case FiatNotSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
+      updateTradeState(FIAT_NOT_SENT_CERTD, id)
 
     case FiatReceived(id) =>
-      updateStateTradeUIModel(FIAT_RCVD, id)
+      updateTradeState(FIAT_RCVD, id)
 
     case BuyerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+      updateTradeState(TRADED, id)
 
     case SellerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+      updateTradeState(TRADED, id)
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
 
     case SellerFunded(id) =>
-      updateStateTradeUIModel(SELLER_FUNDED, id)
+      updateTradeState(SELLER_FUNDED, id)
 
     case BuyerRefunded(id) =>
-      updateStateTradeUIModel(BUYER_REFUNDED, id)
+      updateTradeState(BUYER_REFUNDED, id)
 
     case e: NotaryFSM.Event =>
       log.debug(s"unhandled NotaryFSM event: $e")

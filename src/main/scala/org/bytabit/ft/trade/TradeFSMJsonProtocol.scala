@@ -76,7 +76,7 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def sellerSignedOfferJsonFormat = jsonFormat5(SellerSignedOffer)
 
-  implicit def buyerOpenedEscrowJsonFormat = jsonFormat2(BuyerOpenedEscrow)
+  implicit def buyerOpenedEscrowJsonFormat = jsonFormat1(BuyerOpenedEscrow)
 
   implicit def buyerFundedEscrowJsonFormat = jsonFormat2(BuyerFundedEscrow)
 
