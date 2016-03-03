@@ -57,17 +57,17 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     case bto:BuyerTookOffer =>
       takeOffer(bto)
 
-    case SellerSignedOffer(id, _, _, _, _) =>
-      updateTradeState(SIGNED, id)
+    case sso:SellerSignedOffer =>
+      signOffer(sso)
 
     case BuyerOpenedEscrow(id) =>
       updateTradeState(OPENED, id)
 
-    case BuyerFundedEscrow(id, fdd) =>
-      updateTradeState(FUNDED, id)
+    case bfe:BuyerFundedEscrow =>
+      fundEscrow(bfe)
 
-    case CertifyDeliveryRequested(id, _, _) =>
-      updateTradeState(CERT_DELIVERY_REQD, id)
+    case cdr:CertifyDeliveryRequested =>
+      reqCertDelivery(cdr)
 
     case FiatSentCertified(id, _, _) =>
       updateTradeState(FIAT_SENT_CERTD, id)

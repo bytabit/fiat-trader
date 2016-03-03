@@ -37,12 +37,9 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.reflect._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object TradeFSM {
-
-  // TODO FT-104: replace hardcoded strings with localized values
-  val NO_DELIVERY_DETAILS = "NO DELIVERY DETAILS!"
 
   // actor setup
 
@@ -85,7 +82,7 @@ object TradeFSM {
 
   final case class BuyerOpenedEscrow(id: UUID) extends Event
 
-  final case class BuyerFundedEscrow(id: UUID, fiatDeliveryDetails: String) extends Event
+  final case class BuyerFundedEscrow(id: UUID, fiatDeliveryDetailsKey: Option[Array[Byte]]) extends Event
 
   final case class FiatReceived(id: UUID) extends Event
 
@@ -207,7 +204,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
       case (BuyerSetFiatDeliveryDetailsKey(_, dk), takenOffer: TakenOffer) =>
         takenOffer.withFiatDeliveryDetailsKey(dk)
 
-      case (BuyerSetFiatDeliveryDetailsKey(_, dk), signedTakenOffer: SignedTakenOffer) =>
+      case (BuyerFundedEscrow(_, Some(dk)), signedTakenOffer: SignedTakenOffer) =>
         signedTakenOffer.withFiatDeliveryDetailsKey(dk)
 
       case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), takenOffer: TakenOffer) =>
@@ -256,7 +253,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   def startFunded(sto: SignedTakenOffer): Unit = {
     startOpened(sto)
-    context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+    context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetailsKey)
   }
 
   def startCertDeliveryReqd(cfe: CertifyFiatEvidence): Unit = {
@@ -336,9 +333,11 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
     outputsEqual(tx1, tx2, 0, until)
   }
 
-  def fiatDeliveryDetailsKey(tx: Transaction): Array[Byte] = {
-    val outputs = tx.getOutputs
-    val lastOutputScript = outputs.get(outputs.size - 1).getScriptPubKey
-    lastOutputScript.getChunks.get(1).data
+  def fiatDeliveryDetailsKey(tx: Transaction): Option[Array[Byte]] = {
+    Try {
+      val outputs = tx.getOutputs
+      val lastOutputScript = outputs.get(outputs.size - 1).getScriptPubKey
+      lastOutputScript.getChunks.get(1).data
+    }.toOption
   }
 }

@@ -97,8 +97,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       takeOffer(bto)
       updateUncommitted()
 
-    case SellerSignedOffer(id, _, _, _, _) =>
-      updateTradeState(SIGNED, id)
+    case sso:SellerSignedOffer =>
+      signOffer(sso)
       updateUncommitted()
 
     case BuyerOpenedEscrow(id) =>
@@ -106,12 +106,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateUncommitted()
 
     // TODO FT-7: display fiat delivery details
-    case BuyerFundedEscrow(id, fdd) =>
-      updateTradeState(FUNDED, id)
+    case bfe:BuyerFundedEscrow =>
+      fundEscrow(bfe)
       updateUncommitted()
 
-    case CertifyDeliveryRequested(id, _, _) =>
-      updateTradeState(CERT_DELIVERY_REQD, id)
+    case cdr:CertifyDeliveryRequested =>
+      reqCertDelivery(cdr)
       updateUncommitted()
 
     case FiatSentCertified(id, _, _) =>

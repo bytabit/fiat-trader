@@ -155,9 +155,10 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
       if (outputsEqual(sto.unsignedFundTx, etu.tx, 0, etu.tx.getOutputs.size() - 1) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(FUNDED) applying BuyerSetFiatDeliveryDetailsKey(sto.id, fiatDeliveryDetailsKey(etu.tx)) andThen {
+        val bfe = BuyerFundedEscrow(sto.id, fiatDeliveryDetailsKey(etu.tx))
+        goto(FUNDED) applying bfe andThen {
           case usto: SignedTakenOffer =>
-            context.parent ! BuyerFundedEscrow(usto.id, usto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+            context.parent ! bfe
         }
       }
       else
@@ -217,7 +218,8 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
     case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
       if (outputsEqual(cfe.unsignedFiatSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(SELLER_FUNDED) andThen {
+        val fsc = FiatSentCertified(cfe.id, Seq())
+        goto(SELLER_FUNDED) applying fsc andThen {
           case cfd: CertifiedFiatDelivery =>
             context.parent ! SellerFunded(cfd.id)
             walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
@@ -225,7 +227,8 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       }
       else if (outputsEqual(cfe.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(BUYER_REFUNDED) andThen {
+        val fnsc = FiatNotSentCertified(cfe.id, Seq())
+        goto(BUYER_REFUNDED) applying fnsc andThen {
           case cfd: CertifiedFiatDelivery =>
             context.parent ! BuyerRefunded(cfd.id)
             walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
@@ -299,6 +302,10 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       startSellerFunded(cfd)
       stay()
 
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      //log.warning("Received escrow tx update after seller funded")
+      stay()
+
     case e =>
       log.error(s"Received event after seller funded: $e")
       stay()
@@ -307,6 +314,10 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
   when(BUYER_REFUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
       startBuyerRefunded(cfd)
+      stay()
+
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      //log.warning("Received escrow tx update after buyer refunded")
       stay()
 
     case e =>

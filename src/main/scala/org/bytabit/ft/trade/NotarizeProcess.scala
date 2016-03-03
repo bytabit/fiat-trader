@@ -71,7 +71,9 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
     // someone took the offer
     case Event(bto: BuyerTookOffer, so: SellOffer) if bto.posted.isDefined =>
-      goto(TAKEN) applying bto
+      goto(TAKEN) applying bto andThen { to =>
+        context.parent ! bto
+      }
   }
 
   when(TAKEN) {
@@ -115,9 +117,10 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedFundTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(FUNDED) andThen {
+        val bfe = BuyerFundedEscrow(sto.id, fiatDeliveryDetailsKey(etu.tx))
+        goto(FUNDED) applying bfe andThen {
           case usto: SignedTakenOffer =>
-            context.parent ! BuyerFundedEscrow(sto.id, sto.takenOffer.fiatDeliveryDetails.getOrElse(NO_DELIVERY_DETAILS))
+            context.parent ! bfe
         }
       }
       else
@@ -248,6 +251,10 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
       startSellerFunded(cfd)
       stay()
 
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      //log.warning("Received escrow tx update after seller funded")
+      stay()
+
     case e =>
       log.error(s"Received event after seller funded: $e")
       stay()
@@ -256,6 +263,10 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   when(BUYER_REFUNDED) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
       startBuyerRefunded(cfd)
+      stay()
+
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+      //log.warning("Received escrow tx update after buyer refunded")
       stay()
 
     case e =>
