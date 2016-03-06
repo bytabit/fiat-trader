@@ -268,7 +268,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   def startTaken(to: TakenOffer): Unit = {
     startCreate(to.sellOffer)
-    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyer.fundTxUtxo, to.cipherFiatDeliveryDetails)
+    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherFiatDeliveryDetails)
   }
 
   def startSigned(sto: SignedTakenOffer): Unit = {

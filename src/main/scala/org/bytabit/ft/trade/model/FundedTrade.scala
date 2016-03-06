@@ -33,7 +33,6 @@ case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxU
   def withFiatDeliveryDetailsKey(fiatDeliveryDetailsKey: Array[Byte]) =
     this.copy(fiatDeliveryDetailsKey = Some(fiatDeliveryDetailsKey))
 
-
   def withPayoutTx(payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime) =
     SettledTrade(this, payoutTxHash, payoutTxUpdateTime)
 }

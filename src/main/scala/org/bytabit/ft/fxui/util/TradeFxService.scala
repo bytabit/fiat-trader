@@ -67,8 +67,10 @@ trait TradeFxService extends ActorFxService {
   def takeOffer(bto: BuyerTookOffer): Unit = {
     findTrade(bto.id) match {
       case Some(TradeUIModel(r, s, so: SellOffer)) =>
-        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs, bto.buyerFundPayoutTxo,
-          bto.cipherBuyerDeliveryDetails)))
+        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs,
+          bto.buyerFundPayoutTxo, bto.cipherBuyerDeliveryDetails)))
+      case Some(TradeUIModel(r, s, to: TakenOffer)) =>
+        log.warning("Can't take offer that was already taken.")
       case _ =>
         log.error("No sell offer found to take.")
     }

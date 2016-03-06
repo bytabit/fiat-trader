@@ -21,6 +21,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 
@@ -80,26 +81,24 @@ public abstract class AbstractTradeUI extends ActorController {
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2) {
                     TradeUIModel rowData = (TradeUIModel)row.getItem();
+
                     // TODO show dialog with all trade data
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setHeaderText("Trade ID: "+rowData.getId());
                     //alert.setContentText(rowData.toString());
-                    GridPane grid = new GridPane();
-                    grid.setHgap(10);
-                    grid.setVgap(10);
-                    grid.setPadding(new Insets(20, 150, 10, 10));
+                    VBox vbox = new VBox();
+                    GridPane infoGrid = new GridPane();
+                    infoGrid.setHgap(10);
+                    infoGrid.setVgap(10);
+                    infoGrid.setPadding(new Insets(20, 150, 10, 10));
 
-                    TextField username = new TextField();
-                    username.setPromptText("Username");
-                    PasswordField password = new PasswordField();
-                    password.setPromptText("Password");
+                    infoGrid.add(new Label("Fiat / XBT Exch Rate:"), 0, 0);
+                    infoGrid.add(new Label(rowData.exchangeRateProperty().getValue()), 1, 0);
 
-                    grid.add(new Label("Username:"), 0, 0);
-                    grid.add(username, 1, 0);
-                    grid.add(new Label("Password:"), 0, 1);
-                    grid.add(password, 1, 1);
+                    infoGrid.add(new Label("Bond Percent:"), 0, 1);
+                    infoGrid.add(new Label(rowData.bondPercentProperty().getValue()), 1, 1);
 
-                    alert.getDialogPane().setContent(grid);
+                    alert.getDialogPane().setContent(infoGrid);
 
                     alert.showAndWait();
                 }
