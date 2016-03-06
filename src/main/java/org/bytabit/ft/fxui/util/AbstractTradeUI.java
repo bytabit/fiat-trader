@@ -18,10 +18,9 @@ package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 
@@ -84,7 +83,23 @@ public abstract class AbstractTradeUI extends ActorController {
                     // TODO show dialog with all trade data
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setHeaderText("Trade ID: "+rowData.getId());
-                    alert.setContentText(rowData.toString());
+                    //alert.setContentText(rowData.toString());
+                    GridPane grid = new GridPane();
+                    grid.setHgap(10);
+                    grid.setVgap(10);
+                    grid.setPadding(new Insets(20, 150, 10, 10));
+
+                    TextField username = new TextField();
+                    username.setPromptText("Username");
+                    PasswordField password = new PasswordField();
+                    password.setPromptText("Password");
+
+                    grid.add(new Label("Username:"), 0, 0);
+                    grid.add(username, 1, 0);
+                    grid.add(new Label("Password:"), 0, 1);
+                    grid.add(password, 1, 1);
+
+                    alert.getDialogPane().setContent(grid);
 
                     alert.showAndWait();
                 }

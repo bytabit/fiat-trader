@@ -18,21 +18,25 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bitcoinj.core.Wallet
-import org.bytabit.ft.wallet.model.{TxSig, PayoutTx}
+import org.bitcoinj.core.{Sha256Hash, Wallet}
+import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
+import org.joda.time.DateTime
 
-case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
+case class CertifyFiatEvidence(fundedTrade: FundedTrade,
                                evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
 
-  override val id: UUID = signedTakenOffer.id
-  override val btcAmount: Money = signedTakenOffer.btcAmount
-  override val fiatAmount: Money = signedTakenOffer.fiatAmount
-  override val contract: Contract = signedTakenOffer.contract
+  override val id: UUID = fundedTrade.id
+  override val btcAmount: Money = fundedTrade.btcAmount
+  override val fiatAmount: Money = fundedTrade.fiatAmount
+  override val contract: Contract = fundedTrade.contract
 
-  override val text: String = signedTakenOffer.text
-  override val keyValues: Map[String, Option[String]] = signedTakenOffer.keyValues
+  override val text: String = fundedTrade.text
+  override val keyValues: Map[String, Option[String]] = fundedTrade.keyValues
 
+  val escrowAddress = fundedTrade.escrowAddress
+
+  val signedTakenOffer = fundedTrade.openedTrade.signedTakenOffer
   val takenOffer = signedTakenOffer.takenOffer
   val sellOffer = takenOffer.sellOffer
   val seller = signedTakenOffer.seller
@@ -62,4 +66,7 @@ case class CertifyFiatEvidence(signedTakenOffer: SignedTakenOffer,
 
     CertifiedFiatDelivery(this, notarizedFiatNotSentPayoutTx.inputSigs)
   }
+
+  def addCertifyDeliveryRequest(evidence: Option[Array[Byte]]) =
+    this.copy(evidence = this.evidence ++ evidence.toSeq)
 }

@@ -85,6 +85,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     // Handle Trade Events
 
+    // common path
+
     case LocalSellerCreatedOffer(id, sellOffer, p) =>
       createOffer(SELLER, sellOffer)
       updateUncommitted()
@@ -93,58 +95,65 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       createOffer(BUYER, sellOffer)
       updateUncommitted()
 
-    case bto:BuyerTookOffer =>
+    case bto: BuyerTookOffer =>
       takeOffer(bto)
       updateUncommitted()
 
-    case sso:SellerSignedOffer =>
+    case sso: SellerSignedOffer =>
       signOffer(sso)
       updateUncommitted()
 
-    case BuyerOpenedEscrow(id) =>
-      updateTradeState(OPENED, id)
+    case boe: BuyerOpenedEscrow =>
+      openEscrow(boe)
       updateUncommitted()
 
-    // TODO FT-7: display fiat delivery details
-    case bfe:BuyerFundedEscrow =>
+    case bfe: BuyerFundedEscrow =>
       fundEscrow(bfe)
       updateUncommitted()
 
-    case cdr:CertifyDeliveryRequested =>
+    // happy path
+
+    case fr: FiatReceived =>
+      fiatReceived(fr)
+      updateUncommitted()
+
+    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
+      updateUncommitted()
+
+    case SellerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
+      updateUncommitted()
+
+    // unhappy path
+
+    case cdr: CertifyDeliveryRequested =>
       reqCertDelivery(cdr)
       updateUncommitted()
 
-    case FiatSentCertified(id, _, _) =>
-      updateTradeState(FIAT_SENT_CERTD, id)
+    case fsc: FiatSentCertified =>
+      certifyFiatSent(fsc)
       updateUncommitted()
 
-    case FiatNotSentCertified(id, _, _) =>
-      updateTradeState(FIAT_NOT_SENT_CERTD, id)
+    case fnc: FiatNotSentCertified =>
+      certifyFiatNotSent(fnc)
       updateUncommitted()
 
-    case FiatReceived(id) =>
-      updateTradeState(FIAT_RCVD, id)
+    case sf: SellerFunded =>
+      fundSeller(sf)
       updateUncommitted()
 
-    case BuyerReceivedPayout(id) =>
-      updateTradeState(TRADED, id)
+    case rb: BuyerRefunded =>
+      refundBuyer(rb)
       updateUncommitted()
 
-    case SellerReceivedPayout(id) =>
-      updateTradeState(TRADED, id)
-      updateUncommitted()
-
-    case SellerFunded(id) =>
-      updateTradeState(SELLER_FUNDED, id)
-      updateUncommitted()
-
-    case BuyerRefunded(id) =>
-      updateTradeState(BUYER_REFUNDED, id)
-      updateUncommitted()
+    // cancel path
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
       updateUncommitted()
+
+    // errors
 
     case e: TradeFSM.Event =>
       log.error(s"Unhandled TradeFSM event: $e")

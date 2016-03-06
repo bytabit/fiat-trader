@@ -72,7 +72,7 @@ trait TradeData {
     OpenTx(BTCMoney.toCoin(btcToOpenEscrow), notary, seller, buyer)
 
   // unsigned fund escrow tx
-  def unsignedFundTx(seller: Seller, buyer: Buyer, deliveryDetailsKey:Array[Byte]) =
+  def unsignedFundTx(seller: Seller, buyer: Buyer, deliveryDetailsKey: Array[Byte]) =
     FundTx(BTCMoney.toCoin(btcToFundEscrow), notary, seller, buyer, deliveryDetailsKey)
 
   // unsigned happy path payout escrow tx

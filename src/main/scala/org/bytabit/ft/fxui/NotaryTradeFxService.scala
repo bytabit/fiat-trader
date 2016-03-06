@@ -51,47 +51,57 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   @Override
   def handler = {
 
+    // common path
+
     case SellerCreatedOffer(id, sellOffer, p) =>
       createOffer(NOTARY, sellOffer)
 
-    case bto:BuyerTookOffer =>
+    case bto: BuyerTookOffer =>
       takeOffer(bto)
 
-    case sso:SellerSignedOffer =>
+    case sso: SellerSignedOffer =>
       signOffer(sso)
 
-    case BuyerOpenedEscrow(id) =>
-      updateTradeState(OPENED, id)
+    case boe: BuyerOpenedEscrow =>
+      openEscrow(boe)
 
-    case bfe:BuyerFundedEscrow =>
+    case bfe: BuyerFundedEscrow =>
       fundEscrow(bfe)
 
-    case cdr:CertifyDeliveryRequested =>
+    // happy path
+
+    case fr: FiatReceived =>
+      fiatReceived(fr)
+
+    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
+
+    case SellerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
+
+    // unhappy path
+
+    case cdr: CertifyDeliveryRequested =>
       reqCertDelivery(cdr)
 
-    case FiatSentCertified(id, _, _) =>
-      updateTradeState(FIAT_SENT_CERTD, id)
+    case fsc: FiatSentCertified =>
+      certifyFiatSent(fsc)
 
-    case FiatNotSentCertified(id, _, _) =>
-      updateTradeState(FIAT_NOT_SENT_CERTD, id)
+    case fnc: FiatNotSentCertified =>
+      certifyFiatNotSent(fnc)
 
-    case FiatReceived(id) =>
-      updateTradeState(FIAT_RCVD, id)
+    case sf: SellerFunded =>
+      fundSeller(sf)
 
-    case BuyerReceivedPayout(id) =>
-      updateTradeState(TRADED, id)
+    case rb: BuyerRefunded =>
+      refundBuyer(rb)
 
-    case SellerReceivedPayout(id) =>
-      updateTradeState(TRADED, id)
+    // cancel path
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
 
-    case SellerFunded(id) =>
-      updateTradeState(SELLER_FUNDED, id)
-
-    case BuyerRefunded(id) =>
-      updateTradeState(BUYER_REFUNDED, id)
+    // errors
 
     case e: NotaryFSM.Event =>
       log.debug(s"unhandled NotaryFSM event: $e")

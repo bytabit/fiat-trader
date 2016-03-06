@@ -76,11 +76,17 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
   implicit def sellerSignedOfferJsonFormat = jsonFormat5(SellerSignedOffer)
 
-  implicit def buyerOpenedEscrowJsonFormat = jsonFormat1(BuyerOpenedEscrow)
+  implicit def buyerOpenedEscrowJsonFormat = jsonFormat3(BuyerOpenedEscrow)
 
-  implicit def buyerFundedEscrowJsonFormat = jsonFormat2(BuyerFundedEscrow)
+  implicit def buyerFundedEscrowJsonFormat = jsonFormat4(BuyerFundedEscrow)
 
-  implicit def buyerReceivedPayoutJsonFormat = jsonFormat1(BuyerReceivedPayout)
+  implicit def sellerReceivedPayoutJsonFormat = jsonFormat3(SellerReceivedPayout)
+
+  implicit def buyerReceivedPayoutJsonFormat = jsonFormat3(BuyerReceivedPayout)
+
+  implicit def sellerFundedJsonFormat = jsonFormat3(SellerFunded)
+
+  implicit def buyerRefundedJsonFormat = jsonFormat3(BuyerRefunded)
 
   val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeFSM.Event]] = Map(
     simpleName(classOf[LocalSellerCreatedOffer]) -> localSellerCreatedOfferJsonFormat,
@@ -95,7 +101,10 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[CertifyDeliveryRequested]) -> certifyDeliveryRequestedJsonFormat,
     simpleName(classOf[FiatSentCertified]) -> fiatSentCertifiedJsonFormat,
     simpleName(classOf[FiatNotSentCertified]) -> fiatNotSentCertifiedJsonFormat,
-    simpleName(classOf[BuyerReceivedPayout]) -> buyerReceivedPayoutJsonFormat
+    simpleName(classOf[BuyerReceivedPayout]) -> buyerReceivedPayoutJsonFormat,
+    simpleName(classOf[SellerReceivedPayout]) -> sellerReceivedPayoutJsonFormat,
+    simpleName(classOf[BuyerRefunded]) -> buyerRefundedJsonFormat,
+    simpleName(classOf[SellerFunded]) -> sellerFundedJsonFormat
   )
 
   implicit def tradeEventJsonFormat = new EventJsonFormat[TradeFSM.Event](tradeEventJsonFormatMap)

@@ -25,6 +25,7 @@ import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 import org.joda.money.CurrencyUnit
+import org.joda.time.DateTime
 import org.scalatest._
 
 
@@ -63,7 +64,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   }
 
   it should "create fund escrow transaction" in {
-    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet).withFiatDeliveryDetailsKey(deliveryDetailsKey)
+    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
     val fundTx = sto.unsignedFundTx
     assert(fundTx.verified)
   }
@@ -81,7 +82,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   }
 
   it should "buyer sign fund escrow transaction" in {
-    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet).withFiatDeliveryDetailsKey(deliveryDetailsKey)
+    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
     val fundTx = sto.unsignedFundTx.sign(buyerWallet)
     fundTx shouldBe 'fullySigned
   }
@@ -119,7 +120,9 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val cfr = sto.certifyFiatRequested(None)
+      val ot = sto.withOpenTx(sto.unsignedOpenTx.tx.getHash, new DateTime(sto.unsignedOpenTx.tx.getUpdateTime))
+      val ft = ot.withFundTx(sto.unsignedFundTx.tx.getHash, new DateTime(sto.unsignedFundTx.tx.getUpdateTime), Some(deliveryDetailsKey))
+      val cfr = ft.certifyFiatRequested(None)
       val cfs = cfr.certifyFiatSent(notaryWallet)
 
       val signedPayoutTx = cfs.notarySignedFiatSentPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
@@ -133,7 +136,9 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val cfr = sto.certifyFiatRequested(None)
+      val ot = sto.withOpenTx(sto.unsignedOpenTx.tx.getHash, new DateTime(sto.unsignedOpenTx.tx.getUpdateTime))
+      val ft = ot.withFundTx(sto.unsignedFundTx.tx.getHash, new DateTime(sto.unsignedFundTx.tx.getUpdateTime), Some(deliveryDetailsKey))
+      val cfr = ft.certifyFiatRequested(None)
       val cfns = cfr.certifyFiatNotSent(notaryWallet)
 
       val signedPayoutTx = cfns.notarySignedFiatNotSentPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)

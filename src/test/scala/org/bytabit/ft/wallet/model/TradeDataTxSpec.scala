@@ -20,7 +20,6 @@ import java.net.URL
 import java.util.UUID
 
 import org.bitcoinj.core._
-import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.{Contract, Offer}
 import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
 import org.bytabit.ft.wallet.WalletJsonProtocol
@@ -86,7 +85,7 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
       takenSellOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
     val sellerPayoutTxSigs: Seq[TxSig] =
       takenSellOffer.unsignedPayoutTx(fullySignedOpenTx).sign(seller.escrowPubKey)(sellerWallet).inputSigs
-    val sellerSignedOffer = takenSellOffer.withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs).withFiatDeliveryDetailsKey(deliveryDetailsKey)
+    val sellerSignedOffer = takenSellOffer.withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
 
     // add buyer signed open tx, fund tx and payout tx to get fully signed offer
     val buyerSignedOpenTx = sellerSignedOffer.fullySignedOpenTx

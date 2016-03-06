@@ -27,8 +27,7 @@ object FundTx extends TxTools {
   // create new unsigned fund tx
   def apply(coinFundEscrow: Coin, n: Notary, s: Seller, b: Buyer, ddk: Array[Byte]) =
 
-    new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b),
-      b.fundTxUtxo, b.changeAddr, ddk)
+    new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b), b.fundTxUtxo, b.changeAddr, ddk)
 }
 
 case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
