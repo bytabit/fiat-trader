@@ -17,17 +17,19 @@
 package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import org.bytabit.ft.fxui.TradeInfoDialog;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 
 import java.util.ResourceBundle;
 
-public abstract class AbstractTradeUI extends ActorController {
+public abstract class AbstractTradeUI implements ActorController {
 
     protected TradeFxService tradeFxService;
 
@@ -66,9 +68,19 @@ public abstract class AbstractTradeUI extends ActorController {
     @FXML
     protected TableColumn<TradeUIModel, String> notaryFeeColumn;
 
-    public AbstractTradeUI(ActorSystem system) {
+    final private ActorSystem sys;
 
-        super(system);
+    public AbstractTradeUI(ActorSystem system) {
+        sys = system;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return system().log();
+    }
+
+    public ActorSystem system() {
+        return sys;
     }
 
     @FXML
@@ -80,27 +92,10 @@ public abstract class AbstractTradeUI extends ActorController {
             TableRow row = new TableRow<TradeUIModel>();
             row.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2) {
-                    TradeUIModel rowData = (TradeUIModel)row.getItem();
+                    TradeUIModel rowData = (TradeUIModel) row.getItem();
 
-                    // TODO show dialog with all trade data
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setHeaderText("Trade ID: "+rowData.getId());
-                    //alert.setContentText(rowData.toString());
-                    VBox vbox = new VBox();
-                    GridPane infoGrid = new GridPane();
-                    infoGrid.setHgap(10);
-                    infoGrid.setVgap(10);
-                    infoGrid.setPadding(new Insets(20, 150, 10, 10));
-
-                    infoGrid.add(new Label("Fiat / XBT Exch Rate:"), 0, 0);
-                    infoGrid.add(new Label(rowData.exchangeRateProperty().getValue()), 1, 0);
-
-                    infoGrid.add(new Label("Bond Percent:"), 0, 1);
-                    infoGrid.add(new Label(rowData.bondPercentProperty().getValue()), 1, 1);
-
-                    alert.getDialogPane().setContent(infoGrid);
-
-                    alert.showAndWait();
+                    TradeInfoDialog dialog = new TradeInfoDialog(system(), rowData);
+                    dialog.showAndWait();
                 }
             });
             return row;

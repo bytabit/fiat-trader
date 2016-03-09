@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui.wallet;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -28,7 +29,7 @@ import org.bytabit.ft.fxui.util.ActorController;
 
 import java.util.ResourceBundle;
 
-public class WalletUI extends ActorController {
+public class WalletUI implements ActorController {
 
     private final WalletFxService walletFxService;
 
@@ -61,8 +62,10 @@ public class WalletUI extends ActorController {
     @FXML
     private TableColumn<TransactionUIModel, String> walletBtcAmtColumn;
 
+    final private ActorSystem sys;
+
     public WalletUI(ActorSystem system) {
-        super(system);
+        sys = system;
         walletFxService = new WalletFxService(system);
     }
 
@@ -108,5 +111,15 @@ public class WalletUI extends ActorController {
     @FXML
     private void handleWithdrawFunds() {
         walletFxService.dialogWithdrawBtc();
+    }
+
+    @Override
+    public ActorSystem system() {
+        return sys;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return sys.log();
     }
 }

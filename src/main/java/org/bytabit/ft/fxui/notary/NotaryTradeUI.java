@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui.notary;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import org.bytabit.ft.fxui.NotaryTradeFxService;
 import org.bytabit.ft.fxui.model.NotarizeUIActionTableCell;

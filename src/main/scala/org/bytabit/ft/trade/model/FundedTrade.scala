@@ -25,7 +25,14 @@ case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxU
 
   val unsignedPayoutTx = openedTrade.signedTakenOffer.unsignedPayoutTx
 
+  val seller = openedTrade.signedTakenOffer.seller
   val buyer = openedTrade.signedTakenOffer.buyer
+  val cipherFiatDeliveryDetails = openedTrade.signedTakenOffer.takenOffer.cipherFiatDeliveryDetails
+
+  // decrypt delivery details with buyer provided AES key
+  val fiatDeliveryDetails: String = fiatDeliveryDetailsKey.map { k =>
+    new String(cipher(k, seller, buyer).decrypt(cipherFiatDeliveryDetails).map(b => b.toChar))
+  }.getOrElse("UNKNOWN")
 
   def certifyFiatRequested(evidence: Option[Array[Byte]]) =
     CertifyFiatEvidence(this, evidence.toSeq)

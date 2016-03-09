@@ -17,7 +17,7 @@ case class OpenedTrade(signedTakenOffer: SignedTakenOffer, openTxHash: Sha256Has
   override val text: String = signedTakenOffer.text
   override val keyValues: Map[String, Option[String]] = signedTakenOffer.keyValues
 
-  val escrowAddress = signedTakenOffer.unsignedOpenTx.escrowAddr
+  val escrowAddress = signedTakenOffer.escrowAddress
 
   val fiatDeliveryDetailsKey = signedTakenOffer.takenOffer.fiatDeliveryDetailsKey
 

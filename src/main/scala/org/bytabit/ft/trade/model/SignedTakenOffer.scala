@@ -24,6 +24,8 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def unsignedOpenTx: OpenTx = takenOffer.unsignedOpenTx
 
+  def escrowAddress = takenOffer.escrowAddress
+
   def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
 
   def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer,

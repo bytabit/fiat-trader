@@ -18,7 +18,7 @@ case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
   override val text: String = certifyFiatEvidence.text
   override val keyValues: Map[String, Option[String]] = certifyFiatEvidence.keyValues
 
-  val escrowAddress = certifyFiatEvidence.fundedTrade.escrowAddress
+  val escrowAddress = certifyFiatEvidence.escrowAddress
 
   val seller = certifyFiatEvidence.seller
   val buyer = certifyFiatEvidence.buyer

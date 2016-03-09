@@ -37,6 +37,7 @@ trait TradeData {
 
   lazy val bondPercent = notary.bondPercent
   lazy val btcNotaryFee = notary.btcNotaryFee
+  lazy val btcMinerFee = BTC_MINER_FEE
 
   lazy val btcBond = btcAmount.multipliedBy(notary.bondPercent, Monies.roundingMode)
 
