@@ -27,7 +27,7 @@ import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.SellProcess.{SendFiat, AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer}
@@ -112,6 +112,10 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateUncommitted()
 
     // happy path
+
+    case fs: FiatSent =>
+      fiatSent(fs)
+      updateUncommitted()
 
     case fr: FiatReceived =>
       fiatReceived(fr)
@@ -265,6 +269,10 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def receiveFiat(url: URL, tradeId: UUID): Unit = {
     sendCmd(ReceiveFiat(url, tradeId))
+  }
+
+  def sendFiat(url: URL, tradeId: UUID): Unit = {
+    sendCmd(SendFiat(url, tradeId))
   }
 
   // TODO FT-91: collect evidence

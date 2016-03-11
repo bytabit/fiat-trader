@@ -279,28 +279,6 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
     case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
       // ignore tx updates until decision event from notary received
       stay()
-
-    //    case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
-    //      if (outputsEqual(cfe.unsignedFiatSentPayoutTx, etu.tx) &&
-    //        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-    //        val fsc = FiatSentCertified(cfe.id, Seq())
-    //        goto(SELLER_FUNDED) applying fsc andThen {
-    //          case cfd: CertifiedFiatDelivery =>
-    //            context.parent ! SellerFunded(cfd.id)
-    //            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
-    //        }
-    //      }
-    //      else if (outputsEqual(cfe.unsignedFiatNotSentPayoutTx, etu.tx) &&
-    //        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-    //        val fnsc = FiatNotSentCertified(cfe.id, Seq())
-    //        goto(BUYER_REFUNDED) applying fnsc andThen {
-    //          case cfd: CertifiedFiatDelivery =>
-    //            context.parent ! BuyerRefunded(cfd.id)
-    //            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
-    //        }
-    //      }
-    //      else
-    //        stay()
   }
 
   when(FIAT_SENT_CERTD) {

@@ -106,6 +106,15 @@ trait TradeFxService extends ActorFxService {
 
   // happy path
 
+  def fiatSent(fs: FiatSent) = {
+    findTrade(fs.id) match {
+      case Some(TradeUIModel(r, s, ft: FundedTrade)) =>
+        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, FIAT_SENT, ft))
+      case _ =>
+        log.error("No funded trade found to send fiat.")
+    }
+  }
+
   def fiatReceived(fr: FiatReceived) = {
     findTrade(fr.id) match {
       case Some(TradeUIModel(r, s, ft: FundedTrade)) =>

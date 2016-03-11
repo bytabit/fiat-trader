@@ -51,7 +51,7 @@ public class FiatTrader extends Application {
         loader.setControllerFactory(new ActorControllerFactory(system));
 
         Parent mainUI = loader.load();
-        Scene scene = new Scene(mainUI, 1111, 350);
+        Scene scene = new Scene(mainUI, 1150, 350);
         String title = "Fiat Trader (" + Config.walletNet() + ", v" + Config.version();
         if (Config.config().length() > 0 && !Config.config().equals("default")) title += ", " + Config.config();
         title += ")";

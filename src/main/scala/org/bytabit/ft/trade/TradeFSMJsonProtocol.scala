@@ -49,6 +49,8 @@ trait TradeFSMJsonProtocol extends WalletJsonProtocol {
       case JsString(SIGNED.identifier) => SIGNED
       case JsString(OPENED.identifier) => OPENED
       case JsString(FUNDED.identifier) => FUNDED
+      case JsString(FIAT_RCVD.identifier) => FIAT_RCVD
+      case JsString(FIAT_SENT.identifier) => FIAT_SENT
       case JsString(TRADED.identifier) => TRADED
       case JsString(CERT_DELIVERY_REQD.identifier) => CERT_DELIVERY_REQD
       case JsString(FIAT_SENT_CERTD.identifier) => FIAT_SENT_CERTD

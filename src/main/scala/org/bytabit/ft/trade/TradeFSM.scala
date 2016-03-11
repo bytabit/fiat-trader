@@ -86,6 +86,8 @@ object TradeFSM {
 
   final case class FiatReceived(id: UUID) extends Event
 
+  final case class FiatSent(id: UUID) extends Event
+
   final case class BuyerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
   final case class SellerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event

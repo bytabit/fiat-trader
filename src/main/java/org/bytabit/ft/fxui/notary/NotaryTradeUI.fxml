@@ -16,34 +16,36 @@
   ~ limitations under the License.
   -->
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.notary.NotaryTradeUI">
+
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.notary.NotaryTradeUI">
     <children>
         <TableView fx:id="tradeTable" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action"/>
-                <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status"/>
-                <TableColumn fx:id="fiatCurrencyColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Currency"/>
-                <TableColumn fx:id="fiatAmountColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Amount"/>
-                <TableColumn fx:id="exchRateColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat / XBT"/>
-                <TableColumn fx:id="btcAmountColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Amount"/>
-                <TableColumn fx:id="deliveryMethodColumn" maxWidth="300.0" prefWidth="300.0"
-                             text="Fiat Delivery Method"/>
-                <TableColumn fx:id="bondPercentColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Bond %"/>
-                <TableColumn fx:id="notaryFeeColumn" maxWidth="100.0" prefWidth="100.0" text="Notary Fee"/>
+                <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action" />
+                <TableColumn fx:id="statusColumn" maxWidth="125.0" prefWidth="125.0" text="Status" />
+                <TableColumn fx:id="fiatCurrencyColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Currency" />
+                <TableColumn fx:id="fiatAmountColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Amount" />
+                <TableColumn fx:id="exchRateColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat / XBT" />
+                <TableColumn fx:id="btcAmountColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Amount" />
+                <TableColumn fx:id="deliveryMethodColumn" maxWidth="300.0" prefWidth="300.0" text="Fiat Delivery Method" />
+                <TableColumn fx:id="bondPercentColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Bond %" />
+                <TableColumn fx:id="notaryFeeColumn" maxWidth="100.0" prefWidth="100.0" text="Notary Fee" />
             </columns>
             <VBox.margin>
-                <Insets top="5.0"/>
+                <Insets top="5.0" />
             </VBox.margin>
             <padding>
-                <Insets left="1.0" top="5.0"/>
+                <Insets left="1.0" top="5.0" />
             </padding>
         </TableView>
     </children>
     <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0"/>
+        <Insets bottom="5.0" left="5.0" right="5.0" />
     </padding>
 </VBox>

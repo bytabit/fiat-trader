@@ -27,7 +27,7 @@
             <columns>
                 <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action" />
             <TableColumn fx:id="roleColumn" maxWidth="100.0" prefWidth="100.0" text="Role" />
-                <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status" />
+                <TableColumn fx:id="statusColumn" maxWidth="125.0" prefWidth="125.0" text="Status" />
                 <TableColumn fx:id="fiatCurrencyColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Currency" />
                 <TableColumn fx:id="fiatAmountColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat Amount" />
                 <TableColumn fx:id="exchRateColumn" maxWidth="100.0" prefWidth="100.0" text="Fiat / XBT" />
@@ -46,7 +46,7 @@
         <GridPane fx:id="sellGrid">
             <columnConstraints>
                 <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="200.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="225.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="100.0" />

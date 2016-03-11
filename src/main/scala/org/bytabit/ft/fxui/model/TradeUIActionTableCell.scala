@@ -27,7 +27,7 @@ import org.bytabit.ft.fxui.TraderTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{CREATED, FUNDED}
+import org.bytabit.ft.trade.TradeFSM.{FIAT_SENT, CREATED, FUNDED}
 
 import scala.collection.JavaConversions._
 
@@ -61,6 +61,10 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       tradefxService.receiveFiat(item.url, item.id)
     })
 
+    val fiatSentButton = actionButton("FIAT SENT", event => {
+      tradefxService.sendFiat(item.url, item.id)
+    })
+
     // TODO FT-98: only enable buttons after timeout to deliver fiat
     val sellerReqCertDeliveryButton = actionButton("REQ CERT", event => {
       tradefxService.sellerReqCertDelivery(item.url, item.id)
@@ -80,6 +84,8 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
         Seq(fiatReceivedButton, buyerReqCertDeliveryButton)
       case (TradeOriginState(u, i, SELLER, FUNDED), false) =>
+        Seq(fiatSentButton)
+      case (TradeOriginState(u, i, SELLER, FIAT_SENT), false) =>
         Seq(sellerReqCertDeliveryButton)
       case _ =>
         setText(null)
