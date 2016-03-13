@@ -16,63 +16,76 @@
   ~ limitations under the License.
   -->
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.bytabit.ft.fxui.MainUI">
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.MainUI">
     <center>
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
             <tabs>
                 <Tab fx:id="traderTradesTab" text="Trades">
                     <content>
-                        <fx:include source="trade/TraderTradeUI.fxml"/>
+                        <fx:include source="trade/TraderTradeUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="notaryTradesTab" text="Notary Trades">
                     <content>
-                        <fx:include source="notary/NotaryTradeUI.fxml"/>
+                        <fx:include source="notary/NotaryTradeUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="walletTab" text="Wallet">
                     <content>
-                        <fx:include source="wallet/WalletUI.fxml"/>
+                        <fx:include source="wallet/WalletUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="notariesTab" text="Notaries">
                     <content>
-                        <fx:include source="notary/NotaryClientUI.fxml"/>
+                        <fx:include source="notary/NotaryClientUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="notaryServerTab" text="Notary Server">
                     <content>
-                        <fx:include source="notary/NotaryServerUI.fxml"/>
+                        <fx:include source="notary/NotaryServerUI.fxml" />
                     </content>
                 </Tab>
             </tabs>
             <BorderPane.margin>
-                <Insets/>
+                <Insets />
             </BorderPane.margin>
         </TabPane>
     </center>
     <top>
         <ToolBar nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER">
             <items>
-                <Label text="Fiat Trader">
-                    <font>
-                        <Font name="System Bold" size="14.0"/>
-                    </font>
-                </Label>
-                <Button mnemonicParsing="false" text="Preferences"/>
-                <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About"/>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <ImageView fitHeight="40.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@/logo.png" />
+                     </image>
+                  </ImageView>
+                      <Label text="Fiat Trader">
+                          <font>
+                              <Font name="System Bold" size="14.0" />
+                          </font>
+                      </Label>
+                      <Button mnemonicParsing="false" text="Preferences" />
+                      <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About" />
+               </children>
+            </HBox>
             </items>
             <BorderPane.margin>
-                <Insets/>
+                <Insets />
             </BorderPane.margin>
         </ToolBar>
     </top>
