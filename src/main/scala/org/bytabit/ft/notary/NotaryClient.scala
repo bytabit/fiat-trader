@@ -25,7 +25,7 @@ import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, SELLER}
 import org.bytabit.ft.notary.NotaryClient._
 import org.bytabit.ft.notary.NotaryFSM._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
 import org.bytabit.ft.trade.model.{Offer, SellOffer}
 import org.bytabit.ft.trade.{BuyProcess, NotarizeProcess, SellProcess, TradeFSM}
@@ -139,10 +139,17 @@ class NotaryClient(serverUrl: URL, walletMgr: ActorRef) extends NotaryFSM {
       }
       stay()
 
-    case Event(fr: ReceiveFiat, d) if !isNotary =>
-      tradeFSM(fr.id) match {
-        case Some(ref) => ref ! fr
-        case None => log.error(s"Could not receive fiat ${fr.id}")
+    case Event(rf: ReceiveFiat, d) if !isNotary =>
+      tradeFSM(rf.id) match {
+        case Some(ref) => ref ! rf
+        case None => log.error(s"Could not receive fiat ${rf.id}")
+      }
+      stay()
+
+    case Event(sf: SendFiat, d) if !isNotary =>
+      tradeFSM(sf.id) match {
+        case Some(ref) => ref ! sf
+        case None => log.error(s"Could not send fiat ${sf.id}")
       }
       stay()
 

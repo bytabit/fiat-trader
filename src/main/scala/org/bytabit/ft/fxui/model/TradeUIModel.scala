@@ -19,12 +19,11 @@ package org.bytabit.ft.fxui.model
 import javafx.beans.property._
 
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, BUYER, Role, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.TradeFSM._
-import org.bytabit.ft.trade.model.SellOffer
+import org.bytabit.ft.trade.model.TradeData
 import org.bytabit.ft.util.Monies
-import org.joda.time.DateTime
 
 object TradeUIModel {
 
@@ -38,20 +37,18 @@ object TradeUIModel {
 
 }
 
-case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
-                        posted: Option[DateTime] = None) {
+case class TradeUIModel(role: Role, state: TradeFSM.State, trade: TradeData) {
 
-  val url = offer.contract.notary.url
-  val id = offer.id
-  val contract = offer
-  val template = contract.contract
-  val fiatCurrencyUnit = template.fiatCurrencyUnit
-  val deliveryMethod = template.fiatDeliveryMethod
-  val fiatAmount = contract.fiatAmount
-  val btcAmount = contract.btcAmount
+  val url = trade.contract.notary.url
+  val id = trade.id
+  val contract = trade.contract
+  val fiatCurrencyUnit = contract.fiatCurrencyUnit
+  val deliveryMethod = contract.fiatDeliveryMethod
+  val fiatAmount = trade.fiatAmount
+  val btcAmount = trade.btcAmount
   val exchangeRate = fiatAmount.dividedBy(btcAmount.getAmount, Monies.roundingMode)
-  val bondPercent = template.notary.bondPercent
-  val notaryFee = template.notary.btcNotaryFee
+  val bondPercent = contract.notary.bondPercent
+  val notaryFee = contract.notary.btcNotaryFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
   val roleProperty = new SimpleStringProperty(role.toString)
@@ -66,8 +63,8 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
   val notaryFeeProperty = new SimpleStringProperty(notaryFee.toString)
 
   val uncommitted = (role, state) match {
-    case (SELLER, s) if Seq(CREATED,TAKEN,SIGNED,OPENED).contains(s) => true
-    case (BUYER, s) if Seq(TAKEN,SIGNED,OPENED).contains(s) => true
+    case (SELLER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BUYER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
 
     case _ => false
   }
@@ -82,16 +79,17 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, offer: SellOffer,
       case (SIGNED, _) => "SIGNED"
       case (OPENED, _) => "OPENED"
       case (FUNDED, _) => "FUNDED"
-      case (CERT_DELIVERY_REQD, _) => "CERT REQD"
-      case (FIAT_SENT_CERTD, _) => "SENT"
-      case (FIAT_NOT_SENT_CERTD, _) => "NOT SENT"
+      case (FIAT_SENT, _) => "FIAT SENT"
       case (FIAT_RCVD, _) => "FIAT RCVD"
-      case (TRADED, BUYER) => "BOUGHT"
       case (TRADED, SELLER) => "SOLD"
+      case (TRADED, BUYER) => "BOUGHT"
       case (TRADED, NOTARY) => "TRADED"
+      case (CERT_DELIVERY_REQD, _) => "CERT REQD"
+      case (FIAT_SENT_CERTD, _) => "FIAT SENT"
+      case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
       case (BUYER_REFUNDED, _) => "*REFUNDED"
-      case (SELLER_FUNDED, BUYER) => "*BOUGHT"
       case (SELLER_FUNDED, SELLER) => "*SOLD"
+      case (SELLER_FUNDED, BUYER) => "*BOUGHT"
       case (SELLER_FUNDED, NOTARY) => "*TRADED"
 
       case _ => "ERROR!"

@@ -19,6 +19,7 @@ package org.bytabit.ft.wallet.model
 import org.bitcoinj.core.Transaction.Purpose
 import org.bitcoinj.core._
 import org.bitcoinj.script.{Script, ScriptBuilder}
+import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.model.TxTools.COIN_MINER_FEE
 
 import scala.collection.JavaConversions._

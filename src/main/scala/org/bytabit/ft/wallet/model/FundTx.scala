@@ -25,14 +25,13 @@ import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 object FundTx extends TxTools {
 
   // create new unsigned fund tx
-  def apply(coinFundEscrow: Coin, n: Notary, s: Seller, b: Buyer) =
+  def apply(coinFundEscrow: Coin, n: Notary, s: Seller, b: Buyer, ddk: Array[Byte]) =
 
-    new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b), s.fiatDeliveryDetailsKey,
-      b.fundTxUtxo, b.changeAddr, b.fiatDeliveryDetailsKey)
+    new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b), b.fundTxUtxo, b.changeAddr, ddk)
 }
 
 case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
-                  escrowAddr: Address, sellerFiatDeliveryDetailsKey: Array[Byte],
+                  escrowAddr: Address,
                   buyerFundTxUtxo: Seq[TransactionOutput], buyerChangeAddr: Address,
                   buyerFiatDeliveryDetailsKey: Array[Byte],
                   inputSigs: Seq[TxSig] = Seq()) extends Tx {
@@ -48,7 +47,6 @@ case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
 
   // verify delivery details key lengths
   assert(buyerFiatDeliveryDetailsKey.length == AESCipher.AES_KEY_LEN)
-  assert(sellerFiatDeliveryDetailsKey.length == AESCipher.AES_KEY_LEN)
 
   // add inputs
   buyerFundTxUtxo.foreach(o => tx.addInput(o))
@@ -64,17 +62,8 @@ case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
     tx.addOutput(coinBuyerChg, buyerChangeAddr)
   }
 
-  // for AES Init Vector use first 16 bytes of escrow address hash
-  val aesCipher = AESCipher(sellerFiatDeliveryDetailsKey, escrowAddr.getHash160.slice(0, AESCipher.AES_IV_LEN))
-
-  // encrypt buyer's AES key with sellers AES key
-  val encryptedKey = aesCipher.encrypt(buyerFiatDeliveryDetailsKey)
-
-  // make sure encrypted key length is 32 bytes
-  assert(encryptedKey.length == AESCipher.AES_KEY_LEN + AESCipher.AES_IV_LEN)
-
   // add encrypted aes key to decrypt fiat delivery details
-  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(encryptedKey).build())
+  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(buyerFiatDeliveryDetailsKey).build())
 
   assert(verified)
 

@@ -17,7 +17,6 @@
 package org.bytabit.ft.wallet.model
 
 import org.bitcoinj.core._
-import org.bytabit.ft.util.AESCipher
 
 object Seller extends WalletTools {
 
@@ -30,13 +29,11 @@ object Seller extends WalletTools {
 
   def apply(coinToOpenEscrow: Coin, openTxUtxo: List[TransactionOutput])(implicit w: Wallet): Seller =
 
-    new Seller(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, AESCipher.newAesKey)
+    new Seller(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo)
 
 }
 
-case class Seller(netParams: NetworkParameters, escrowPubKey: PubECKey,
-                  changeAddr: Address, payoutAddr: Address,
-                  openTxUtxo: Seq[TransactionOutput], fiatDeliveryDetailsKey: Array[Byte])
-  extends ParticipantDetails
+case class Seller(netParams: NetworkParameters, escrowPubKey: PubECKey, changeAddr: Address, payoutAddr: Address,
+                  openTxUtxo: Seq[TransactionOutput]) extends ParticipantDetails
 
 

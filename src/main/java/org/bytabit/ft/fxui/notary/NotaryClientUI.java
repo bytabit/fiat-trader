@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui.notary;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -30,7 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class NotaryClientUI extends ActorController {
+public class NotaryClientUI implements ActorController {
 
     private NotaryClientFxService notaryClientFxService;
 
@@ -65,8 +66,10 @@ public class NotaryClientUI extends ActorController {
     @FXML
     private Button addNotaryButton;
 
+    private ActorSystem sys;
+
     public NotaryClientUI(ActorSystem system) {
-        super(system);
+        sys = system;
         notaryClientFxService = new NotaryClientFxService(system);
         notaryClientFxService.start();
     }
@@ -128,6 +131,16 @@ public class NotaryClientUI extends ActorController {
                 }
             }
         };
+    }
+
+    @Override
+    public ActorSystem system() {
+        return sys;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return sys.log();
     }
 
 }

@@ -30,7 +30,7 @@ import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater, Monies}
+import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
@@ -150,7 +150,8 @@ class WalletManager extends Actor with ListenerUpdater {
       sender ! SellOfferCreated(offer.withSeller)
 
     case TakeSellOffer(sellOffer: SellOffer, deliveryDetails: String) =>
-      sender ! SellOfferTaken(sellOffer.take(deliveryDetails))
+      val key = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
+      sender ! SellOfferTaken(sellOffer.take(deliveryDetails, key))
 
     case SignTakenOffer(takenOffer: TakenOffer) =>
       sender ! TakenOfferSigned(takenOffer.sign)

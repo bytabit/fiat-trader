@@ -17,15 +17,19 @@
 package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import org.bytabit.ft.fxui.TradeInfoDialog;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 
 import java.util.ResourceBundle;
 
-public abstract class AbstractTradeUI extends ActorController {
+public abstract class AbstractTradeUI implements ActorController {
 
     protected TradeFxService tradeFxService;
 
@@ -64,15 +68,38 @@ public abstract class AbstractTradeUI extends ActorController {
     @FXML
     protected TableColumn<TradeUIModel, String> notaryFeeColumn;
 
-    public AbstractTradeUI(ActorSystem system) {
+    final private ActorSystem sys;
 
-        super(system);
+    public AbstractTradeUI(ActorSystem system) {
+        sys = system;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return system().log();
+    }
+
+    public ActorSystem system() {
+        return sys;
     }
 
     @FXML
     protected void initialize() {
 
         // setup trade table
+
+        tradeTable.setRowFactory(tv -> {
+            TableRow row = new TableRow<TradeUIModel>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2) {
+                    TradeUIModel rowData = (TradeUIModel) row.getItem();
+
+                    TradeInfoDialog dialog = new TradeInfoDialog(system(), rowData);
+                    dialog.showAndWait();
+                }
+            });
+            return row;
+        });
 
         statusColumn.setCellValueFactory(t -> t.getValue().statusProperty());
         fiatCurrencyColumn.setCellValueFactory(t -> t.getValue().fiatCurrencyUnitProperty());

@@ -51,47 +51,57 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   @Override
   def handler = {
 
-    case SellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(NOTARY, CREATED, offer, p)
+    // common path
 
-    case BuyerTookOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(TAKEN, id)
+    case SellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(NOTARY, sellOffer)
 
-    case SellerSignedOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(SIGNED, id)
+    case bto: BuyerTookOffer =>
+      takeOffer(bto)
 
-    case BuyerOpenedEscrow(id, _) =>
-      updateStateTradeUIModel(OPENED, id)
+    case sso: SellerSignedOffer =>
+      signOffer(sso)
 
-    case BuyerFundedEscrow(id) =>
-      updateStateTradeUIModel(FUNDED, id)
+    case boe: BuyerOpenedEscrow =>
+      openEscrow(boe)
 
-    case CertifyDeliveryRequested(id, _, _) =>
-      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+    case bfe: BuyerFundedEscrow =>
+      fundEscrow(bfe)
 
-    case FiatSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+    // happy path
 
-    case FiatNotSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
+    case fr: FiatReceived =>
+      fiatReceived(fr)
 
-    case FiatReceived(id) =>
-      updateStateTradeUIModel(FIAT_RCVD, id)
+    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
 
-    case BuyerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+    case SellerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
 
-    case SellerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+    // unhappy path
+
+    case cdr: CertifyDeliveryRequested =>
+      reqCertDelivery(cdr)
+
+    case fsc: FiatSentCertified =>
+      certifyFiatSent(fsc)
+
+    case fnc: FiatNotSentCertified =>
+      certifyFiatNotSent(fnc)
+
+    case sf: SellerFunded =>
+      fundSeller(sf)
+
+    case rb: BuyerRefunded =>
+      refundBuyer(rb)
+
+    // cancel path
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
 
-    case SellerFunded(id) =>
-      updateStateTradeUIModel(SELLER_FUNDED, id)
-
-    case BuyerRefunded(id) =>
-      updateStateTradeUIModel(BUYER_REFUNDED, id)
+    // errors
 
     case e: NotaryFSM.Event =>
       log.debug(s"unhandled NotaryFSM event: $e")
@@ -103,12 +113,12 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  def certifyFiatSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatSent(url,tradeId))
+  def certifyFiatSent(url: URL, tradeId: UUID): Unit = {
+    sendCmd(NotarizeProcess.CertifyFiatSent(url, tradeId))
   }
 
-  def certifyFiatNotSent(url:URL, tradeId:UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatNotSent(url,tradeId))
+  def certifyFiatNotSent(url: URL, tradeId: UUID): Unit = {
+    sendCmd(NotarizeProcess.CertifyFiatNotSent(url, tradeId))
   }
 
   def sendCmd(cmd: NotarizeProcess.Command) = sendMsg(notaryMgrRef, cmd)

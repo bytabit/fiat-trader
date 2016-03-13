@@ -25,7 +25,7 @@ import org.joda.time.LocalDateTime
 object TransactionUIModel {
   def apply(tx: Transaction, btcAmt: Money) = {
 
-    new TransactionUIModel(tx.getHashAsString, tx.getConfidence.getConfidenceType.toString, tx.getConfidence.getDepthInBlocks, LocalDateTime.fromDateFields(tx.getUpdateTime), tx.getMemo, btcAmt)
+    new TransactionUIModel(tx.getHash.toString, tx.getConfidence.getConfidenceType.toString, tx.getConfidence.getDepthInBlocks, LocalDateTime.fromDateFields(tx.getUpdateTime), tx.getMemo, btcAmt)
   }
 }
 

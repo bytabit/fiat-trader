@@ -21,10 +21,11 @@ import java.util.UUID
 
 import org.bitcoinj.core._
 import org.bytabit.ft.trade.model.{Contract, SellOffer, SignedTakenOffer, TakenOffer}
-import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatMoney}
+import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 import org.joda.money.CurrencyUnit
+import org.joda.time.DateTime
 import org.scalatest._
 
 
@@ -53,6 +54,9 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   val coinSellerOpenIn1 = coinBond
   val coinSellerOpenIn2 = coinNotaryFee.add(COIN_MINER_FEE)
 
+  // delivery details key
+  val deliveryDetailsKey = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
+
   it should "create open escrow transaction" in {
     val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
     val openTx = sto.fullySignedOpenTx
@@ -60,7 +64,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   }
 
   it should "create fund escrow transaction" in {
-    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
+    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
     val fundTx = sto.unsignedFundTx
     assert(fundTx.verified)
   }
@@ -78,7 +82,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   }
 
   it should "buyer sign fund escrow transaction" in {
-    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
+    val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
     val fundTx = sto.unsignedFundTx.sign(buyerWallet)
     fundTx shouldBe 'fullySigned
   }
@@ -116,7 +120,9 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val cfr = sto.certifyFiatRequested(None)
+      val ot = sto.withOpenTx(sto.unsignedOpenTx.tx.getHash, new DateTime(sto.unsignedOpenTx.tx.getUpdateTime))
+      val ft = ot.withFundTx(sto.unsignedFundTx.tx.getHash, new DateTime(sto.unsignedFundTx.tx.getUpdateTime), Some(deliveryDetailsKey))
+      val cfr = ft.certifyFiatRequested(None)
       val cfs = cfr.certifyFiatSent(notaryWallet)
 
       val signedPayoutTx = cfs.notarySignedFiatSentPayoutTx.sign(sto.seller.escrowPubKey)(sellerWallet)
@@ -130,10 +136,12 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     (0 to 10).foreach { i =>
       // sign multiple times to ensure signature ordering is always correct
       val sto = signedTakenOffer(notaryWallet, sellerWallet, buyerWallet)
-      val cfr = sto.certifyFiatRequested(None)
+      val ot = sto.withOpenTx(sto.unsignedOpenTx.tx.getHash, new DateTime(sto.unsignedOpenTx.tx.getUpdateTime))
+      val ft = ot.withFundTx(sto.unsignedFundTx.tx.getHash, new DateTime(sto.unsignedFundTx.tx.getUpdateTime), Some(deliveryDetailsKey))
+      val cfr = ft.certifyFiatRequested(None)
       val cfns = cfr.certifyFiatNotSent(notaryWallet)
 
-      val signedPayoutTx = cfns.notarySignedFiatSentPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
+      val signedPayoutTx = cfns.notarySignedFiatNotSentPayoutTx.sign(sto.buyer.escrowPubKey)(buyerWallet)
 
       signedPayoutTx shouldBe 'fullySigned
     }
@@ -197,11 +205,15 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
 
     val so = sellOffer(notaryWallet, sellerWallet)
 
-    val buyer = Buyer(so.offer.coinToOpenEscrow, so.offer.coinToFundEscrow, deliveryDetails, buyerOpenUtxo, buyerFundUtxo)(buyerWallet)
+    val buyer = Buyer(so.offer.coinToOpenEscrow, so.offer.coinToFundEscrow, buyerOpenUtxo, buyerFundUtxo)(buyerWallet)
     val buyerOpenTxSigs: Seq[TxSig] = so.unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
-    val buyerFundPayoutTxo: Seq[TransactionOutput] = so.unsignedFundTx(buyer).sign(buyerWallet).outputsToEscrow
+    val buyerFundPayoutTxo: Seq[TransactionOutput] = so.unsignedFundTx(buyer, deliveryDetailsKey).sign(buyerWallet).outputsToEscrow
 
-    so.withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo)
+    // cipher delivery details
+    val cipher = so.cipher(deliveryDetailsKey, so.seller, buyer)
+    val cipherDeliveryDetails = cipher.encrypt(deliveryDetails.map(_.toByte).toArray)
+
+    so.withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherDeliveryDetails)
   }
 
   def signedTakenOffer(notaryWallet: Wallet, sellerWallet: Wallet, buyerWallet: Wallet): SignedTakenOffer = {

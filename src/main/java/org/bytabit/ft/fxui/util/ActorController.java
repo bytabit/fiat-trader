@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.util
+package org.bytabit.ft.fxui.util;
 
-import akka.actor.ActorSystem
-import akka.event.Logging
+import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 
-abstract class ActorController(system: ActorSystem) {
+public interface ActorController {
 
-  final val log = Logging.getLogger(system, this)
+    ActorSystem system();
 
+    LoggingAdapter log();
 }

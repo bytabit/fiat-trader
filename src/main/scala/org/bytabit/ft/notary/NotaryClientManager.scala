@@ -23,7 +23,7 @@ import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import org.bytabit.ft.notary.NotaryClientManager._
 import org.bytabit.ft.trade.BuyProcess.{RequestCertifyDelivery, ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.SellProcess.{SendFiat, AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.{NotarizeProcess, BuyProcess, SellProcess, TradeFSM}
 import org.bytabit.ft.util.ListenerUpdater
 import org.bytabit.ft.util.ListenerUpdater.AddListener
@@ -146,6 +146,9 @@ class NotaryClientManager(walletMgr: ActorRef) extends PersistentActor with List
 
     case ReceiveFiat(url, oid) =>
       notaryClientFSM(url).foreach(_ ! ReceiveFiat(url, oid))
+
+    case SendFiat(url, oid) =>
+      notaryClientFSM(url).foreach(_ ! SendFiat(url, oid))
 
     case rcd:SellProcess.RequestCertifyDelivery =>
       notaryClientFSM(rcd.notaryUrl).foreach(_ ! rcd)

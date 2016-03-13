@@ -27,6 +27,7 @@ import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, RemoveWatchEscrowAddress}
+import org.joda.time.DateTime
 
 import scala.language.postfixOps
 
@@ -57,7 +58,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   when(CREATED) {
 
     case Event(Start, so: SellOffer) =>
-      context.parent ! SellerCreatedOffer(so.id, so)
+      startCreate(so)
       stay()
 
     case Event(sco: SellerCreatedOffer, so: SellOffer) if sco.posted.isDefined =>
@@ -71,13 +72,14 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
     // someone took the offer
     case Event(bto: BuyerTookOffer, so: SellOffer) if bto.posted.isDefined =>
-      goto(TAKEN) applying bto
+      goto(TAKEN) applying bto andThen { to =>
+        context.parent ! bto
+      }
   }
 
   when(TAKEN) {
     case Event(Start, to: TakenOffer) =>
-      context.parent ! SellerCreatedOffer(to.id, to.sellOffer)
-      context.parent ! BuyerTookOffer(to.id, to.buyer, Seq(), Seq())
+      startTaken(to)
       stay()
 
     // seller signed
@@ -91,17 +93,17 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, Seq(), Seq())
+      startSigned(sto)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedOpenTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(OPENED) andThen {
-          case usto: SignedTakenOffer =>
-            context.parent ! BuyerOpenedEscrow(sto.id, Seq())
+        val boe = BuyerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(OPENED) applying boe andThen {
+          case ot: OpenedTrade =>
+            context.parent ! boe
         }
       }
       else
@@ -109,18 +111,19 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   }
 
   when(OPENED) {
-    case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerOpenedEscrow(sto.id, Seq())
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+    case Event(Start, ot: OpenedTrade) =>
+      startOpened(ot)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(ot.escrowAddress)
       stay()
 
-    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
-      if (outputsEqual(sto.unsignedFundTx, etu.tx) &&
+    case Event(etu: WalletManager.EscrowTransactionUpdated, ot: OpenedTrade) =>
+      if (outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(FUNDED) andThen {
-          case usto: SignedTakenOffer =>
-            context.parent ! BuyerFundedEscrow(sto.id)
+        val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime),
+          fiatDeliveryDetailsKey(etu.tx))
+        goto(FUNDED) applying bfe andThen {
+          case ft: FundedTrade =>
+            context.parent ! bfe
         }
       }
       else
@@ -128,37 +131,55 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   }
 
   when(FUNDED) {
-    case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! BuyerFundedEscrow(sto.id)
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+    case Event(Start, ft: FundedTrade) =>
+      startFunded(ft)
+      walletMgrRef ! WalletManager.AddWatchEscrowAddress(ft.escrowAddress)
       stay()
 
-    case Event(cfr: CertifyDeliveryRequested, sto: SignedTakenOffer) if cfr.posted.isDefined =>
+    case Event(cfr: CertifyDeliveryRequested, ft: FundedTrade) if cfr.posted.isDefined =>
       goto(CERT_DELIVERY_REQD) applying cfr andThen {
         case sto: CertifyFiatEvidence =>
           context.parent ! cfr
       }
 
-    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
-      if (outputsEqual(sto.unsignedPayoutTx, etu.tx) &&
+    case Event(etu: WalletManager.EscrowTransactionUpdated, ft: FundedTrade) =>
+      if (outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(TRADED) andThen {
-          case usto: SignedTakenOffer =>
-            context.parent ! BuyerReceivedPayout(sto.id)
-            walletMgrRef ! WalletManager.RemoveWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+        val brp = BuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(TRADED) applying brp andThen {
+          case st: SettledTrade =>
+            context.parent ! brp
+            walletMgrRef ! WalletManager.RemoveWatchEscrowAddress(ft.escrowAddress)
         }
       }
       else
         stay()
   }
 
+  // happy path
+
+  when(TRADED) {
+    case Event(Start, st: SettledTrade) =>
+      startTraded(st)
+      stay()
+
+    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
+      stay()
+
+    case e =>
+      log.error(s"Received event after being traded: $e")
+      stay()
+  }
+
+  // unhappy path
+
   when(CERT_DELIVERY_REQD) {
     case Event(Start, cfe: CertifyFiatEvidence) =>
-      context.parent ! SellerCreatedOffer(cfe.id, cfe.takenOffer.sellOffer)
-      context.parent ! CertifyDeliveryRequested(cfe.id)
+      startCertDeliveryReqd(cfe)
       walletMgrRef ! WalletManager.AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
       stay()
+
+    // certify fiat sent
 
     case Event(cfs: CertifyFiatSent, cfe: CertifyFiatEvidence) =>
       walletMgrRef ! WalletManager.CertifyFiatSent(cfe)
@@ -173,6 +194,8 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
         case cfd: CertifiedFiatDelivery =>
           context.parent ! fsc
       }
+
+    // certify fiat not sent
 
     case Event(cfns: CertifyFiatNotSent, cfe: CertifyFiatEvidence) =>
       walletMgrRef ! WalletManager.CertifyFiatNotSent(cfe)
@@ -189,39 +212,19 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
       }
   }
 
-  when(TRADED) {
-    case Event(Start, sto: SignedTakenOffer) =>
-      context.parent ! SellerCreatedOffer(sto.id, sto.takenOffer.sellOffer)
-      context.parent ! SellerReceivedPayout(sto.id)
-      stay()
-
-    case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
-      stay()
-
-    case e =>
-      log.error(s"Received event after being traded: $e")
-      stay()
-  }
-
-  when(CANCELED) {
-    case e =>
-      log.error(s"Received event after being canceled: $e")
-      stay()
-  }
-
   when(FIAT_SENT_CERTD) {
     case Event(Start, cfs: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfs.id, cfs.sellOffer)
-      context.parent ! FiatSentCertified(cfs.id, Seq())
+      startFiatSentCertd(cfs)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
       if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(SELLER_FUNDED) andThen {
-          case cfd:CertifiedFiatDelivery =>
-            context.parent ! SellerFunded(cfd.id)
-            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        val sf = SellerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(SELLER_FUNDED) applying sf andThen {
+          case cst: CertifiedSettledTrade =>
+            context.parent ! sf
+            walletMgrRef ! RemoveWatchEscrowAddress(cst.escrowAddress)
         }
       }
       else
@@ -234,17 +237,17 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
 
   when(FIAT_NOT_SENT_CERTD) {
     case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! FiatNotSentCertified(cfd.id, Seq())
+      startFiatNotSentCertd(cfd)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
       if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
-        goto(BUYER_REFUNDED) andThen {
-          case cfd: CertifiedFiatDelivery =>
-            context.parent ! BuyerRefunded(cfd.id)
-            walletMgrRef ! RemoveWatchEscrowAddress(cfd.fullySignedOpenTx.escrowAddr)
+        val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(BUYER_REFUNDED) applying br andThen {
+          case cst: CertifiedSettledTrade =>
+            context.parent ! br
+            walletMgrRef ! RemoveWatchEscrowAddress(cfd.escrowAddress)
         }
       }
       else
@@ -252,9 +255,12 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   }
 
   when(SELLER_FUNDED) {
-    case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! SellerFunded(cfd.id)
+    case Event(Start, cst: CertifiedSettledTrade) =>
+      startSellerFunded(cst)
+      stay()
+
+    case Event(etu: EscrowTransactionUpdated, cst: CertifiedSettledTrade) =>
+      //log.warning("Received escrow tx update after seller funded")
       stay()
 
     case e =>
@@ -263,13 +269,24 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
   }
 
   when(BUYER_REFUNDED) {
-    case Event(Start, cfd: CertifiedFiatDelivery) =>
-      context.parent ! SellerCreatedOffer(cfd.id, cfd.sellOffer)
-      context.parent ! BuyerRefunded(cfd.id)
+    case Event(Start, cst: CertifiedSettledTrade) =>
+      startBuyerRefunded(cst)
+      stay()
+
+    case Event(etu: EscrowTransactionUpdated, cst: CertifiedSettledTrade) =>
+      //log.warning("Received escrow tx update after buyer refunded")
       stay()
 
     case e =>
       log.error(s"Received event after buyer refunded: $e")
+      stay()
+  }
+
+  // cancel path
+
+  when(CANCELED) {
+    case e =>
+      log.error(s"Received event after being canceled: $e")
       stay()
   }
 

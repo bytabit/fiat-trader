@@ -2,9 +2,11 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bitcoinj.core.Wallet
+import org.bitcoinj.core.Sha256Hash
+import org.bytabit.ft.util.AESCipher
 import org.bytabit.ft.wallet.model.{FundTx, OpenTx, PayoutTx, TxSig}
 import org.joda.money.Money
+import org.joda.time.DateTime
 
 case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig],
                             sellerPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
@@ -22,14 +24,16 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
 
   def unsignedOpenTx: OpenTx = takenOffer.unsignedOpenTx
 
+  def escrowAddress = takenOffer.escrowAddress
+
   def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
 
-  def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer)
+  def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer,
+    takenOffer.fiatDeliveryDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
 
   def unsignedPayoutTx: PayoutTx = takenOffer.unsignedPayoutTx(fullySignedOpenTx)
 
   def sellerSignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(sellerPayoutTxSigs)
 
-  def certifyFiatRequested(evidence: Option[Array[Byte]]) =
-    CertifyFiatEvidence(this, evidence.toSeq)
+  def withOpenTx(openTxHash: Sha256Hash, openTxUpdateTime: DateTime) = OpenedTrade(this, openTxHash, openTxUpdateTime)
 }

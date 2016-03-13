@@ -2,8 +2,10 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
+import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
+import org.joda.time.DateTime
 
 case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
                                  notaryPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
@@ -15,6 +17,8 @@ case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
 
   override val text: String = certifyFiatEvidence.text
   override val keyValues: Map[String, Option[String]] = certifyFiatEvidence.keyValues
+
+  val escrowAddress = certifyFiatEvidence.escrowAddress
 
   val seller = certifyFiatEvidence.seller
   val buyer = certifyFiatEvidence.buyer
@@ -30,4 +34,6 @@ case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
 
   def notarySignedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.addInputSigs(notaryPayoutTxSigs)
 
+  def withPayoutTx(payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime) =
+    CertifiedSettledTrade(this, payoutTxHash, payoutTxUpdateTime)
 }

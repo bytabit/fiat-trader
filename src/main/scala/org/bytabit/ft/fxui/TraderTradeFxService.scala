@@ -27,7 +27,7 @@ import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.SellProcess.{SendFiat, AddSellOffer, CancelSellOffer}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer}
@@ -67,6 +67,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   @Override
   def handler = {
 
+    // Handle Notary Events
+
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
       updateCurrencyUnits(contracts, sellCurrencyUnits)
@@ -81,65 +83,81 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     case e: NotaryFSM.Event =>
       log.debug(s"Unhandled NotaryFSM event: $e")
 
-    case LocalSellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(SELLER, CREATED, offer, p)
+    // Handle Trade Events
+
+    // common path
+
+    case LocalSellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(SELLER, sellOffer)
       updateUncommitted()
 
-    case SellerCreatedOffer(id, offer, p) =>
-      addOrUpdateTradeUIModel(BUYER, CREATED, offer, p)
+    case SellerCreatedOffer(id, sellOffer, p) =>
+      createOffer(BUYER, sellOffer)
       updateUncommitted()
 
-    case BuyerTookOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(TAKEN, id)
+    case bto: BuyerTookOffer =>
+      takeOffer(bto)
       updateUncommitted()
 
-    case SellerSignedOffer(id, _, _, _, _) =>
-      updateStateTradeUIModel(SIGNED, id)
+    case sso: SellerSignedOffer =>
+      signOffer(sso)
       updateUncommitted()
 
-    case BuyerOpenedEscrow(id, _) =>
-      updateStateTradeUIModel(OPENED, id)
+    case boe: BuyerOpenedEscrow =>
+      openEscrow(boe)
       updateUncommitted()
 
-    case BuyerFundedEscrow(id) =>
-      updateStateTradeUIModel(FUNDED, id)
+    case bfe: BuyerFundedEscrow =>
+      fundEscrow(bfe)
       updateUncommitted()
 
-    case CertifyDeliveryRequested(id, _, _) =>
-      updateStateTradeUIModel(CERT_DELIVERY_REQD, id)
+    // happy path
+
+    case fs: FiatSent =>
+      fiatSent(fs)
       updateUncommitted()
 
-    case FiatSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_SENT_CERTD, id)
+    case fr: FiatReceived =>
+      fiatReceived(fr)
       updateUncommitted()
 
-    case FiatNotSentCertified(id, _, _) =>
-      updateStateTradeUIModel(FIAT_NOT_SENT_CERTD, id)
+    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
       updateUncommitted()
 
-    case FiatReceived(id) =>
-      updateStateTradeUIModel(FIAT_RCVD, id)
+    case SellerReceivedPayout(id, txHash, txUpdated) =>
+      payoutEscrow(id, txHash, txUpdated)
       updateUncommitted()
 
-    case BuyerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+    // unhappy path
+
+    case cdr: CertifyDeliveryRequested =>
+      reqCertDelivery(cdr)
       updateUncommitted()
 
-    case SellerReceivedPayout(id) =>
-      updateStateTradeUIModel(TRADED, id)
+    case fsc: FiatSentCertified =>
+      certifyFiatSent(fsc)
       updateUncommitted()
 
-    case SellerFunded(id) =>
-      updateStateTradeUIModel(SELLER_FUNDED, id)
+    case fnc: FiatNotSentCertified =>
+      certifyFiatNotSent(fnc)
       updateUncommitted()
 
-    case BuyerRefunded(id) =>
-      updateStateTradeUIModel(BUYER_REFUNDED, id)
+    case sf: SellerFunded =>
+      fundSeller(sf)
       updateUncommitted()
+
+    case rb: BuyerRefunded =>
+      refundBuyer(rb)
+      updateUncommitted()
+
+    // cancel path
 
     case SellerCanceledOffer(id, p) =>
       cancelTradeUIModel(id)
       updateUncommitted()
+
+    // errors
 
     case e: TradeFSM.Event =>
       log.error(s"Unhandled TradeFSM event: $e")
@@ -253,14 +271,18 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     sendCmd(ReceiveFiat(url, tradeId))
   }
 
-  // TODO FT-91: collect evidence
-  def sellerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(SellProcess.RequestCertifyDelivery(url,tradeId))
+  def sendFiat(url: URL, tradeId: UUID): Unit = {
+    sendCmd(SendFiat(url, tradeId))
   }
 
   // TODO FT-91: collect evidence
-  def buyerReqCertDelivery(url:URL, tradeId:UUID): Unit = {
-    sendCmd(BuyProcess.RequestCertifyDelivery(url,tradeId))
+  def sellerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
+    sendCmd(SellProcess.RequestCertifyDelivery(url, tradeId))
+  }
+
+  // TODO FT-91: collect evidence
+  def buyerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
+    sendCmd(BuyProcess.RequestCertifyDelivery(url, tradeId))
   }
 
   def updateUncommitted() = {

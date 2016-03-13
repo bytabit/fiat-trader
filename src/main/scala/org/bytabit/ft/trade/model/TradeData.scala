@@ -19,7 +19,7 @@ package org.bytabit.ft.trade.model
 import java.util.UUID
 
 import org.bitcoinj.core.TransactionOutput
-import org.bytabit.ft.util.{BTCMoney, Monies}
+import org.bytabit.ft.util.{AESCipher, BTCMoney, Monies}
 import org.bytabit.ft.wallet.model.TxTools.{BTC_MINER_FEE, BTC_OP_RETURN_FEE}
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
@@ -37,6 +37,7 @@ trait TradeData {
 
   lazy val bondPercent = notary.bondPercent
   lazy val btcNotaryFee = notary.btcNotaryFee
+  lazy val btcMinerFee = BTC_MINER_FEE
 
   lazy val btcBond = btcAmount.multipliedBy(notary.bondPercent, Monies.roundingMode)
 
@@ -63,13 +64,17 @@ trait TradeData {
   // BTC Cancel Trade Payout to Seller Amount (cancel path)
   lazy val btcSellerCancelPayout = btcNotaryFee.plus(btcBond)
 
+  // AES cipher for fiat delivery details, init Vector is first 16 bytes of escrow address hash
+  def cipher(key: Array[Byte], seller: Seller, buyer: Buyer) =
+    AESCipher(key, unsignedOpenTx(seller, buyer).escrowAddr.getHash160.slice(0, AESCipher.AES_IV_LEN))
+
   // unsigned open escrow tx
   def unsignedOpenTx(seller: Seller, buyer: Buyer) =
     OpenTx(BTCMoney.toCoin(btcToOpenEscrow), notary, seller, buyer)
 
   // unsigned fund escrow tx
-  def unsignedFundTx(seller: Seller, buyer: Buyer) =
-    FundTx(BTCMoney.toCoin(btcToFundEscrow), notary, seller, buyer)
+  def unsignedFundTx(seller: Seller, buyer: Buyer, deliveryDetailsKey: Array[Byte]) =
+    FundTx(BTCMoney.toCoin(btcToFundEscrow), notary, seller, buyer, deliveryDetailsKey)
 
   // unsigned happy path payout escrow tx
   def unsignedPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =

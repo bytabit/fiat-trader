@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui.notary;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -30,7 +31,7 @@ import org.joda.money.CurrencyUnit;
 
 import java.util.ResourceBundle;
 
-public class NotaryServerUI extends ActorController {
+public class NotaryServerUI implements ActorController {
 
     private NotaryServerFxService notaryServerFxService;
 
@@ -80,8 +81,10 @@ public class NotaryServerUI extends ActorController {
     @FXML
     private TableColumn<ContractUIModel, String> deliveryMethodColumn;
 
+    final private ActorSystem sys;
+
     public NotaryServerUI(ActorSystem system) {
-        super(system);
+        sys = system;
         notaryServerFxService = new NotaryServerFxService(system);
     }
 
@@ -161,5 +164,15 @@ public class NotaryServerUI extends ActorController {
                 }
             }
         };
+    }
+
+    @Override
+    public ActorSystem system() {
+        return sys;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return sys.log();
     }
 }

@@ -28,7 +28,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import org.bitcoinj.core.{Address, Transaction, TransactionOutput}
+import org.bitcoinj.core.{Address, Sha256Hash, Transaction, TransactionOutput}
 import org.bytabit.ft.trade.TradeFSM.{SellerSignedOffer, _}
 import org.bytabit.ft.trade.model.{SellOffer, TakenOffer, TradeData, _}
 import org.bytabit.ft.util.Posted
@@ -37,7 +37,7 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.reflect._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 object TradeFSM {
 
@@ -70,35 +70,40 @@ object TradeFSM {
   final case class SellerCanceledOffer(id: UUID,
                                        posted: Option[DateTime] = None) extends PostedEvent
 
+  final case class BuyerSetFiatDeliveryDetailsKey(id: UUID, fiatDeliveryDetailsKey: Array[Byte]) extends Event
+
   final case class BuyerTookOffer(id: UUID, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
                                   buyerFundPayoutTxo: Seq[TransactionOutput],
+                                  cipherBuyerDeliveryDetails: Array[Byte],
                                   posted: Option[DateTime] = None) extends PostedEvent
 
   final case class SellerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
                                      posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BuyerOpenedEscrow(id: UUID, openSigs: Seq[TxSig]) extends Event
+  final case class BuyerOpenedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class BuyerFundedEscrow(id: UUID) extends Event
+  final case class BuyerFundedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime, fiatDeliveryDetailsKey: Option[Array[Byte]]) extends Event
 
   final case class FiatReceived(id: UUID) extends Event
 
-  final case class BuyerReceivedPayout(id: UUID) extends Event
+  final case class FiatSent(id: UUID) extends Event
 
-  final case class SellerReceivedPayout(id: UUID) extends Event
+  final case class BuyerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
+
+  final case class SellerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
   final case class CertifyDeliveryRequested(id: UUID, evidence: Option[Array[Byte]] = None,
                                             posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
-                                            posted: Option[DateTime] = None) extends PostedEvent
+                                     posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatNotSentCertified(id: UUID, payoutSigs: Seq[TxSig],
-                                               posted: Option[DateTime] = None) extends PostedEvent
+                                        posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class SellerFunded(id: UUID) extends Event
+  final case class SellerFunded(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class BuyerRefunded(id: UUID) extends Event
+  final case class BuyerRefunded(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
   // states
 
@@ -170,7 +175,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   import spray.json._
 
-  val id:UUID
+  val id: UUID
 
   // implicits
 
@@ -192,34 +197,130 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
     (event, tradeData) match {
 
+      // common path
+
       case (SellerCreatedOffer(_, so, Some(_)), offer: Offer) =>
         so
 
-      case (BuyerTookOffer(_, b, bots, bfpt, _), sellOffer: SellOffer) =>
-        sellOffer.withBuyer(b, bots, bfpt)
+      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), sellOffer: SellOffer) =>
+        sellOffer.withBuyer(b, bots, bfpt, cdd)
 
-      case (BuyerTookOffer(_, b, bots, bfpt, _), takenOffer: TakenOffer) =>
+      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), takenOffer: TakenOffer) =>
         takenOffer
 
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), signedTakenOffer:SignedTakenOffer) =>
-        signedTakenOffer.certifyFiatRequested(e)
+      case (BuyerSetFiatDeliveryDetailsKey(_, dk), takenOffer: TakenOffer) =>
+        takenOffer.withFiatDeliveryDetailsKey(dk)
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
-        certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
+      case (BuyerOpenedEscrow(_, th, ut), signedTakenOffer: SignedTakenOffer) =>
+        signedTakenOffer.withOpenTx(th, ut)
 
-      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (BuyerFundedEscrow(_, th, ut, fdk), openedTrade: OpenedTrade) =>
+        openedTrade.withFundTx(th, ut, fdk)
+
+      // happy path
+
+      case (BuyerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
+        fundedTrade.withPayoutTx(txh, ut)
+
+      case (SellerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
+        fundedTrade.withPayoutTx(txh, ut)
+
+      // unhappy path
+
+      case (CertifyDeliveryRequested(_, e, Some(_)), fundedTrade: FundedTrade) =>
+        fundedTrade.certifyFiatRequested(e)
+
+      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
+        certifyFiatEvidence.addCertifyDeliveryRequest(e)
+      //certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
+
+      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
         certifyFiatEvidence.withNotarizedFiatSentSigs(ps)
 
-      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence:CertifyFiatEvidence) =>
+      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
         certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
+
+      case (SellerFunded(_, th, ut), certifiedFiatDelivery: CertifiedFiatDelivery) =>
+        certifiedFiatDelivery.withPayoutTx(th, ut)
+
+      case (BuyerRefunded(_, th, ut), certifiedFiatDelivery: CertifiedFiatDelivery) =>
+        certifiedFiatDelivery.withPayoutTx(th, ut)
+
+      // cancel path
+
+      // TODO FT-80, FT-81, FT-82
+
+      // error
 
       case _ =>
         log.error(s"No transition for event: $event\nwith trade data: ${tradeData.getClass.getSimpleName}")
         tradeData
     }
+
+  // send start events for each state
+
+  // common path
+
+  def startCreate(so: SellOffer): Unit = {
+    context.parent ! SellerCreatedOffer(so.id, so)
+  }
+
+  def startTaken(to: TakenOffer): Unit = {
+    startCreate(to.sellOffer)
+    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherFiatDeliveryDetails)
+  }
+
+  def startSigned(sto: SignedTakenOffer): Unit = {
+    startTaken(sto.takenOffer)
+    context.parent ! SellerSignedOffer(sto.id, sto.buyer.id, sto.sellerOpenTxSigs, sto.sellerPayoutTxSigs)
+  }
+
+  def startOpened(ot: OpenedTrade): Unit = {
+    startSigned(ot.signedTakenOffer)
+    context.parent ! BuyerOpenedEscrow(ot.id, ot.openTxHash, ot.openTxUpdateTime)
+  }
+
+  def startFunded(ft: FundedTrade): Unit = {
+    startOpened(ft.openedTrade)
+    context.parent ! BuyerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.fiatDeliveryDetailsKey)
+  }
+
+  // happy path
+
+  def startTraded(st: SettledTrade): Unit = {
+    startFunded(st.fundedTrade)
+    context.parent ! SellerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
+  }
+
+  // unhappy path
+
+  def startCertDeliveryReqd(cfe: CertifyFiatEvidence): Unit = {
+    startFunded(cfe.fundedTrade)
+    context.parent ! CertifyDeliveryRequested(cfe.id)
+  }
+
+  def startFiatSentCertd(cfd: CertifiedFiatDelivery): Unit = {
+    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+    context.parent ! FiatSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+  }
+
+  def startFiatNotSentCertd(cfd: CertifiedFiatDelivery): Unit = {
+    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+    context.parent ! FiatNotSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+  }
+
+  def startSellerFunded(cst: CertifiedSettledTrade): Unit = {
+    startFiatSentCertd(cst.certifiedFiatDelivery)
+    context.parent ! SellerFunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
+  }
+
+  def startBuyerRefunded(cst: CertifiedSettledTrade): Unit = {
+    startFiatNotSentCertd(cst.certifiedFiatDelivery)
+    context.parent ! BuyerRefunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
+  }
 
   // http flow
 
@@ -259,7 +360,20 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
     }
   }
 
+  def outputsEqual(tx1: Tx, tx2: Transaction, from: Int, until: Int): Boolean = {
+    tx1.outputs.slice(from, until).toSet == tx2.getOutputs.slice(from, until).toSet
+  }
+
   def outputsEqual(tx1: Tx, tx2: Transaction): Boolean = {
-    tx1.outputs.toSet == tx2.getOutputs.toSet
+    val until: Int = Seq(tx1.outputs.length - 1, tx2.getOutputs.length - 1).min
+    outputsEqual(tx1, tx2, 0, until)
+  }
+
+  def fiatDeliveryDetailsKey(tx: Transaction): Option[Array[Byte]] = {
+    Try {
+      val outputs = tx.getOutputs
+      val lastOutputScript = outputs.get(outputs.size - 1).getScriptPubKey
+      lastOutputScript.getChunks.get(1).data
+    }.toOption
   }
 }

@@ -21,7 +21,7 @@ import java.util.UUID
 
 import org.bitcoinj.core._
 import org.bytabit.ft.trade.model.{Contract, Offer}
-import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatMoney}
+import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.scalatest._
 
@@ -39,6 +39,9 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
 
   // seller
   val sellerWallet = new Wallet(params)
+
+  // delivery details key
+  val deliveryDetailsKey = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
 
   it should "create fully signed transactions from complete buy offer" in {
 
@@ -62,13 +65,17 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     val buyerInput2Key = buyerWallet.freshReceiveKey().dropParent.dropPrivateBytes
     val buyerOpenUtxo = Seq(unspentTx(None, sellOffer.coinToOpenEscrow, buyerInput1Key)).map(_.getOutput(0))
     val buyerFundUtxo = Seq(unspentTx(None, sellOffer.coinToFundEscrow, buyerInput2Key)).map(_.getOutput(0))
-    val buyer = Buyer(sellOffer.coinToOpenEscrow, sellOffer.coinToFundEscrow, deliveryDetails)(buyerWallet)
+    val buyer = Buyer(sellOffer.coinToOpenEscrow, sellOffer.coinToFundEscrow)(buyerWallet)
       .copy(openTxUtxo = buyerOpenUtxo, fundTxUtxo = buyerFundUtxo)
     val buyerOpenTxSigs: Seq[TxSig] =
       sellOffer.unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
     val buyerFundPayoutTxo: Seq[TransactionOutput] =
-      sellOffer.unsignedFundTx(buyer).sign(buyerWallet).outputsToEscrow
-    val takenSellOffer = sellOffer.withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo)
+      sellOffer.unsignedFundTx(buyer, deliveryDetailsKey).sign(buyerWallet).outputsToEscrow
+
+    // cipher delivery details
+    val cipher = offer.cipher(deliveryDetailsKey, seller, buyer)
+    val cipherDeliveryDetails = cipher.encrypt(deliveryDetails.map(_.toByte).toArray)
+    val takenSellOffer = sellOffer.withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherDeliveryDetails)
 
     // add seller open tx sigs and payout tx sigs to taken sell offer to create
     // fully signed offer
@@ -78,7 +85,7 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
       takenSellOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
     val sellerPayoutTxSigs: Seq[TxSig] =
       takenSellOffer.unsignedPayoutTx(fullySignedOpenTx).sign(seller.escrowPubKey)(sellerWallet).inputSigs
-    val sellerSignedOffer = takenSellOffer.withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs)
+    val sellerSignedOffer = takenSellOffer.withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
 
     // add buyer signed open tx, fund tx and payout tx to get fully signed offer
     val buyerSignedOpenTx = sellerSignedOffer.fullySignedOpenTx

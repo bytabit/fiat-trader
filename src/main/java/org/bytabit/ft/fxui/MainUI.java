@@ -17,6 +17,7 @@
 package org.bytabit.ft.fxui;
 
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -25,14 +26,16 @@ import org.bytabit.ft.util.Config;
 
 import java.util.ResourceBundle;
 
-public class MainUI extends ActorController {
+public class MainUI implements ActorController {
 
 
     @FXML
     private ResourceBundle resources;
 
+    private ActorSystem sys;
+
     public MainUI(ActorSystem system) {
-        super(system);
+        sys = system;
     }
 
     @FXML
@@ -61,5 +64,15 @@ public class MainUI extends ActorController {
         traderTradesTab.setDisable(Config.serverEnabled());
 
         tabPane.getTabs().removeIf(Tab::isDisable);
+    }
+
+    @Override
+    public ActorSystem system() {
+        return sys;
+    }
+
+    @Override
+    public LoggingAdapter log() {
+        return sys.log();
     }
 }
