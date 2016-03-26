@@ -20,9 +20,9 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.fxui.model.TradeUIModel.NOTARY
+import org.bytabit.ft.arbitrator._
+import org.bytabit.ft.fxui.model.TradeUIModel.ARBITRATOR
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.util.ListenerUpdater.AddListener
@@ -30,16 +30,16 @@ import org.bytabit.ft.util._
 
 import scala.concurrent.duration.FiniteDuration
 
-object NotaryTradeFxService {
-  def apply(serverUrl: URL, system: ActorSystem) = new NotaryTradeFxService(serverUrl, system)
+object ArbitratorTradeFxService {
+  def apply(serverUrl: URL, system: ActorSystem) = new ArbitratorTradeFxService(serverUrl, system)
 }
 
-class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends TradeFxService {
+class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends TradeFxService {
 
   override val system = actorSystem
 
-  val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
-  lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val arbitratorMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
     if (Config.serverEnabled) {
@@ -54,7 +54,7 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
     // common path
 
     case SellerCreatedOffer(id, sellOffer, p) =>
-      createOffer(NOTARY, sellOffer)
+      createOffer(ARBITRATOR, sellOffer)
 
     case bto: BuyerTookOffer =>
       takeOffer(bto)
@@ -103,8 +103,8 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
 
     // errors
 
-    case e: NotaryFSM.Event =>
-      log.debug(s"unhandled NotaryFSM event: $e")
+    case e: ArbitratorFSM.Event =>
+      log.debug(s"unhandled ArbitratorFSM event: $e")
 
     case e: TradeFSM.Event =>
       log.error(s"unhandled TradeFSM event: $e")
@@ -114,16 +114,16 @@ class NotaryTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends Tra
   }
 
   def certifyFiatSent(url: URL, tradeId: UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatSent(url, tradeId))
+    sendCmd(ArbitrateProcess.CertifyFiatSent(url, tradeId))
   }
 
   def certifyFiatNotSent(url: URL, tradeId: UUID): Unit = {
-    sendCmd(NotarizeProcess.CertifyFiatNotSent(url, tradeId))
+    sendCmd(ArbitrateProcess.CertifyFiatNotSent(url, tradeId))
   }
 
-  def sendCmd(cmd: NotarizeProcess.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: ArbitrateProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(notaryMgrRef, cmd)
+    sendMsg(arbitratorMgrRef, cmd)
   }
 }

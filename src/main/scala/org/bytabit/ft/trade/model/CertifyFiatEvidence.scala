@@ -18,10 +18,9 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bitcoinj.core.{Sha256Hash, Wallet}
+import org.bitcoinj.core.Wallet
 import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
-import org.joda.time.DateTime
 
 case class CertifyFiatEvidence(fundedTrade: FundedTrade,
                                evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
@@ -49,22 +48,22 @@ case class CertifyFiatEvidence(fundedTrade: FundedTrade,
   def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(seller, buyer, fullySignedOpenTx,
     takenOffer.buyerFundPayoutTxo)
 
-  def withNotarizedFiatSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, notaryPayoutTxSigs)
+  def withArbitratedFiatSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
+    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
 
-  def withNotarizedFiatNotSentSigs(notaryPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, notaryPayoutTxSigs)
+  def withArbitratedFiatNotSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
+    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
 
-  def certifyFiatSent(implicit notaryWallet: Wallet): CertifiedFiatDelivery = {
-    val notarizedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(notary.escrowPubKey)
+  def certifyFiatSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+    val arbitratedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, notarizedFiatSentPayoutTx.inputSigs)
+    CertifiedFiatDelivery(this, arbitratedFiatSentPayoutTx.inputSigs)
   }
 
-  def certifyFiatNotSent(implicit notaryWallet: Wallet): CertifiedFiatDelivery = {
-    val notarizedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(notary.escrowPubKey)
+  def certifyFiatNotSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+    val arbitratorFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, notarizedFiatNotSentPayoutTx.inputSigs)
+    CertifiedFiatDelivery(this, arbitratorFiatNotSentPayoutTx.inputSigs)
   }
 
   def addCertifyDeliveryRequest(evidence: Option[Array[Byte]]) =

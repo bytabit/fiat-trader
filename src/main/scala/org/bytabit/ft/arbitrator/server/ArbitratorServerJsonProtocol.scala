@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary.server
+package org.bytabit.ft.arbitrator.server
 
-import org.bytabit.ft.notary.NotaryFSMJsonProtocol
-import org.bytabit.ft.notary.server.NotaryServerManager.{TradeEventPosted, NotaryEventPosted}
+import org.bytabit.ft.arbitrator.ArbitratorFSMJsonProtocol
+import org.bytabit.ft.arbitrator.server.ArbitratorServerManager.{ArbitratorEventPosted, TradeEventPosted}
 import org.bytabit.ft.util.EventJsonFormat
 
-trait NotaryServerJsonProtocol extends NotaryFSMJsonProtocol {
+trait ArbitratorServerJsonProtocol extends ArbitratorFSMJsonProtocol {
 
-  implicit def notaryEventPostedJsonFormat = jsonFormat1(NotaryEventPosted)
+  implicit def arbitratorEventPostedJsonFormat = jsonFormat1(ArbitratorEventPosted)
 
   implicit def tradeEventPostedJsonFormat = jsonFormat1(TradeEventPosted)
 
-  implicit def notaryServerManagerEventJsonFormat = new EventJsonFormat[NotaryServerManager.Event](
-    Map(simpleName(classOf[NotaryEventPosted]) -> notaryEventPostedJsonFormat,
+  implicit def arbitratorServerManagerEventJsonFormat = new EventJsonFormat[ArbitratorServerManager.Event](
+    Map(simpleName(classOf[ArbitratorEventPosted]) -> arbitratorEventPostedJsonFormat,
       simpleName(classOf[TradeEventPosted]) -> tradeEventPostedJsonFormat)
   )
 }

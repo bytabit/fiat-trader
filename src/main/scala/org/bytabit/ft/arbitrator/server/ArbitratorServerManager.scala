@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary.server
+package org.bytabit.ft.arbitrator.server
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
@@ -23,15 +23,15 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.notary.NotaryFSM
-import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved, NotaryCreated}
-import org.bytabit.ft.notary.server.NotaryServerManager._
+import org.bytabit.ft.arbitrator.ArbitratorFSM
+import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator.server.ArbitratorServerManager._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater, Monies}
 import org.bytabit.ft.wallet.WalletManager
-import org.bytabit.ft.wallet.model.Notary
+import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
@@ -39,13 +39,13 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object NotaryServerManager {
+object ArbitratorServerManager {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new NotaryServerManager(walletMgr))
+  def props(walletMgr: ActorRef) = Props(new ArbitratorServerManager(walletMgr))
 
-  val name = NotaryServerManager.getClass.getSimpleName
+  val name = ArbitratorServerManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
   def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) =
@@ -69,7 +69,7 @@ object NotaryServerManager {
 
   sealed trait Event
 
-  case class NotaryEventPosted(event: NotaryFSM.PostedEvent) extends Event {
+  case class ArbitratorEventPosted(event: ArbitratorFSM.PostedEvent) extends Event {
     assert(event.posted.isDefined)
   }
 
@@ -79,12 +79,12 @@ object NotaryServerManager {
 
   // data
 
-  case class Data(notary: Option[Notary] = None, contract: Seq[Contract] = Seq(),
-                  postedNotaryEvents: Seq[NotaryFSM.PostedEvent] = Seq(),
+  case class Data(arbitrator: Option[Arbitrator] = None, contract: Seq[Contract] = Seq(),
+                  postedArbitratorEvents: Seq[ArbitratorFSM.PostedEvent] = Seq(),
                   postedTradeEvents: Seq[TradeFSM.PostedEvent] = Seq()) {
 
-    def notaryCreated(n: Notary) =
-      this.copy(notary = Some(n))
+    def arbitratorCreated(a: Arbitrator) =
+      this.copy(arbitrator = Some(a))
 
     def contractTemplateAdded(ct: Contract) =
       this.copy(contract = contract :+ ct)
@@ -92,24 +92,24 @@ object NotaryServerManager {
     def contractTemplateRemoved(id: Sha256Hash) =
       this.copy(contract = contract.filterNot(_.id == id))
 
-    def notaryEventPosted(event: NotaryFSM.PostedEvent) =
-      this.copy(postedNotaryEvents = postedNotaryEvents :+ event)
+    def arbitratorEventPosted(event: ArbitratorFSM.PostedEvent) =
+      this.copy(postedArbitratorEvents = postedArbitratorEvents :+ event)
 
     def tradeEventPosted(event: TradeFSM.PostedEvent) =
       this.copy(postedTradeEvents = postedTradeEvents :+ event)
 
     def postedEvents(since: Option[DateTime]) = since match {
       case Some(s: DateTime) =>
-        PostedEvents(postedNotaryEvents.filter(_.posted.get.isAfter(s)),
+        PostedEvents(postedArbitratorEvents.filter(_.posted.get.isAfter(s)),
           postedTradeEvents.filter(_.posted.get.isAfter(s)))
       case None =>
-        PostedEvents(postedNotaryEvents, postedTradeEvents)
+        PostedEvents(postedArbitratorEvents, postedTradeEvents)
     }
   }
 
 }
 
-class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with NotaryServerHttp {
+class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with ArbitratorServerHttp {
 
   // implicits
 
@@ -129,7 +129,7 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
 
   // persistence
 
-  override def persistenceId: String = NotaryServerManager.persistenceId
+  override def persistenceId: String = ArbitratorServerManager.persistenceId
 
   private var data = Data()
 
@@ -145,15 +145,15 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
 
   // apply events to data
 
-  def applyEvent(event: NotaryServerManager.Event, data: Data): Data = event match {
-    case NotaryEventPosted(ac: NotaryFSM.NotaryCreated) =>
-      data.notaryEventPosted(ac).notaryCreated(ac.notary)
+  def applyEvent(event: ArbitratorServerManager.Event, data: Data): Data = event match {
+    case ArbitratorEventPosted(ac: ArbitratorFSM.ArbitratorCreated) =>
+      data.arbitratorEventPosted(ac).arbitratorCreated(ac.arbitrator)
 
-    case NotaryEventPosted(ca: NotaryFSM.ContractAdded) if data.notary.isDefined =>
-      data.notaryEventPosted(ca).contractTemplateAdded(ca.contract)
+    case ArbitratorEventPosted(ca: ArbitratorFSM.ContractAdded) if data.arbitrator.isDefined =>
+      data.arbitratorEventPosted(ca).contractTemplateAdded(ca.contract)
 
-    case NotaryEventPosted(ctr: NotaryFSM.ContractRemoved) =>
-      data.notaryEventPosted(ctr).contractTemplateRemoved(ctr.id)
+    case ArbitratorEventPosted(ctr: ArbitratorFSM.ContractRemoved) =>
+      data.arbitratorEventPosted(ctr).contractTemplateRemoved(ctr.id)
 
     case TradeEventPosted(te: TradeFSM.PostedEvent) =>
       data.tradeEventPosted(te)
@@ -183,34 +183,34 @@ class NotaryServerManager(walletMgr: ActorRef) extends PersistentActor with List
     case c: ListenerUpdater.Command => handleListenerCommand(c)
 
     // handlers for manager commands
-    case Start if data.notary.isDefined =>
+    case Start if data.arbitrator.isDefined =>
       self ! AddListener(context.sender())
-      data.notary.foreach(a => context.sender ! NotaryCreated(a.url, a))
-      data.contract.foreach(c => context.sender ! ContractAdded(c.notary.url, c))
+      data.arbitrator.foreach(a => context.sender ! ArbitratorCreated(a.url, a))
+      data.contract.foreach(c => context.sender ! ContractAdded(c.arbitrator.url, c))
 
-    case Start if data.notary.isEmpty =>
+    case Start if data.arbitrator.isEmpty =>
       self ! AddListener(context.sender())
-      walletMgr ! WalletManager.CreateNotary(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcNotaryFee))
+      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
 
-    case WalletManager.NotaryCreated(a) =>
-      val ac = NotaryFSM.NotaryCreated(a.url, a)
-      persist(NotaryEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
+    case WalletManager.ArbitratorCreated(a) =>
+      val ac = ArbitratorFSM.ArbitratorCreated(a.url, a)
+      persist(ArbitratorEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
       sendToListeners(ac)
 
     case AddContractTemplate(cu, dm) =>
-      // TODO FT-26: send back errors if notary not initialized or contract already exists
-      data.notary.foreach { a =>
+      // TODO FT-26: send back errors if arbitrator not initialized or contract already exists
+      data.arbitrator.foreach { a =>
         val c = Contract(a, cu, dm)
         val ca = ContractAdded(a.url, c)
-        persist(NotaryEventPosted(ca.copy(posted = Some(DateTime.now))))(updateData)
+        persist(ArbitratorEventPosted(ca.copy(posted = Some(DateTime.now))))(updateData)
         sendToListeners(ca)
       }
 
     case RemoveContractTemplate(id) =>
-      // TODO FT-26: send back errors if notary not initialized or contract doesn't exists
-      data.notary.foreach { a =>
+      // TODO FT-26: send back errors if arbitrator not initialized or contract doesn't exists
+      data.arbitrator.foreach { a =>
         val ctr = ContractRemoved(a.url, id)
-        persist(NotaryEventPosted(ctr.copy(posted = Some(DateTime.now))))(updateData)
+        persist(ArbitratorEventPosted(ctr.copy(posted = Some(DateTime.now))))(updateData)
         sendToListeners(ctr)
       }
 

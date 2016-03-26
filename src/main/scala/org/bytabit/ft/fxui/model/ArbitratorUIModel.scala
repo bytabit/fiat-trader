@@ -19,16 +19,16 @@ package org.bytabit.ft.fxui.model
 import java.net.URL
 import javafx.beans.property.SimpleStringProperty
 
-import org.bytabit.ft.notary.NotaryFSM
-import org.bytabit.ft.wallet.model.Notary
+import org.bytabit.ft.arbitrator.ArbitratorFSM
+import org.bytabit.ft.wallet.model.Arbitrator
 
-case class NotaryUIModel(status: NotaryFSM.State, url: URL, notary: Option[Notary]) {
+case class ArbitratorUIModel(status: ArbitratorFSM.State, url: URL, arbitrator: Option[Arbitrator]) {
 
   val statusProperty = new SimpleStringProperty(status.identifier)
   val urlProperty = new SimpleStringProperty(url.toString)
-  val bondProperty = new SimpleStringProperty(f"${notary.map(_.bondPercent).getOrElse(0.0) * 100}%f")
-  val feeProperty = new SimpleStringProperty(notary.map(_.btcNotaryFee.toString).getOrElse(""))
-  val idProperty = new SimpleStringProperty(notary.map(_.id.toString).getOrElse(""))
+  val bondProperty = new SimpleStringProperty(f"${arbitrator.map(_.bondPercent).getOrElse(0.0) * 100}%f")
+  val feeProperty = new SimpleStringProperty(arbitrator.map(_.btcArbitratorFee.toString).getOrElse(""))
+  val idProperty = new SimpleStringProperty(arbitrator.map(_.id.toString).getOrElse(""))
 
   def getUrl = urlProperty.get
 }

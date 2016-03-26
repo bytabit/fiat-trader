@@ -47,7 +47,7 @@ object TradeFSM {
 
   def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyProcess(sellOffer, walletMgrRef))
 
-  def notarizeProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new NotarizeProcess(sellOffer, walletMgrRef))
+  def arbitrateProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new ArbitrateProcess(sellOffer, walletMgrRef))
 
   def name(id: UUID) = s"tradeFSM-${id.toString}"
 
@@ -238,10 +238,10 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
       //certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
 
       case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
-        certifyFiatEvidence.withNotarizedFiatSentSigs(ps)
+        certifyFiatEvidence.withArbitratedFiatSentSigs(ps)
 
       case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
-        certifyFiatEvidence.withNotarizedFiatNotSentSigs(ps)
+        certifyFiatEvidence.withArbitratedFiatNotSentSigs(ps)
 
       case (SellerFunded(_, th, ut), certifiedFiatDelivery: CertifiedFiatDelivery) =>
         certifiedFiatDelivery.withPayoutTx(th, ut)
@@ -304,12 +304,12 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   def startFiatSentCertd(cfd: CertifiedFiatDelivery): Unit = {
     startCertDeliveryReqd(cfd.certifyFiatEvidence)
-    context.parent ! FiatSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+    context.parent ! FiatSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs)
   }
 
   def startFiatNotSentCertd(cfd: CertifiedFiatDelivery): Unit = {
     startCertDeliveryReqd(cfd.certifyFiatEvidence)
-    context.parent ! FiatNotSentCertified(cfd.id, cfd.notaryPayoutTxSigs)
+    context.parent ! FiatNotSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs)
   }
 
   def startSellerFunded(cst: CertifiedSettledTrade): Unit = {

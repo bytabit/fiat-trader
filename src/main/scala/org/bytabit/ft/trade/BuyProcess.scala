@@ -39,11 +39,11 @@ object BuyProcess {
 
   case object Start extends Command
 
-  final case class TakeSellOffer(notaryUrl: URL, id: UUID, fiatDeliveryDetails: String) extends Command
+  final case class TakeSellOffer(arbitratorUrl: URL, id: UUID, fiatDeliveryDetails: String) extends Command
 
-  final case class ReceiveFiat(notaryUrl: URL, id: UUID) extends Command
+  final case class ReceiveFiat(arbitratorUrl: URL, id: UUID) extends Command
 
-  final case class RequestCertifyDelivery(notaryUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
+  final case class RequestCertifyDelivery(arbitratorUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
@@ -196,7 +196,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
       }
 
     case Event(rcf: RequestCertifyDelivery, ft: FundedTrade) =>
-      postTradeEvent(rcf.notaryUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
+      postTradeEvent(rcf.arbitratorUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
       stay()
 
     case Event(cdr: CertifyDeliveryRequested, ft: FundedTrade) if cdr.posted.isDefined =>
@@ -273,11 +273,11 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
       goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
         case cfd: CertifiedFiatDelivery =>
           context.parent ! fnsc
-          walletMgrRef ! WalletManager.BroadcastTx(cfd.notarySignedFiatNotSentPayoutTx, Some(cfd.buyer.escrowPubKey))
+          walletMgrRef ! WalletManager.BroadcastTx(cfd.arbitratorSignedFiatNotSentPayoutTx, Some(cfd.buyer.escrowPubKey))
       }
 
     case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
-      // ignore tx updates until decision event from notary received
+      // ignore tx updates until decision event from arbitrator received
       stay()
   }
 
@@ -300,7 +300,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
         stay()
 
     case e =>
-      log.error(s"Received event after fiat sent certified by notary: $e")
+      log.error(s"Received event after fiat sent certified by arbitrator: $e")
       stay()
   }
 
@@ -323,7 +323,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
         stay()
 
     case e =>
-      log.error(s"Received event after fiat not sent certified by notary: $e")
+      log.error(s"Received event after fiat not sent certified by arbitrator: $e")
       stay()
   }
 

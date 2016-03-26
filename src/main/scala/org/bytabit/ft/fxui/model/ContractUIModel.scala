@@ -22,9 +22,9 @@ import javafx.beans.property.SimpleStringProperty
 import org.bitcoinj.core.Sha256Hash
 import org.joda.money.CurrencyUnit
 
-case class ContractUIModel(notaryUrl: URL, id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, deliveryMethod: String) {
+case class ContractUIModel(arbitratorUrl: URL, id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, deliveryMethod: String) {
 
-  val urlProperty = new SimpleStringProperty(notaryUrl.toString)
+  val urlProperty = new SimpleStringProperty(arbitratorUrl.toString)
   val idProperty = new SimpleStringProperty(id.toString)
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
   val deliveryMethodProperty = new SimpleStringProperty(deliveryMethod)

@@ -23,7 +23,7 @@ import org.bitcoinj.core._
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
 import org.bytabit.ft.trade.{TradeFSM, TradeFSMJsonProtocol}
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatMoney}
-import org.bytabit.ft.wallet.model.{Notary, Seller}
+import org.bytabit.ft.wallet.model.{Arbitrator, Seller}
 import org.scalatest._
 import spray.json._
 
@@ -33,20 +33,20 @@ class JsonSpec extends FlatSpec with Matchers with TradeFSMJsonProtocol {
 
   Context.propagate(new Context(params))
 
-  val notaryWallet = new Wallet(params)
+  val arbitratorWallet = new Wallet(params)
   val sellerWallet = new Wallet(params)
 
   val btcAmt = BTCMoney(5, 0)
   val fiatAmt = FiatMoney(CurrencyUnits.USD, "1500.00")
   val bondPercent = 0.20
-  val btcNotaryFee = BTCMoney(1, 0)
-  val notaryURL = new URL("http://bytabit.org")
+  val btcArbitratorFee = BTCMoney(1, 0)
+  val arbitratorURL = new URL("http://bytabit.org")
   val fiatDeliveryMethod = "CASH DEPOSIT"
   val fiatCurrencyUnit = CurrencyUnits.USD
 
-  val notary = Notary(notaryURL, bondPercent, btcNotaryFee)(notaryWallet)
+  val arbitrator = Arbitrator(arbitratorURL, bondPercent, btcArbitratorFee)(arbitratorWallet)
 
-  val contract = Contract(notary, fiatCurrencyUnit, fiatDeliveryMethod)
+  val contract = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
 
   val offer = Offer(UUID.randomUUID(), contract, fiatAmt, btcAmt)
 

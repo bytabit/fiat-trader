@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.notary;
+package org.bytabit.ft.fxui.arbitrator;
 
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
@@ -23,61 +23,61 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.bytabit.ft.fxui.NotaryClientFxService;
-import org.bytabit.ft.fxui.model.NotaryUIModel;
+import org.bytabit.ft.fxui.ArbitratorClientFxService;
+import org.bytabit.ft.fxui.model.ArbitratorUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class NotaryClientUI implements ActorController {
+public class ArbitratorClientUI implements ActorController {
 
-    private NotaryClientFxService notaryClientFxService;
+    private ArbitratorClientFxService arbitratorClientFxService;
 
     @FXML
     private ResourceBundle resources;
 
 
     @FXML
-    private TableView<NotaryUIModel> notariesTable;
+    private TableView<ArbitratorUIModel> arbitratorsTable;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> actionColumn;
+    private TableColumn<ArbitratorUIModel, String> actionColumn;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> statusColumn;
+    private TableColumn<ArbitratorUIModel, String> statusColumn;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> bondColumn;
+    private TableColumn<ArbitratorUIModel, String> bondColumn;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> feeColumn;
+    private TableColumn<ArbitratorUIModel, String> feeColumn;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> urlColumn;
+    private TableColumn<ArbitratorUIModel, String> urlColumn;
 
     @FXML
-    private TableColumn<NotaryUIModel, String> idColumn;
+    private TableColumn<ArbitratorUIModel, String> idColumn;
 
     @FXML
     private TextField urlTextField;
 
     @FXML
-    private Button addNotaryButton;
+    private Button addArbitratorButton;
 
     private ActorSystem sys;
 
-    public NotaryClientUI(ActorSystem system) {
+    public ArbitratorClientUI(ActorSystem system) {
         sys = system;
-        notaryClientFxService = new NotaryClientFxService(system);
-        notaryClientFxService.start();
+        arbitratorClientFxService = new ArbitratorClientFxService(system);
+        arbitratorClientFxService.start();
     }
 
     @FXML
     void initialize() {
 
-        // setup notary table
+        // setup arbitrator table
         actionColumn.setCellValueFactory(a -> a.getValue().urlProperty());
         actionColumn.setCellFactory(column -> newTableCell());
 
@@ -87,11 +87,11 @@ public class NotaryClientUI implements ActorController {
         feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
         idColumn.setCellValueFactory(a -> a.getValue().idProperty());
 
-        notariesTable.setItems(notaryClientFxService.notaries());
+        arbitratorsTable.setItems(arbitratorClientFxService.arbitrators());
     }
 
     @FXML
-    void handleAddNotary(ActionEvent event) {
+    void handleAddArbitrator(ActionEvent event) {
 
         URL url = null;
         try {
@@ -99,12 +99,12 @@ public class NotaryClientUI implements ActorController {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if (url != null) notaryClientFxService.addNotary(url);
+        if (url != null) arbitratorClientFxService.addArbitrator(url);
     }
 
-    private TableCell<NotaryUIModel, String> newTableCell() {
+    private TableCell<ArbitratorUIModel, String> newTableCell() {
 
-        return new TableCell<NotaryUIModel, String>() {
+        return new TableCell<ArbitratorUIModel, String>() {
 
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -121,7 +121,7 @@ public class NotaryClientUI implements ActorController {
                     deleteButton.setText("DELETE");
                     deleteButton.setOnAction(evt -> {
                         try {
-                            notaryClientFxService.removeNotary(new URL(item));
+                            arbitratorClientFxService.removeArbitrator(new URL(item));
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
                         }

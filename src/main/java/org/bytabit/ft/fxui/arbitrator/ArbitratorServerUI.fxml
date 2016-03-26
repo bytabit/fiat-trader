@@ -20,7 +20,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.notary.NotaryServerUI">
+      fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorServerUI">
     <children>
         <VBox spacing="5.0">
             <children>
@@ -34,7 +34,7 @@
                             </padding>
                         </Label>
                         <Label fx:id="bondLabel" layoutX="204.0" layoutY="10.0" text="XXXXX"/>
-                        <Label text="Notary Fee:">
+                        <Label text="Arbitrator Fee:">
                             <padding>
                                 <Insets left="20.0" right="5.0"/>
                             </padding>

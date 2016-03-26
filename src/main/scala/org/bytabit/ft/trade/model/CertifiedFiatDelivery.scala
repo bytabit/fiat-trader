@@ -8,7 +8,7 @@ import org.joda.money.Money
 import org.joda.time.DateTime
 
 case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
-                                 notaryPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
+                                 arbitratorPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
 
   override val id: UUID = certifyFiatEvidence.id
   override val btcAmount: Money = certifyFiatEvidence.btcAmount
@@ -28,11 +28,11 @@ case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
 
   def unsignedFiatSentPayoutTx: PayoutTx = certifyFiatEvidence.unsignedFiatSentPayoutTx
 
-  def notarySignedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.addInputSigs(notaryPayoutTxSigs)
+  def arbitratorSignedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.addInputSigs(arbitratorPayoutTxSigs)
 
   def unsignedFiatNotSentPayoutTx: PayoutTx = certifyFiatEvidence.unsignedFiatNotSentPayoutTx
 
-  def notarySignedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.addInputSigs(notaryPayoutTxSigs)
+  def arbitratorSignedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.addInputSigs(arbitratorPayoutTxSigs)
 
   def withPayoutTx(payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime) =
     CertifiedSettledTrade(this, payoutTxHash, payoutTxUpdateTime)

@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.notary;
+package org.bytabit.ft.fxui.arbitrator;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
-import org.bytabit.ft.fxui.NotaryTradeFxService;
-import org.bytabit.ft.fxui.model.NotarizeUIActionTableCell;
+import org.bytabit.ft.fxui.ArbitratorTradeFxService;
+import org.bytabit.ft.fxui.model.ArbitratorUIActionTableCell;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.Config;
 
-public class NotaryTradeUI extends AbstractTradeUI {
+public class ArbitratorTradeUI extends AbstractTradeUI {
 
-    private NotaryTradeFxService tradeFxService;
+    private ArbitratorTradeFxService tradeFxService;
 
-    public NotaryTradeUI(ActorSystem system) {
+    public ArbitratorTradeUI(ActorSystem system) {
 
         super(system);
-        tradeFxService = new NotaryTradeFxService(Config.publicUrl(), system);
+        tradeFxService = new ArbitratorTradeFxService(Config.publicUrl(), system);
         tradeFxService.start();
     }
 
@@ -43,7 +42,7 @@ public class NotaryTradeUI extends AbstractTradeUI {
         // setup trade table
 
         actionColumn.setCellValueFactory(t -> t.getValue().actionProperty());
-        actionColumn.setCellFactory(column -> new NotarizeUIActionTableCell(tradeFxService));
+        actionColumn.setCellFactory(column -> new ArbitratorUIActionTableCell(tradeFxService));
 
         tradeTable.setItems(tradeFxService.trades());
     }

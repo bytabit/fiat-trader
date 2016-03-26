@@ -29,21 +29,21 @@ class JsonSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   val params = NetworkParameters.fromID(NetworkParameters.ID_TESTNET)
   Context.propagate(new Context(params))
 
-  // notary
-  val notaryWallet = new Wallet(params)
+  // arbitrator
+  val arbitratorWallet = new Wallet(params)
 
-  val notaryUrl = new URL("http://bytabit.com/notary")
+  val arbitratorUrl = new URL("http://bytabit.com/arbitrator")
   val bondPercent = 0.20
-  val btcNotaryFee = BTCMoney(0.10)
+  val btcArbitratorFee = BTCMoney(0.10)
 
-  val testNotary = Notary(notaryUrl, bondPercent, btcNotaryFee)(notaryWallet)
+  val testArbitrator = Arbitrator(arbitratorUrl, bondPercent, btcArbitratorFee)(arbitratorWallet)
 
   it should "serialize initialized to json" in {
 
-    val json: String = testNotary.toJson.toString()
+    val json: String = testArbitrator.toJson.toString()
     //System.out.println(json)
 
-    val obj: Notary = json.parseJson.convertTo[Notary]
+    val obj: Arbitrator = json.parseJson.convertTo[Arbitrator]
     //System.out.println(obj)
 
     json.toString should equal(obj.toJson.toString())

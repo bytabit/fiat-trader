@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.arbitrator
 
-import org.bytabit.ft.notary.NotaryClientManager.{NotaryAdded, NotaryRemoved}
+import org.bytabit.ft.arbitrator.ArbitratorClientManager.{ArbitratorAdded, ArbitratorRemoved}
 import org.bytabit.ft.util.{EventJsonFormat, UtilJsonProtocol}
 
-trait NotaryClientManagerJsonProtocol extends UtilJsonProtocol {
+trait ArbitratorClientManagerJsonProtocol extends UtilJsonProtocol {
 
-  implicit def notaryAddedJsonFormat = jsonFormat(NotaryAdded.apply(_), "url")
+  implicit def arbitratorAddedJsonFormat = jsonFormat(ArbitratorAdded.apply(_), "url")
 
-  implicit def notaryRemovedJsonFormat = jsonFormat(NotaryRemoved.apply(_), "url")
+  implicit def arbitratorRemovedJsonFormat = jsonFormat(ArbitratorRemoved.apply(_), "url")
 
-  implicit def notaryClientManagerEventJsonFormat = new EventJsonFormat[NotaryClientManager.Event](
-    Map(simpleName(classOf[NotaryAdded]) -> notaryAddedJsonFormat,
-      simpleName(classOf[NotaryRemoved]) -> notaryRemovedJsonFormat)
+  implicit def arbitratorClientManagerEventJsonFormat = new EventJsonFormat[ArbitratorClientManager.Event](
+    Map(simpleName(classOf[ArbitratorAdded]) -> arbitratorAddedJsonFormat,
+      simpleName(classOf[ArbitratorRemoved]) -> arbitratorRemovedJsonFormat)
   )
 }

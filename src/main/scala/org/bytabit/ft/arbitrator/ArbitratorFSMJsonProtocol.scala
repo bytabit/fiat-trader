@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.arbitrator
 
-import org.bytabit.ft.notary.NotaryFSM._
-import org.bytabit.ft.notary.server.PostedEvents
+import org.bytabit.ft.arbitrator.ArbitratorFSM._
+import org.bytabit.ft.arbitrator.server.PostedEvents
 import org.bytabit.ft.trade.TradeFSMJsonProtocol
 import org.bytabit.ft.util.EventJsonFormat
 import spray.json._
 
-trait NotaryFSMJsonProtocol extends TradeFSMJsonProtocol {
+trait ArbitratorFSMJsonProtocol extends TradeFSMJsonProtocol {
 
-  implicit def notaryCreatedJsonFormat = jsonFormat3(NotaryCreated)
+  implicit def arbitratorCreatedJsonFormat = jsonFormat3(ArbitratorCreated)
 
   implicit def contractAddedJsonFormat = jsonFormat3(ContractAdded)
 
@@ -34,36 +34,36 @@ trait NotaryFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def buyTradeAddedJsonFormat = jsonFormat4(BuyTradeAdded)
 
-  implicit def notarizeTradeAddedJsonFormat = jsonFormat4(NotarizeTradeAdded)
+  implicit def arbitrateTradeAddedJsonFormat = jsonFormat4(ArbitrateTradeAdded)
 
   implicit def tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
 
   implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
 
-  val notaryEventJsonFormatMap: Map[String, RootJsonFormat[_ <: NotaryFSM.Event]] = Map(
-    simpleName(classOf[NotaryCreated]) -> notaryCreatedJsonFormat,
+  val arbitratorEventJsonFormatMap: Map[String, RootJsonFormat[_ <: ArbitratorFSM.Event]] = Map(
+    simpleName(classOf[ArbitratorCreated]) -> arbitratorCreatedJsonFormat,
     simpleName(classOf[ContractAdded]) -> contractAddedJsonFormat,
     simpleName(classOf[ContractRemoved]) -> contractRemovedJsonFormat,
     simpleName(classOf[SellTradeAdded]) -> sellTradeAddedJsonFormat,
     simpleName(classOf[BuyTradeAdded]) -> buyTradeAddedJsonFormat,
-    simpleName(classOf[NotarizeTradeAdded]) -> notarizeTradeAddedJsonFormat,
+    simpleName(classOf[ArbitrateTradeAdded]) -> arbitrateTradeAddedJsonFormat,
     simpleName(classOf[TradeRemoved]) -> tradeRemovedJsonFormat,
     simpleName(classOf[PostedTradeEventReceived]) -> postedTradeEventReceivedJsonFormat
   )
 
-  implicit def notaryEventJsonFormat = new EventJsonFormat[NotaryFSM.Event](notaryEventJsonFormatMap)
+  implicit def arbitratorEventJsonFormat = new EventJsonFormat[ArbitratorFSM.Event](arbitratorEventJsonFormatMap)
 
-  implicit def notaryPostedEventJsonFormat = new RootJsonFormat[NotaryFSM.PostedEvent] {
+  implicit def arbitratorPostedEventJsonFormat = new RootJsonFormat[ArbitratorFSM.PostedEvent] {
 
-    override def read(json: JsValue): NotaryFSM.PostedEvent =
-      notaryEventJsonFormat.read(json) match {
-        case pe: NotaryFSM.PostedEvent => pe
-        case _ => throw new DeserializationException("NotaryClientFSM PostedEvent expected")
+    override def read(json: JsValue): ArbitratorFSM.PostedEvent =
+      arbitratorEventJsonFormat.read(json) match {
+        case pe: ArbitratorFSM.PostedEvent => pe
+        case _ => throw new DeserializationException("ArbitratorClientFSM PostedEvent expected")
       }
 
-    override def write(obj: NotaryFSM.PostedEvent): JsValue =
-      notaryEventJsonFormat.write(obj)
+    override def write(obj: ArbitratorFSM.PostedEvent): JsValue =
+      arbitratorEventJsonFormat.write(obj)
   }
 
-  implicit val postedEventsJsonFormat = jsonFormat(PostedEvents.apply, "notaryEvents", "tradeEvents")
+  implicit val postedEventsJsonFormat = jsonFormat(PostedEvents.apply, "arbitratorEvents", "tradeEvents")
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary
+package org.bytabit.ft.arbitrator
 
 import java.net.URL
 import java.util.UUID
@@ -28,14 +28,14 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, NOTARY, Role, SELLER}
-import org.bytabit.ft.notary.NotaryClient.{ReceivePostedNotaryEvent, ReceivePostedTradeEvent}
-import org.bytabit.ft.notary.NotaryFSM._
-import org.bytabit.ft.notary.server.PostedEvents
+import org.bytabit.ft.arbitrator.ArbitratorClient.{ReceivePostedArbitratorEvent, ReceivePostedTradeEvent}
+import org.bytabit.ft.arbitrator.ArbitratorFSM._
+import org.bytabit.ft.arbitrator.server.PostedEvents
+import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.{Contract, SellOffer}
 import org.bytabit.ft.util.{DateTimeOrdering, Posted}
-import org.bytabit.ft.wallet.model.Notary
+import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
@@ -43,13 +43,13 @@ import scala.language.postfixOps
 import scala.reflect.{ClassTag, _}
 import scala.util.{Failure, Success}
 
-object NotaryFSM {
+object ArbitratorFSM {
 
   // actor setup
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new NotaryClient(url, walletMgr))
+  def props(url: URL, walletMgr: ActorRef) = Props(new ArbitratorClient(url, walletMgr))
 
-  def name(url: URL) = s"${NotaryFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
+  def name(url: URL) = s"${ArbitratorFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 
   // events
 
@@ -59,10 +59,10 @@ object NotaryFSM {
 
   sealed trait PostedEvent extends Event with Posted
 
-  // notary events
+  // arbitrator events
 
-  final case class NotaryCreated(url: URL, notary: Notary,
-                                 posted: Option[DateTime] = None) extends PostedEvent
+  final case class ArbitratorCreated(url: URL, arbitrator: Arbitrator,
+                                     posted: Option[DateTime] = None) extends PostedEvent
 
   final case class ContractAdded(url: URL, contract: Contract,
                                  posted: Option[DateTime] = None) extends PostedEvent
@@ -70,9 +70,9 @@ object NotaryFSM {
   final case class ContractRemoved(url: URL, id: Sha256Hash,
                                    posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class NotaryOnline(url: URL) extends Event
+  final case class ArbitratorOnline(url: URL) extends Event
 
-  final case class NotaryOffline(url: URL) extends Event
+  final case class ArbitratorOffline(url: URL) extends Event
 
   // trade events
 
@@ -82,8 +82,8 @@ object NotaryFSM {
   final case class BuyTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
                                  posted: Option[DateTime] = None) extends Event
 
-  final case class NotarizeTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                      posted: Option[DateTime] = None) extends Event
+  final case class ArbitrateTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
+                                       posted: Option[DateTime] = None) extends Event
 
   final case class TradeRemoved(url: URL, tradeId: UUID,
                                 posted: Option[DateTime]) extends Event
@@ -109,22 +109,22 @@ object NotaryFSM {
 
   // data
 
-  trait NotaryData {
+  trait ArbitratorData {
     val serverUrl: URL
 
     def latest(latestPosted: DateTime, newPosted: DateTime): DateTime = Seq(newPosted, latestPosted).reduce(DateTimeOrdering.max)
   }
 
-  case class AddedNotary(serverUrl: URL) extends NotaryData {
+  case class AddedArbitrator(serverUrl: URL) extends ArbitratorData {
 
-    def created(notary: Notary, posted: DateTime) = ActiveNotary(notary, posted)
+    def created(arbitrator: Arbitrator, posted: DateTime) = ActiveArbitrator(arbitrator, posted)
   }
 
-  case class ActiveNotary(notary: Notary, latestPosted: DateTime,
-                          contracts: Map[Sha256Hash, Contract] = Map(),
-                          activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends NotaryData {
+  case class ActiveArbitrator(arbitrator: Arbitrator, latestPosted: DateTime,
+                              contracts: Map[Sha256Hash, Contract] = Map(),
+                              activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends ArbitratorData {
 
-    val serverUrl = notary.url
+    val serverUrl = arbitrator.url
 
     def postedEventReceived(posted: DateTime) =
       this.copy(latestPosted = latest(posted, latestPosted))
@@ -152,7 +152,7 @@ object NotaryFSM {
 
 }
 
-trait NotaryFSM extends PersistentFSM[NotaryFSM.State, NotaryFSM.NotaryData, NotaryFSM.Event] with NotaryFSMJsonProtocol {
+trait ArbitratorFSM extends PersistentFSM[ArbitratorFSM.State, ArbitratorFSM.ArbitratorData, ArbitratorFSM.Event] with ArbitratorFSMJsonProtocol {
 
   val url: URL
 
@@ -166,40 +166,40 @@ trait NotaryFSM extends PersistentFSM[NotaryFSM.State, NotaryFSM.NotaryData, Not
 
   // persistence
 
-  override def persistenceId = NotaryFSM.name(url)
+  override def persistenceId = ArbitratorFSM.name(url)
 
-  override def domainEventClassTag: ClassTag[NotaryFSM.Event] = classTag[NotaryFSM.Event]
+  override def domainEventClassTag: ClassTag[ArbitratorFSM.Event] = classTag[ArbitratorFSM.Event]
 
   // apply events to state and data
 
-  def applyEvent(event: NotaryFSM.Event, notaryData: NotaryFSM.NotaryData): NotaryData =
-    (event, notaryData) match {
+  def applyEvent(event: ArbitratorFSM.Event, arbitratorData: ArbitratorFSM.ArbitratorData): ArbitratorData =
+    (event, arbitratorData) match {
 
-      case (NotaryCreated(u, n, Some(p)), an: AddedNotary) =>
+      case (ArbitratorCreated(u, n, Some(p)), an: AddedArbitrator) =>
         an.created(n, p)
 
-      case (ContractAdded(u, c, Some(p)), an: ActiveNotary) =>
+      case (ContractAdded(u, c, Some(p)), an: ActiveArbitrator) =>
         an.contractAdded(c, p)
 
-      case (ContractRemoved(u, id, Some(p)), an: ActiveNotary) =>
+      case (ContractRemoved(u, id, Some(p)), an: ActiveArbitrator) =>
         an.contractRemoved(id, p)
 
-      case (SellTradeAdded(u, i, o, Some(p)), an: ActiveNotary) =>
+      case (SellTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
         an.tradeAdded(SELLER, i, o, p)
 
-      case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveNotary) =>
+      case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
         an.tradeAdded(BUYER, i, o, p)
 
-      case (NotarizeTradeAdded(u, i, o, Some(p)), an: ActiveNotary) =>
-        an.tradeAdded(NOTARY, i, o, p)
+      case (ArbitrateTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
+        an.tradeAdded(ARBITRATOR, i, o, p)
 
-      case (TradeRemoved(u, i, Some(p)), an: ActiveNotary) =>
+      case (TradeRemoved(u, i, Some(p)), an: ActiveArbitrator) =>
         an.tradeRemoved(i, p)
 
-      case (PostedTradeEventReceived(u, Some(p)), an: ActiveNotary) =>
+      case (PostedTradeEventReceived(u, Some(p)), an: ActiveArbitrator) =>
         an.postedEventReceived(p)
 
-      case _ => notaryData
+      case _ => arbitratorData
     }
 
   // http flow
@@ -209,41 +209,41 @@ trait NotaryFSM extends PersistentFSM[NotaryFSM.State, NotaryFSM.NotaryData, Not
 
   // http get events requester and handler
 
-  def reqNotaryEvents(url: URL, since: Option[DateTime]): Unit = {
+  def reqArbitratorEvents(url: URL, since: Option[DateTime]): Unit = {
 
     val query = since match {
       case Some(dt) => s"?since=${dt.toString}"
       case None => ""
     }
 
-    val notaryUri = s"/notary$query"
+    val arbitratorUri = s"/arbitrator$query"
 
-    val req = Source.single(HttpRequest(uri = notaryUri, method = HttpMethods.GET))
+    val req = Source.single(HttpRequest(uri = arbitratorUri, method = HttpMethods.GET))
       .via(connectionFlow(url))
 
     req.runWith(Sink.head).onComplete {
 
       case Success(HttpResponse(StatusCodes.OK, headers, entity, protocol)) =>
-        log.debug(s"Response from ${url.toString} $notaryUri OK")
+        log.debug(s"Response from ${url.toString} $arbitratorUri OK")
         Unmarshal(entity).to[PostedEvents].onSuccess {
           case PostedEvents(aes, tes) =>
-            self ! NotaryOnline(url)
-            aes.foreach(self ! ReceivePostedNotaryEvent(_))
+            self ! ArbitratorOnline(url)
+            aes.foreach(self ! ReceivePostedArbitratorEvent(_))
             tes.foreach(self ! ReceivePostedTradeEvent(_))
           case _ =>
-            log.error("No notary events in response.")
+            log.error("No arbitrator events in response.")
         }
 
       case Success(HttpResponse(StatusCodes.NoContent, headers, entity, protocol)) =>
-        log.debug(s"No new events from ${url.toString}$notaryUri")
-        self ! NotaryOnline(url)
+        log.debug(s"No new events from ${url.toString}$arbitratorUri")
+        self ! ArbitratorOnline(url)
 
       case Success(HttpResponse(sc, headers, entity, protocol)) =>
-        log.error(s"Response from ${url.toString}$notaryUri ${sc.toString()}")
+        log.error(s"Response from ${url.toString}$arbitratorUri ${sc.toString()}")
 
       case Failure(failure) =>
         log.debug(s"No Response from ${url.toString}: $failure")
-        self ! NotaryOffline(url)
+        self ! ArbitratorOffline(url)
     }
   }
 

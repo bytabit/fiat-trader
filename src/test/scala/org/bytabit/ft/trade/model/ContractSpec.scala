@@ -20,7 +20,7 @@ import java.net.URL
 
 import org.bitcoinj.core.{Context, NetworkParameters, Wallet}
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits}
-import org.bytabit.ft.wallet.model.Notary
+import org.bytabit.ft.wallet.model.Arbitrator
 import org.scalatest._
 
 class ContractSpec extends FlatSpec with Matchers {
@@ -28,24 +28,24 @@ class ContractSpec extends FlatSpec with Matchers {
   val params = NetworkParameters.fromID(NetworkParameters.ID_TESTNET)
   Context.propagate(new Context(params))
 
-  // notary
-  val notaryWallet = new Wallet(params)
+  // arbitrator
+  val arbitratorWallet = new Wallet(params)
 
   val bondPercent = 0.20
-  val btcNotaryFee = BTCMoney(1, 0)
-  val notaryURL = new URL("http://bytabit.org")
+  val btcArbitratorFee = BTCMoney(1, 0)
+  val arbitratorURL = new URL("http://bytabit.org")
   val fiatDeliveryMethod = "CASH DEPOSIT"
   val fiatCurrencyUnit = CurrencyUnits.USD
-  val notary = Notary(notaryURL, bondPercent, btcNotaryFee)(notaryWallet)
+  val arbitrator = Arbitrator(arbitratorURL, bondPercent, btcArbitratorFee)(arbitratorWallet)
 
   "Contract" should "substitute template parameters" in {
 
-    val contract = Contract(notary, fiatCurrencyUnit, fiatDeliveryMethod)
+    val contract = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
 
     val contractId = contract.id.toString
-    val notaryId = contract.notary.id.toString
+    val arbitratorId = contract.arbitrator.id.toString
     val btcNetworkName = contract.btcNetworkName
-    val notaryFeeAddress = contract.notary.feesAddr.toString
+    val arbitratorFeeAddress = contract.arbitrator.feesAddr.toString
     val NONE = "<NONE>"
     val buyerId = NONE
     val btcAmount = NONE
@@ -56,8 +56,8 @@ class ContractSpec extends FlatSpec with Matchers {
     contract.toString should equal(
       "Fiat Trade Contract \n\n" +
         s"1. The transactions in this contract are based on contract id $contractId published on the $btcNetworkName Bitcoin network.\n" +
-        s"2. In case of a dispute the notary at URL $notaryURL and id $notaryId will decide the outcome. \n" +
-        s"3. The notary fee will be $btcNotaryFee and will be paid to BTC address $notaryFeeAddress. \n" +
+        s"2. In case of a dispute the arbitrator at URL $arbitratorURL and id $arbitratorId will decide the outcome. \n" +
+        s"3. The arbitrator fee will be $btcArbitratorFee and will be paid to BTC address $arbitratorFeeAddress. \n" +
         "4. Buyer with key ID $buyerId will transfer $btcAmount to the seller.\n" +
         "5. Seller with key ID $sellerId will transfer $fiatAmount to the buyer.\n" +
         "6. Seller will transfer the $fiatAmount to the buyer using the" + s" $fiatDeliveryMethod fiat delivery method.\n" +
@@ -65,8 +65,8 @@ class ContractSpec extends FlatSpec with Matchers {
   }
 
   "ContractTemplate" should "have the same id given the same text and parameters" in {
-    val t1 = Contract(notary, fiatCurrencyUnit, fiatDeliveryMethod)
-    val t2 = Contract(notary, fiatCurrencyUnit, fiatDeliveryMethod)
+    val t1 = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
+    val t2 = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
 
     t1.id should equal(t2.id)
   }

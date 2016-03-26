@@ -22,12 +22,12 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
 
 import akka.actor.ActorSystem
+import org.bytabit.ft.arbitrator.ArbitratorFSM.{ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator._
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved}
-import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{SendFiat, AddSellOffer, CancelSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer}
@@ -46,8 +46,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   override val system = actorSystem
 
-  val notaryMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
-  lazy val notaryMgrRef = notaryMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val arbitratorMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // TODO FT-99: disable buy buttons if current trade is uncommitted
   val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
@@ -67,7 +67,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   @Override
   def handler = {
 
-    // Handle Notary Events
+    // Handle Arbitrator Events
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
@@ -80,8 +80,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
 
-    case e: NotaryFSM.Event =>
-      log.debug(s"Unhandled NotaryFSM event: $e")
+    case e: ArbitratorFSM.Event =>
+      log.debug(s"Unhandled ArbitratorFSM event: $e")
 
     // Handle Trade Events
 
@@ -179,12 +179,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def setSelectedContract(dm: String) = {
-    // TODO FT-21: allow user to rank notaries in notary client screen so UI can auto pick top ranked one
+    // TODO FT-21: allow user to rank arbitrators in arbitrator client screen so UI can auto pick top ranked one
     // for now pick lowest fee contract template that matches currency and delivery method
     sellContractSelected = for {
       fcu <- sellCurrencyUnitSelected
       c <- contracts.filter(t => t.fiatCurrencyUnit == fcu && t.fiatDeliveryMethod == dm)
-        .sortWith((x, y) => x.notary.btcNotaryFee.isGreaterThan(y.notary.btcNotaryFee)).headOption
+        .sortWith((x, y) => x.arbitrator.btcArbitratorFee.isGreaterThan(y.arbitrator.btcArbitratorFee)).headOption
     } yield c
 
     updateSellContract(sellContractSelected)
@@ -213,8 +213,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def updateSellContract(contract: Option[Contract]) = {
     contract.foreach { c =>
-      sellBondPercent.set(f"${c.notary.bondPercent * 100}%f")
-      sellNotaryFee.set(c.notary.btcNotaryFee.toString)
+      sellBondPercent.set(f"${c.arbitrator.bondPercent * 100}%f")
+      sellArbitratorFee.set(c.arbitrator.btcArbitratorFee.toString)
     }
   }
 
@@ -264,7 +264,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def takeSellOffer(url: URL, tradeId: UUID): Unit = {
     // TODO FT-10: get delivery details from delivery details preferences
-    sendCmd(TakeSellOffer(url, tradeId, "Test Delivery Details"))
+    sendCmd(TakeSellOffer(url, tradeId, "Swish: +467334557"))
   }
 
   def receiveFiat(url: URL, tradeId: UUID): Unit = {
@@ -289,13 +289,13 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     tradeUncommitted.set(trades.exists(_.uncommitted))
   }
 
-  def sendCmd(cmd: NotaryClient.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: ArbitratorClient.Command) = sendMsg(arbitratorMgrRef, cmd)
 
-  def sendCmd(cmd: SellProcess.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: SellProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
 
-  def sendCmd(cmd: BuyProcess.Command) = sendMsg(notaryMgrRef, cmd)
+  def sendCmd(cmd: BuyProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(notaryMgrRef, cmd)
+    sendMsg(arbitratorMgrRef, cmd)
   }
 }

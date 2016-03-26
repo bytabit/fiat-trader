@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.notary;
+package org.bytabit.ft.fxui.arbitrator;
 
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
@@ -23,7 +23,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.bitcoinj.core.Sha256Hash;
-import org.bytabit.ft.fxui.NotaryServerFxService;
+import org.bytabit.ft.fxui.ArbitratorServerFxService;
 import org.bytabit.ft.fxui.model.ContractUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 import org.bytabit.ft.util.Config;
@@ -31,9 +31,9 @@ import org.joda.money.CurrencyUnit;
 
 import java.util.ResourceBundle;
 
-public class NotaryServerUI implements ActorController {
+public class ArbitratorServerUI implements ActorController {
 
-    private NotaryServerFxService notaryServerFxService;
+    private ArbitratorServerFxService arbitratorServerFxService;
 
     @FXML
     private ResourceBundle resources;
@@ -62,7 +62,7 @@ public class NotaryServerUI implements ActorController {
     private TextField fiatDeliveryMethodTextField;
 
     @FXML
-    private TextField btcNotaryFeeTextField;
+    private TextField btcArbitratorFeeTextField;
 
     // table
 
@@ -83,9 +83,9 @@ public class NotaryServerUI implements ActorController {
 
     final private ActorSystem sys;
 
-    public NotaryServerUI(ActorSystem system) {
+    public ArbitratorServerUI(ActorSystem system) {
         sys = system;
-        notaryServerFxService = new NotaryServerFxService(system);
+        arbitratorServerFxService = new ArbitratorServerFxService(system);
     }
 
     // handlers
@@ -95,23 +95,23 @@ public class NotaryServerUI implements ActorController {
 
         if (Config.serverEnabled()) {
 
-            // setup notary id listener
-            notaryServerFxService.notaryId().addListener((observable, oldValue, newValue) -> {
+            // setup arbitrator id listener
+            arbitratorServerFxService.arbitratorId().addListener((observable, oldValue, newValue) -> {
                 idLabel.setText(newValue);
             });
 
-            // setup notary bond percent listener
-            notaryServerFxService.bondPercent().addListener((observable, oldValue, newValue) -> {
+            // setup arbitrator bond percent listener
+            arbitratorServerFxService.bondPercent().addListener((observable, oldValue, newValue) -> {
                 bondLabel.setText(newValue);
             });
 
-            // setup notary fee listener
-            notaryServerFxService.notaryFee().addListener((observable, oldValue, newValue) -> {
+            // setup arbitrator fee listener
+            arbitratorServerFxService.arbitratorFee().addListener((observable, oldValue, newValue) -> {
                 feeLabel.setText(newValue);
             });
 
-            // setup notary url listener
-            notaryServerFxService.notaryUrl().addListener((observable, oldValue, newValue) -> {
+            // setup arbitrator url listener
+            arbitratorServerFxService.arbitratorUrl().addListener((observable, oldValue, newValue) -> {
                 urlLabel.setText(newValue);
             });
 
@@ -123,12 +123,12 @@ public class NotaryServerUI implements ActorController {
             idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
             currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
             deliveryMethodColumn.setCellValueFactory(ct -> ct.getValue().deliveryMethodProperty());
-            //feeColumn.setCellValueFactory(ct -> ct.getValue().notaryFeeProperty());
+            //feeColumn.setCellValueFactory(ct -> ct.getValue().arbitratorFeeProperty());
 
-            contractTemplateTable.setItems(notaryServerFxService.contractTemplates());
-            addFiatCurrencyChoiceBox.setItems(notaryServerFxService.addCurrencyUnits());
+            contractTemplateTable.setItems(arbitratorServerFxService.contractTemplates());
+            addFiatCurrencyChoiceBox.setItems(arbitratorServerFxService.addCurrencyUnits());
 
-            notaryServerFxService.start();
+            arbitratorServerFxService.start();
         }
     }
 
@@ -138,7 +138,7 @@ public class NotaryServerUI implements ActorController {
         CurrencyUnit fiatCurrencyUnit = CurrencyUnit.of(addFiatCurrencyChoiceBox.getValue());
         String fiatDeliveryMethod = fiatDeliveryMethodTextField.getText();
 
-        notaryServerFxService.addContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod);
+        arbitratorServerFxService.addContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod);
     }
 
     private TableCell<ContractUIModel, String> newTableCell() {
@@ -158,7 +158,7 @@ public class NotaryServerUI implements ActorController {
                     vbox.alignmentProperty().setValue(Pos.CENTER);
                     Button deleteButton = new Button();
                     deleteButton.setText("DELETE");
-                    deleteButton.setOnAction(evt -> notaryServerFxService.deleteContractTemplate(Sha256Hash.wrap(item)));
+                    deleteButton.setOnAction(evt -> arbitratorServerFxService.deleteContractTemplate(Sha256Hash.wrap(item)));
                     vbox.getChildren().addAll(deleteButton);
                     setGraphic(vbox);
                 }

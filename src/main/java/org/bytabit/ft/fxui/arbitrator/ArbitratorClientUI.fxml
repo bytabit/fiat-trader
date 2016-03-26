@@ -20,15 +20,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.notary.NotaryClientUI">
+      fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorClientUI">
     <children>
-        <TableView fx:id="notariesTable" VBox.vgrow="ALWAYS">
+        <TableView fx:id="arbitratorsTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action"/>
                 <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status"/>
                 <TableColumn fx:id="urlColumn" maxWidth="300.0" prefWidth="300.0" text="URL"/>
                 <TableColumn fx:id="bondColumn" maxWidth="100.0" prefWidth="100.0" text="XBT Bond %"/>
-                <TableColumn fx:id="feeColumn" maxWidth="100.0" prefWidth="100.0" text="Notary Fee"/>
+                <TableColumn fx:id="feeColumn" maxWidth="100.0" prefWidth="100.0" text="Arbitrator Fee"/>
                 <TableColumn fx:id="idColumn" maxWidth="1.7976931348623157E308" prefWidth="200.0" text="Public Key ID"/>
             </columns>
             <VBox.margin>
@@ -50,8 +50,8 @@
                 <RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
             </rowConstraints>
             <children>
-                <Button fx:id="addNotaryButton" mnemonicParsing="false" onAction="#handleAddNotary" text="ADD"/>
-                <TextField fx:id="urlTextField" promptText="Notary URL" text="http://localhost:9001"
+                <Button fx:id="addArbitratorButton" mnemonicParsing="false" onAction="#handleAddArbitrator" text="ADD"/>
+                <TextField fx:id="urlTextField" promptText="Arbitrator URL" text="http://localhost:9001"
                            GridPane.columnIndex="2"/>
             </children>
             <VBox.margin>

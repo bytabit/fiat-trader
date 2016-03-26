@@ -23,37 +23,37 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
+import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator.server.ArbitratorServerManager
+import org.bytabit.ft.arbitrator.server.ArbitratorServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryFSM.{ContractAdded, ContractRemoved, NotaryCreated}
-import org.bytabit.ft.notary.server.NotaryServerManager
-import org.bytabit.ft.notary.server.NotaryServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object NotaryServerFxService {
-  def apply(system: ActorSystem) = new NotaryServerFxService(system)
+object ArbitratorServerFxService {
+  def apply(system: ActorSystem) = new ArbitratorServerFxService(system)
 }
 
-class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
+class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val notaryServerMgrSel = system.actorSelection(s"/user/${NotaryServerManager.name}")
-  lazy val notaryServerMgrRef = notaryServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val arbitratorServerMgrSel = system.actorSelection(s"/user/${ArbitratorServerManager.name}")
+  lazy val arbitratorServerMgrRef = arbitratorServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
 
-  val notaryId: SimpleStringProperty = new SimpleStringProperty("Unknown")
+  val arbitratorId: SimpleStringProperty = new SimpleStringProperty("Unknown")
 
   val bondPercent: SimpleStringProperty = new SimpleStringProperty("Unknown")
 
-  val notaryFee: SimpleStringProperty = new SimpleStringProperty("Unknown")
+  val arbitratorFee: SimpleStringProperty = new SimpleStringProperty("Unknown")
 
-  val notaryUrl: SimpleStringProperty = new SimpleStringProperty("Unknown")
+  val arbitratorUrl: SimpleStringProperty = new SimpleStringProperty("Unknown")
 
   val contractTemplates: ObservableList[ContractUIModel] = FXCollections.observableArrayList[ContractUIModel]
 
@@ -78,11 +78,11 @@ class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   @Override
   def handler = {
-    case NotaryCreated(u, n, p) =>
-      notaryId.set(n.id.toString)
+    case ArbitratorCreated(u, n, p) =>
+      arbitratorId.set(n.id.toString)
       bondPercent.set(f"${n.bondPercent * 100}%f")
-      notaryFee.set(n.btcNotaryFee.toString)
-      notaryUrl.set(n.url.toString)
+      arbitratorFee.set(n.btcArbitratorFee.toString)
+      arbitratorUrl.set(n.url.toString)
 
     case ContractAdded(u, c, _) =>
       addUIContract(u, c.id, c.fiatCurrencyUnit, c.fiatDeliveryMethod)
@@ -94,8 +94,8 @@ class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
       log.error(s"Unexpected event: $e")
   }
 
-  def addUIContract(notaryURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: String) = {
-    val newContractTempUI = ContractUIModel(notaryURL, id, fcu, fdm)
+  def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: String) = {
+    val newContractTempUI = ContractUIModel(arbitratorURL, id, fcu, fdm)
     contractTemplates.find(t => t.getId == newContractTempUI.getId) match {
       case Some(ct) => contractTemplates.set(contractTemplates.indexOf(ct), newContractTempUI)
       case None => contractTemplates.add(newContractTempUI)
@@ -110,7 +110,7 @@ class NotaryServerFxService(actorSystem: ActorSystem) extends ActorFxService {
     })
   }
 
-  def sendCmd(cmd: NotaryServerManager.Command) = sendMsg(notaryServerMgrRef, cmd)
+  def sendCmd(cmd: ArbitratorServerManager.Command) = sendMsg(arbitratorServerMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(notaryServerMgrRef, cmd)
+  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorServerMgrRef, cmd)
 }

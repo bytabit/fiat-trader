@@ -22,7 +22,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.NotarizeProcess._
+import org.bytabit.ft.trade.ArbitrateProcess._
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
@@ -31,7 +31,7 @@ import org.joda.time.DateTime
 
 import scala.language.postfixOps
 
-object NotarizeProcess {
+object ArbitrateProcess {
 
   // commands
 
@@ -39,13 +39,13 @@ object NotarizeProcess {
 
   case object Start extends Command
 
-  final case class CertifyFiatSent(notaryUrl: URL, id: UUID) extends Command
+  final case class CertifyFiatSent(arbitratorUrl: URL, id: UUID) extends Command
 
-  final case class CertifyFiatNotSent(notaryUrl: URL, id: UUID) extends Command
+  final case class CertifyFiatNotSent(arbitratorUrl: URL, id: UUID) extends Command
 
 }
 
-class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
+class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
 
   override val id = sellOffer.id
 
@@ -186,7 +186,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
       stay()
 
     case Event(WalletManager.FiatSentCertified(cfs), cfe: CertifyFiatEvidence) =>
-      postTradeEvent(cfs.url, FiatSentCertified(cfs.id, cfs.notaryPayoutTxSigs), self)
+      postTradeEvent(cfs.url, FiatSentCertified(cfs.id, cfs.arbitratorPayoutTxSigs), self)
       stay()
 
     case Event(fsc: FiatSentCertified, cfe: CertifyFiatEvidence) if fsc.posted.isDefined =>
@@ -202,7 +202,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
       stay()
 
     case Event(WalletManager.FiatNotSentCertified(cfd), cfe: CertifyFiatEvidence) =>
-      postTradeEvent(cfd.url, FiatNotSentCertified(cfd.id, cfd.notaryPayoutTxSigs), self)
+      postTradeEvent(cfd.url, FiatNotSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs), self)
       stay()
 
     case Event(fnsc: FiatNotSentCertified, cfe: CertifyFiatEvidence) if fnsc.posted.isDefined =>
@@ -231,7 +231,7 @@ class NotarizeProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Trad
         stay()
 
     case e =>
-      log.error(s"Received event after fiat sent certified by notary: $e")
+      log.error(s"Received event after fiat sent certified by arbitrator: $e")
       stay()
   }
 

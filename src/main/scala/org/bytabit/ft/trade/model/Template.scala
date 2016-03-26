@@ -2,7 +2,7 @@ package org.bytabit.ft.trade.model
 
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.util.Monies
-import org.bytabit.ft.wallet.model.{Buyer, Notary, Seller}
+import org.bytabit.ft.wallet.model.{Arbitrator, Buyer, Seller}
 import org.joda.money.{CurrencyUnit, Money}
 
 trait Template {
@@ -13,18 +13,18 @@ trait Template {
   override lazy val toString: String = replaceAll(text, keyValues)
 
   def contractKeyValues(id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: String,
-                        notary: Notary, btcNetworkName: String) =
+                        arbitrator: Arbitrator, btcNetworkName: String) =
     Map[String, Option[String]](
       "contractId" -> Some(id.toString),
       "fiatCurrencyUnit" -> Some(fiatCurrencyUnit.toString),
       "fiatDeliveryMethod" -> Some(fiatDeliveryMethod),
 
-      "notaryId" -> Some(notary.id.toString),
+      "arbitratorId" -> Some(arbitrator.id.toString),
       "btcNetworkName" -> Some(btcNetworkName),
-      "notaryFeeAddress" -> Some(notary.feesAddr.toString),
-      "notaryURL" -> Some(notary.url.toString),
-      "bondPercent" -> Some(notary.bondPercent.toString),
-      "btcNotaryFee" -> Some(notary.btcNotaryFee.toString)
+      "arbitratorFeeAddress" -> Some(arbitrator.feesAddr.toString),
+      "arbitratorURL" -> Some(arbitrator.url.toString),
+      "bondPercent" -> Some(arbitrator.bondPercent.toString),
+      "btcArbitratorFee" -> Some(arbitrator.btcArbitratorFee.toString)
     )
 
   def amountKeyValues(fiatAmount: Money, btcAmount: Money, bondPercent: Double) =

@@ -42,13 +42,13 @@ public class MainUI implements ActorController {
     private Tab traderTradesTab;
 
     @FXML
-    private Tab notariesTab;
+    private Tab arbitratorsTab;
 
     @FXML
-    private Tab notaryTradesTab;
+    private Tab arbitratorTradesTab;
 
     @FXML
-    private Tab notaryServerTab;
+    private Tab arbitratorServerTab;
 
     @FXML
     private TabPane tabPane;
@@ -56,11 +56,11 @@ public class MainUI implements ActorController {
     @FXML
     void initialize() {
 
-        // remove notary server tab if notary is not enabled
-        notaryTradesTab.setDisable(!Config.serverEnabled());
-        notaryServerTab.setDisable(!Config.serverEnabled());
+        // remove arbitrator server tab if arbitrator is not enabled
+        arbitratorTradesTab.setDisable(!Config.serverEnabled());
+        arbitratorServerTab.setDisable(!Config.serverEnabled());
 
-        // remove trader trades tab if notary is enabled
+        // remove trader trades tab if arbitrator is enabled
         traderTradesTab.setDisable(Config.serverEnabled());
 
         tabPane.getTabs().removeIf(Tab::isDisable);

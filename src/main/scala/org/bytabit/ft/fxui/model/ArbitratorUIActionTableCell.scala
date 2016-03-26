@@ -22,21 +22,21 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.NotaryTradeFxService
+import org.bytabit.ft.fxui.ArbitratorTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{NOTARY, Role}
+import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, Role}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.TradeFSM.CERT_DELIVERY_REQD
 
 import scala.collection.JavaConversions._
 
-object NotarizeUIActionTableCell {
+object ArbitratorUIActionTableCell {
 
   case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
 
 }
 
-class NotarizeUIActionTableCell(tradefxService: NotaryTradeFxService) extends ActionTableCell {
+class ArbitratorUIActionTableCell(tradefxService: ArbitratorTradeFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)
@@ -59,7 +59,7 @@ class NotarizeUIActionTableCell(tradefxService: NotaryTradeFxService) extends Ac
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, NOTARY, CERT_DELIVERY_REQD), false) =>
+      case (TradeOriginState(u, i, ARBITRATOR, CERT_DELIVERY_REQD), false) =>
         Seq(certifySentButton, certifyNotSentButton)
 
       case _ =>

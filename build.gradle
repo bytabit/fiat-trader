@@ -21,10 +21,10 @@ repositories {
     mavenLocal()
 }
 
-sourceSets.main.scala.srcDirs = ["src/main/java","src/main/scala"]
+sourceSets.main.scala.srcDirs = ["src/main/java", "src/main/scala"]
 sourceSets.main.java.srcDirs = []
 
-sourceSets.test.scala.srcDirs = ["src/test/java","src/test/scala"]
+sourceSets.test.scala.srcDirs = ["src/test/java", "src/test/scala"]
 sourceSets.test.java.srcDirs = []
 
 sourceSets.main.resources {
@@ -78,4 +78,8 @@ task spec(dependsOn: ['testClasses'], type: JavaExec) {
     main = 'org.scalatest.tools.Runner'
     args = ['-R', 'build/classes/test', '-o']
     classpath = sourceSets.test.runtimeClasspath
+}
+
+test {
+    dependsOn spec
 }

@@ -23,15 +23,15 @@ import org.bytabit.ft.util.Monies
 import org.joda.money.Money
 
 
-object Notary extends WalletTools with Serializable {
+object Arbitrator extends WalletTools with Serializable {
 
-  def apply(url: URL, bondPercent: Double, btcNotaryFee: Money)(implicit w: Wallet): Notary =
-    new Notary(url, w.getParams, freshEscrowKey, freshPayoutAddress, bondPercent, btcNotaryFee)
+  def apply(url: URL, bondPercent: Double, btcNotaryFee: Money)(implicit w: Wallet): Arbitrator =
+    new Arbitrator(url, w.getParams, freshEscrowKey, freshPayoutAddress, bondPercent, btcNotaryFee)
 }
 
-case class Notary(url: URL, netParams: NetworkParameters, escrowPubKey: PubECKey, feesAddr: Address,
-                  bondPercent: Double, btcNotaryFee: Money)
+case class Arbitrator(url: URL, netParams: NetworkParameters, escrowPubKey: PubECKey, feesAddr: Address,
+                      bondPercent: Double, btcArbitratorFee: Money)
   extends ParticipantDetails {
 
-  assert(Monies.isBTC(btcNotaryFee))
+  assert(Monies.isBTC(btcArbitratorFee))
 }

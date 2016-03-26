@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary.server
+package org.bytabit.ft.arbitrator.server
 
-import org.bytabit.ft.notary.NotaryFSM
+import org.bytabit.ft.arbitrator.ArbitratorFSM
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.util.DateTimeOrdering
 
-final case class PostedEvents(notaryEvents: Seq[NotaryFSM.PostedEvent],
+final case class PostedEvents(arbitratorEvents: Seq[ArbitratorFSM.PostedEvent],
                               tradeEvents: Seq[TradeFSM.PostedEvent]) {
 
-  val latestUpdate = (notaryEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))
+  val latestUpdate = (arbitratorEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))
     .reduceOption(DateTimeOrdering.max)
 }

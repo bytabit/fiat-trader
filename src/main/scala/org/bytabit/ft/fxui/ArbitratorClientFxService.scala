@@ -21,34 +21,34 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.fxui.model.NotaryUIModel
+import org.bytabit.ft.arbitrator.ArbitratorClientManager.{Start, _}
+import org.bytabit.ft.arbitrator.ArbitratorFSM._
+import org.bytabit.ft.arbitrator._
+import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.notary.NotaryClientManager.{Start, _}
-import org.bytabit.ft.notary.NotaryFSM._
-import org.bytabit.ft.notary._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
-import org.bytabit.ft.wallet.model.Notary
+import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object NotaryClientFxService {
-  def apply(system: ActorSystem) = new NotaryClientFxService(system)
+object ArbitratorClientFxService {
+  def apply(system: ActorSystem) = new ArbitratorClientFxService(system)
 }
 
-class NotaryClientFxService(actorSystem: ActorSystem) extends ActorFxService {
+class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val notaryClientMgrSel = system.actorSelection(s"/user/${NotaryClientManager.name}")
-  lazy val notaryClientMgrRef = notaryClientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val arbitratorClientMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  lazy val arbitratorClientMgrRef = arbitratorClientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
 
-  val notaries: ObservableList[NotaryUIModel] = FXCollections.observableArrayList[NotaryUIModel]
+  val arbitrators: ObservableList[ArbitratorUIModel] = FXCollections.observableArrayList[ArbitratorUIModel]
   val addCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
   val addDeliveryMethods: ObservableList[String] = FXCollections.observableArrayList[String]
 
@@ -61,31 +61,31 @@ class NotaryClientFxService(actorSystem: ActorSystem) extends ActorFxService {
     sendCmd(Start)
   }
 
-  def addNotary(url: URL) =
-    sendCmd(AddNotary(url))
+  def addArbitrator(url: URL) =
+    sendCmd(AddArbitrator(url))
 
-  def removeNotary(url: URL) =
-    sendCmd(RemoveNotary(url))
+  def removeArbitrator(url: URL) =
+    sendCmd(RemoveArbitrator(url))
 
   @Override
   def handler = {
-    case NotaryAdded(u) =>
-      updateNotaryUIModel(ADDED, u, None)
+    case ArbitratorAdded(u) =>
+      updateArbitratorUIModel(ADDED, u, None)
 
-    case NotaryCreated(u, n, _) =>
-      updateNotaryUIModel(ONLINE, u, Some(n))
+    case ArbitratorCreated(u, n, _) =>
+      updateArbitratorUIModel(ONLINE, u, Some(n))
 
-    case NotaryRemoved(u) =>
-      removeNotaryUIModel(u)
+    case ArbitratorRemoved(u) =>
+      removeArbitratorUIModel(u)
 
-    case NotaryOnline(u) =>
-      updateNotaryUIModel(ONLINE, u, None)
+    case ArbitratorOnline(u) =>
+      updateArbitratorUIModel(ONLINE, u, None)
 
-    case NotaryOffline(u) =>
-      updateNotaryUIModel(OFFLINE, u, None)
+    case ArbitratorOffline(u) =>
+      updateArbitratorUIModel(OFFLINE, u, None)
 
-    case e: NotaryFSM.Event =>
-      log.debug(s"unhandled NotaryFSM event: $e")
+    case e: ArbitratorFSM.Event =>
+      log.debug(s"unhandled ArbitratorFSM event: $e")
 
     case e: TradeFSM.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
@@ -94,23 +94,23 @@ class NotaryClientFxService(actorSystem: ActorSystem) extends ActorFxService {
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  private def updateNotaryUIModel(state: NotaryFSM.State, url: URL, notary: Option[Notary]) = {
-    notaries.find(n => n.getUrl == url.toString) match {
-      case Some(n) if notary.isDefined =>
-        val newNotaryUI = NotaryUIModel(state, url, notary)
-        notaries.set(notaries.indexOf(n), newNotaryUI)
-      case Some(n) if notary.isEmpty =>
-        val newNotaryUI = n.copy(status = state, url = url)
-        notaries.set(notaries.indexOf(n), newNotaryUI)
+  private def updateArbitratorUIModel(state: ArbitratorFSM.State, url: URL, arbitrator: Option[Arbitrator]) = {
+    arbitrators.find(n => n.getUrl == url.toString) match {
+      case Some(n) if arbitrator.isDefined =>
+        val newArbitratorUI = ArbitratorUIModel(state, url, arbitrator)
+        arbitrators.set(arbitrators.indexOf(n), newArbitratorUI)
+      case Some(n) if arbitrator.isEmpty =>
+        val newArbitratorUI = n.copy(status = state, url = url)
+        arbitrators.set(arbitrators.indexOf(n), newArbitratorUI)
       case None =>
-        val newNotaryUI = NotaryUIModel(state, url, notary)
-        notaries.add(newNotaryUI)
+        val newArbitratorUI = ArbitratorUIModel(state, url, arbitrator)
+        arbitrators.add(newArbitratorUI)
     }
   }
 
-  private def removeNotaryUIModel(u: URL) = {
-    notaries.removeIf(new Predicate[NotaryUIModel] {
-      override def test(a: NotaryUIModel): Boolean = {
+  private def removeArbitratorUIModel(u: URL) = {
+    arbitrators.removeIf(new Predicate[ArbitratorUIModel] {
+      override def test(a: ArbitratorUIModel): Boolean = {
         a.getUrl == u.toString
       }
     })
@@ -181,7 +181,7 @@ class NotaryClientFxService(actorSystem: ActorSystem) extends ActorFxService {
     }
   }
 
-  private def sendCmd(cmd: NotaryClientManager.Command) = sendMsg(notaryClientMgrRef, cmd)
+  private def sendCmd(cmd: ArbitratorClientManager.Command) = sendMsg(arbitratorClientMgrRef, cmd)
 
-  private def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(notaryClientMgrRef, cmd)
+  private def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorClientMgrRef, cmd)
 }

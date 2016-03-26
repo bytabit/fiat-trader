@@ -58,7 +58,7 @@ object WalletManager {
 
   case class FindCurrentAddress(purpose: KeyChain.KeyPurpose) extends Command
 
-  case class CreateNotary(url: URL, bondPercent: Double, btcNotaryFee: Money) extends Command
+  case class CreateArbitrator(url: URL, bondPercent: Double, btcNotaryFee: Money) extends Command
 
   case class CreateSellOffer(offer: Offer) extends Command
 
@@ -96,7 +96,7 @@ object WalletManager {
 
   case class CurrentAddressFound(a: Address) extends Event
 
-  case class NotaryCreated(notary: Notary) extends Event
+  case class ArbitratorCreated(arbitrator: Arbitrator) extends Event
 
   case class SellOfferCreated(sellOffer: SellOffer) extends Event
 
@@ -143,8 +143,8 @@ class WalletManager extends Actor with ListenerUpdater {
       log.debug(s"current wallet address: $a")
       sender ! CurrentAddressFound(a)
 
-    case CreateNotary(u, bp, nf) =>
-      sender ! NotaryCreated(Notary(u, bp, nf))
+    case CreateArbitrator(u, bp, nf) =>
+      sender ! ArbitratorCreated(Arbitrator(u, bp, nf))
 
     case CreateSellOffer(offer: Offer) =>
       sender ! SellOfferCreated(offer.withSeller)

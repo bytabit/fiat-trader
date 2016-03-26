@@ -18,16 +18,15 @@ package org.bytabit.ft.fxui.model
 
 import java.net.URL
 import java.util.UUID
-import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.Pos
-import javafx.scene.control.{Button, TableCell}
+import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
 import org.bytabit.ft.fxui.TraderTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{FIAT_SENT, CREATED, FUNDED}
+import org.bytabit.ft.trade.TradeFSM.{CREATED, FIAT_SENT, FUNDED}
 
 import scala.collection.JavaConversions._
 

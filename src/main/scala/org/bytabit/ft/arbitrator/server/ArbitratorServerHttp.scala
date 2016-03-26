@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.notary.server
+package org.bytabit.ft.arbitrator.server
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
@@ -22,13 +22,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import org.bytabit.ft.notary.NotaryFSMJsonProtocol
+import org.bytabit.ft.arbitrator.ArbitratorFSMJsonProtocol
 import org.bytabit.ft.trade.TradeFSM
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
 
-trait NotaryServerHttp extends NotaryFSMJsonProtocol {
+trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
 
   implicit val system: ActorSystem
 
@@ -56,14 +56,14 @@ trait NotaryServerHttp extends NotaryFSMJsonProtocol {
   }
 
   val route = {
-    pathPrefix("notary") {
+    pathPrefix("arbitrator") {
       pathEnd {
         get {
           parameter("since".?) { sinceParam =>
             val since = dateParam(sinceParam)
             complete {
               val pae = getPostedEvents(since)
-              if (pae.notaryEvents.nonEmpty || pae.tradeEvents.nonEmpty) pae
+              if (pae.arbitratorEvents.nonEmpty || pae.tradeEvents.nonEmpty) pae
               else HttpResponse(StatusCodes.NoContent)
             }
           }
