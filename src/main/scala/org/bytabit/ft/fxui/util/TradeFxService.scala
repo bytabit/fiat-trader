@@ -38,7 +38,7 @@ trait TradeFxService extends ActorFxService {
   val sellCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
   val sellDeliveryMethods: ObservableList[String] = FXCollections.observableArrayList[String]
   val sellBondPercent = new SimpleStringProperty()
-  val sellNotaryFee = new SimpleStringProperty()
+  val sellArbitratorFee = new SimpleStringProperty()
 
   // UI update functions
 
@@ -150,7 +150,7 @@ trait TradeFxService extends ActorFxService {
   def certifyFiatSent(fsc: FiatSentCertified): Unit = {
     findTrade(fsc.id) match {
       case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
-        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_SENT_CERTD, cfe.withNotarizedFiatSentSigs(fsc.payoutSigs)))
+        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fsc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat sent.")
     }
@@ -159,7 +159,7 @@ trait TradeFxService extends ActorFxService {
   def certifyFiatNotSent(fnc: FiatNotSentCertified): Unit = {
     findTrade(fnc.id) match {
       case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
-        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_NOT_SENT_CERTD, cfe.withNotarizedFiatSentSigs(fnc.payoutSigs)))
+        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_NOT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fnc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat not sent.")
     }

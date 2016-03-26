@@ -86,7 +86,7 @@ public class TraderTradeUI extends AbstractTradeUI {
         sellFiatCurrencyChoiceBox.setItems(tradeFxService.sellCurrencyUnits());
         sellDeliveryMethodChoiceBox.setItems(tradeFxService.sellDeliveryMethods());
         sellBondPercentLabel.textProperty().bind(tradeFxService.sellBondPercent());
-        sellNotaryFeeLabel.textProperty().bind(tradeFxService.sellNotaryFee());
+        sellNotaryFeeLabel.textProperty().bind(tradeFxService.sellArbitratorFee());
 
         // handle change events
 

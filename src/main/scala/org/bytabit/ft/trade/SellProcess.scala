@@ -41,11 +41,11 @@ object SellProcess {
 
   final case class AddSellOffer(offer: Offer) extends Command
 
-  final case class CancelSellOffer(notaryUrl: URL, id: UUID) extends Command
+  final case class CancelSellOffer(arbitratorUrl: URL, id: UUID) extends Command
 
-  final case class SendFiat(notaryUrl: URL, id: UUID) extends Command
+  final case class SendFiat(arbitratorUrl: URL, id: UUID) extends Command
 
-  final case class RequestCertifyDelivery(notaryUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
+  final case class RequestCertifyDelivery(arbitratorUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
@@ -177,7 +177,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
 
     case Event(e: SendFiat, ft: FundedTrade) =>
       goto(FIAT_SENT) andThen {
-        case ft:FundedTrade =>
+        case ft: FundedTrade =>
           context.parent ! FiatSent(ft.id)
       }
 
@@ -215,7 +215,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       stay()
 
     case Event(rcf: RequestCertifyDelivery, ft: FundedTrade) =>
-      postTradeEvent(rcf.notaryUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
+      postTradeEvent(rcf.arbitratorUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
       stay()
 
     case Event(cdr: CertifyDeliveryRequested, ft: FundedTrade) if cdr.posted.isDefined =>
@@ -238,7 +238,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       else
         stay()
 
-    case e:Event =>
+    case e: Event =>
       log.error(s"unexpected event: $e")
       stay()
   }
@@ -272,7 +272,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       goto(FIAT_SENT_CERTD) applying fsc andThen {
         case cfd: CertifiedFiatDelivery =>
           context.parent ! fsc
-          walletMgrRef ! WalletManager.BroadcastTx(cfd.notarySignedFiatSentPayoutTx, Some(cfd.seller.escrowPubKey))
+          walletMgrRef ! WalletManager.BroadcastTx(cfd.arbitratorSignedFiatSentPayoutTx, Some(cfd.seller.escrowPubKey))
       }
 
     case Event(fnsc: FiatNotSentCertified, cfe: CertifyFiatEvidence) if fnsc.posted.isDefined =>
@@ -282,7 +282,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       }
 
     case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
-      // ignore tx updates until decision event from notary received
+      // ignore tx updates until decision event from arbitrator received
       stay()
   }
 
@@ -305,7 +305,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
         stay()
 
     case e =>
-      log.error(s"Received event after fiat sent certified by notary: $e")
+      log.error(s"Received event after fiat sent certified by arbitrator: $e")
       stay()
   }
 

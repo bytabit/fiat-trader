@@ -38,7 +38,7 @@ object JavaFXExecutionContext {
 
 trait ActorFxService extends Service[Unit] {
 
-  val system:ActorSystem
+  val system: ActorSystem
 
   final lazy val log: LoggingAdapter = Logging.getLogger(system, this)
   final lazy val inbox: Inbox = Inbox.create(system)

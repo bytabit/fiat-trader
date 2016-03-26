@@ -4,7 +4,7 @@
   ~ Copyright 2016 Steven Myers
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
+  ~ you may arbitrator use this file except in compliance with the License.
   ~ You may obtain a copy of the License at
   ~
   ~     http://www.apache.org/licenses/LICENSE-2.0
@@ -18,6 +18,8 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 <BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
@@ -31,9 +33,9 @@
                     </content>
                 </Tab>
 
-                <Tab fx:id="notaryTradesTab" text="Notary Trades">
+                <Tab fx:id="arbitratorTradesTab" text="Trades">
                     <content>
-                        <fx:include source="notary/NotaryTradeUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorTradeUI.fxml"/>
                     </content>
                 </Tab>
 
@@ -43,15 +45,15 @@
                     </content>
                 </Tab>
 
-                <Tab fx:id="notariesTab" text="Notaries">
+                <Tab fx:id="arbitratorsTab" text="Arbitrators">
                     <content>
-                        <fx:include source="notary/NotaryClientUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorClientUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab fx:id="notaryServerTab" text="Notary Server">
+                <Tab fx:id="arbitratorServerTab" text="Trade Server">
                     <content>
-                        <fx:include source="notary/NotaryServerUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorServerUI.fxml"/>
                     </content>
                 </Tab>
             </tabs>
@@ -63,13 +65,22 @@
     <top>
         <ToolBar nodeOrientation="LEFT_TO_RIGHT" BorderPane.alignment="CENTER">
             <items>
-                <Label text="Fiat Trader">
-                    <font>
-                        <Font name="System Bold" size="14.0"/>
-                    </font>
-                </Label>
-                <Button mnemonicParsing="false" text="Preferences"/>
-                <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About"/>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <children>
+                        <ImageView fitHeight="40.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
+                            <image>
+                                <Image url="@/logo.png"/>
+                            </image>
+                        </ImageView>
+                        <Label text="Fiat Trader">
+                            <font>
+                                <Font name="System Bold" size="14.0"/>
+                            </font>
+                        </Label>
+                        <Button mnemonicParsing="false" text="Preferences"/>
+                        <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About"/>
+                    </children>
+                </HBox>
             </items>
             <BorderPane.margin>
                 <Insets/>

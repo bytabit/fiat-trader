@@ -30,7 +30,7 @@ case class Offer(id: UUID, contract: Contract, fiatAmount: Money, btcAmount: Mon
   assert(Monies.isBTC(btcAmount))
 
   override val text = contract.text
-  override val keyValues = contract.keyValues ++ amountKeyValues(fiatAmount, btcAmount, contract.notary.bondPercent)
+  override val keyValues = contract.keyValues ++ amountKeyValues(fiatAmount, btcAmount, contract.arbitrator.bondPercent)
 
   def withSeller(seller: Seller) = SellOffer(this, seller)
 

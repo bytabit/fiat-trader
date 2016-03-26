@@ -37,20 +37,20 @@ object Config {
   val walletNet = getString(s"$configRoot.wallet.net").getOrElse("org.bitcoin.test")
   val walletDir = getString(s"$configRoot.wallet.dir").getOrElse(s"$home/.bytabit/$config/wallet")
 
-  // notary server configs
+  // arbitrator server configs
 
-  val serverEnabled = getBoolean(s"$configRoot.notary-server.enabled").getOrElse(false)
+  val serverEnabled = getBoolean(s"$configRoot.arbitrator-server.enabled").getOrElse(false)
 
-  val bondPercent = getDouble(s"$configRoot.notary-server.bond-percent").getOrElse(0.0)
-  val btcNotaryFee = getDouble(s"$configRoot.notary-server.btc-notary-fee").getOrElse(0.0)
+  val bondPercent = getDouble(s"$configRoot.arbitrator-server.bond-percent").getOrElse(0.0)
+  val btcArbitratorFee = getDouble(s"$configRoot.arbitrator-server.btc-arbitrator-fee").getOrElse(0.0)
 
-  val localAddress = getString(s"$configRoot.notary-server.local-address").getOrElse("0.0.0.0")
-  val localPort = getInt(s"$configRoot.notary-server.local-port").getOrElse(9000)
-  val localProtocol = getString(s"$configRoot.notary-server.local-protocol").getOrElse("http")
+  val localAddress = getString(s"$configRoot.arbitrator-server.local-address").getOrElse("0.0.0.0")
+  val localPort = getInt(s"$configRoot.arbitrator-server.local-port").getOrElse(9000)
+  val localProtocol = getString(s"$configRoot.arbitrator-server.local-protocol").getOrElse("http")
 
-  val publicAddress = getString(s"$configRoot.notary-server.public-address").getOrElse("127.0.0.1")
-  val publicPort = getInt(s"$configRoot.notary-server.public-port").getOrElse(9000)
-  val publicProtocol = getString(s"$configRoot.notary-server.public-protocol").getOrElse("http")
+  val publicAddress = getString(s"$configRoot.arbitrator-server.public-address").getOrElse("127.0.0.1")
+  val publicPort = getInt(s"$configRoot.arbitrator-server.public-port").getOrElse(9000)
+  val publicProtocol = getString(s"$configRoot.arbitrator-server.public-protocol").getOrElse("http")
 
   val publicUrl = new URL(s"$publicProtocol://$publicAddress:$publicPort")
 

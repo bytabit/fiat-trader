@@ -19,26 +19,25 @@ package org.bytabit.ft.wallet.model
 import org.bitcoinj.core.Transaction.Purpose
 import org.bitcoinj.core._
 import org.bitcoinj.script.{Script, ScriptBuilder}
-import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.model.TxTools.COIN_MINER_FEE
 
 import scala.collection.JavaConversions._
 
 // create new unsigned payout tx
 object PayoutTx extends TxTools {
-  def apply(n: Notary, s: Seller, b: Buyer, coinSellerPayout: Option[Coin], coinBuyerPayout: Option[Coin],
-            coinNotaryFee: Option[Coin], signedOpenTx: OpenTx, signedFundTxOutputs: Option[Seq[TransactionOutput]]) = {
+  def apply(n: Arbitrator, s: Seller, b: Buyer, coinSellerPayout: Option[Coin], coinBuyerPayout: Option[Coin],
+            coinArbitratorFee: Option[Coin], signedOpenTx: OpenTx, signedFundTxOutputs: Option[Seq[TransactionOutput]]) = {
 
     assert(signedOpenTx.fullySigned)
-    new PayoutTx(n.netParams, coinSellerPayout, coinBuyerPayout, coinNotaryFee,
+    new PayoutTx(n.netParams, coinSellerPayout, coinBuyerPayout, coinArbitratorFee,
       signedOpenTx.outputsToEscrow ++ signedFundTxOutputs.getOrElse(Seq()), s.payoutAddr, b.payoutAddr, n.feesAddr,
       escrowRedeemScript(n, s, b))
   }
 }
 
 case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin], coinBuyerPayout: Option[Coin],
-                    coinNotaryFee: Option[Coin], outputsToEscrow: Seq[TransactionOutput],
-                    sellerPayoutAddr: Address, buyerPayoutAddr: Address, notaryFeeAddr: Address,
+                    coinArbitratorFee: Option[Coin], outputsToEscrow: Seq[TransactionOutput],
+                    sellerPayoutAddr: Address, buyerPayoutAddr: Address, arbitratorFeeAddr: Address,
                     redeemScript: Script, inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_CLAIM)
@@ -47,7 +46,7 @@ case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin]
 
   // verify inputs from escrow and payout amounts
   assert(coinEscrowAmt.subtract(coinSellerPayout.getOrElse(Coin.ZERO)).subtract(coinBuyerPayout.getOrElse(Coin.ZERO))
-    .subtract(coinNotaryFee.getOrElse(Coin.ZERO)).subtract(COIN_MINER_FEE).isZero)
+    .subtract(coinArbitratorFee.getOrElse(Coin.ZERO)).subtract(COIN_MINER_FEE).isZero)
 
   // add  inputs with empty unlock scripts
   outputsToEscrow.foreach { o =>
@@ -66,7 +65,7 @@ case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin]
   // add outputs
   coinSellerPayout.foreach(tx.addOutput(_, sellerPayoutAddr))
   coinBuyerPayout.foreach(tx.addOutput(_, buyerPayoutAddr))
-  coinNotaryFee.foreach(tx.addOutput(_, notaryFeeAddr))
+  coinArbitratorFee.foreach(tx.addOutput(_, arbitratorFeeAddr))
 
   assert(verified)
 

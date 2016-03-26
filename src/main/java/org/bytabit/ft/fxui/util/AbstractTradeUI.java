@@ -19,7 +19,6 @@ package org.bytabit.ft.fxui.util;
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -66,7 +65,7 @@ public abstract class AbstractTradeUI implements ActorController {
     protected TableColumn<TradeUIModel, String> bondPercentColumn;
 
     @FXML
-    protected TableColumn<TradeUIModel, String> notaryFeeColumn;
+    protected TableColumn<TradeUIModel, String> arbitratorFeeColumn;
 
     final private ActorSystem sys;
 
@@ -108,7 +107,7 @@ public abstract class AbstractTradeUI implements ActorController {
         exchRateColumn.setCellValueFactory(t -> t.getValue().exchangeRateProperty());
         deliveryMethodColumn.setCellValueFactory(t -> t.getValue().deliveryMethodProperty());
         bondPercentColumn.setCellValueFactory(t -> t.getValue().bondPercentProperty());
-        notaryFeeColumn.setCellValueFactory(t -> t.getValue().notaryFeeProperty());
+        arbitratorFeeColumn.setCellValueFactory(t -> t.getValue().arbitratorFeeProperty());
 
     }
 

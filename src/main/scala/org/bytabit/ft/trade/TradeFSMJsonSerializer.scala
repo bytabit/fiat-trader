@@ -22,7 +22,7 @@ import spray.json._
 
 class TradeFSMJsonSerializer(override val system: ExtendedActorSystem)
   extends AbstractSprayJsonSerializer[TradeFSM.Event](system)
-  with TradeFSMJsonProtocol {
+    with TradeFSMJsonProtocol {
 
   override val identifier = hashId("TradeFSMJsonSerializer")
 

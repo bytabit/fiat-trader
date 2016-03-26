@@ -30,7 +30,7 @@ trait WalletJsonProtocol extends UtilJsonProtocol {
   implicit def sellerJsonFormat = jsonFormat(Seller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
     "openTxUtxo")
 
-  implicit def NotaryJsonFormat = jsonFormat(Notary.apply, "url", "netParams", "escrowPubKey", "feesAddr",
+  implicit def NotaryJsonFormat = jsonFormat(Arbitrator.apply, "url", "netParams", "escrowPubKey", "feesAddr",
     "bondPercent", "btcNotaryFee")
 
   implicit object Sha256HashJsonFormat extends JsonFormat[Sha256Hash] {

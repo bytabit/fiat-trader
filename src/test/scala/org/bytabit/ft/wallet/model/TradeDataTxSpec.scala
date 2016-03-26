@@ -31,8 +31,8 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
 
   Context.propagate(new Context(params))
 
-  // notary
-  val notaryWallet = new Wallet(params)
+  // arbitrator
+  val arbitratorWallet = new Wallet(params)
 
   // buyer
   val buyerWallet = new Wallet(params)
@@ -48,7 +48,7 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     val deliveryDetails = "Bank Name: Citibank, Account Holder: Fred Flintstone, Account Number: 12345-678910"
 
     // create test offer
-    val offer = createOffer(notaryWallet)
+    val offer = createOffer(arbitratorWallet)
 
     // add seller to new offer to create sell offer
     val sellerInput1Key = sellerWallet.freshReceiveKey().dropParent.dropPrivateBytes
@@ -97,19 +97,19 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     buyerSignedPayoutTx shouldBe 'fullySigned
   }
 
-  def createOffer(notaryWallet: Wallet): Offer = {
+  def createOffer(arbitratorWallet: Wallet): Offer = {
 
-    val notaryUrl = new URL("http://bytabit.com/notary")
+    val arbitratorUrl = new URL("http://bytabit.com/arbitrator")
     val bondPercent = 0.20
-    val notaryFee = BTCMoney(0.10)
-    val notary = Notary(notaryUrl, bondPercent, notaryFee)(notaryWallet)
+    val arbitratorFee = BTCMoney(0.10)
+    val arbitrator = Arbitrator(arbitratorUrl, bondPercent, arbitratorFee)(arbitratorWallet)
 
     val deliveryMethod = "CASH DEPOSIT"
     val fiatCurrencyUnit = CurrencyUnits.USD
     val fiatAmount = FiatMoney(fiatCurrencyUnit, "100.00")
     val btcAmount = BTCMoney(0, 20)
 
-    val contract = Contract(notary, fiatCurrencyUnit, deliveryMethod)
+    val contract = Contract(arbitrator, fiatCurrencyUnit, deliveryMethod)
 
     Offer(UUID.randomUUID(), contract, fiatAmount, btcAmount)
   }

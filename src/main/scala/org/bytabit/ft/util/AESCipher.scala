@@ -77,34 +77,34 @@ case class AESCipher(key: Array[Byte], iv: Array[Byte]) {
 }
 
 /**
-private static byte[] cipherData(PaddedBufferedBlockCipher cipher, byte[] data)
-        throws Exception
-{
-    int minSize = cipher.getOutputSize(data.length);
-    byte[] outBuf = new byte[minSize];
-    int length1 = cipher.processBytes(data, 0, data.length, outBuf, 0);
-    int length2 = cipher.doFinal(outBuf, length1);
-    int actualLength = length1 + length2;
-    byte[] result = new byte[actualLength];
-    System.arraycopy(outBuf, 0, result, 0, result.length);
-    return result;
-}
-
-private static byte[] decrypt(byte[] cipher, byte[] key, byte[] iv) throws Exception
-{
-    PaddedBufferedBlockCipher aes = new PaddedBufferedBlockCipher(new CBCBlockCipher(
-            new AESEngine()));
-    CipherParameters ivAndKey = new ParametersWithIV(new KeyParameter(key), iv);
-    aes.init(false, ivAndKey);
-    return cipherData(aes, cipher);
-}
-
-private static byte[] encrypt(byte[] plain, byte[] key, byte[] iv) throws Exception
-{
-    PaddedBufferedBlockCipher aes = new PaddedBufferedBlockCipher(new CBCBlockCipher(
-            new AESEngine()));
-    CipherParameters ivAndKey = new ParametersWithIV(new KeyParameter(key), iv);
-    aes.init(true, ivAndKey);
-    return cipherData(aes, plain);
-}
+  * private static byte[] cipherData(PaddedBufferedBlockCipher cipher, byte[] data)
+  * throws Exception
+  * {
+  * int minSize = cipher.getOutputSize(data.length);
+  * byte[] outBuf = new byte[minSize];
+  * int length1 = cipher.processBytes(data, 0, data.length, outBuf, 0);
+  * int length2 = cipher.doFinal(outBuf, length1);
+  * int actualLength = length1 + length2;
+  * byte[] result = new byte[actualLength];
+  * System.arraycopy(outBuf, 0, result, 0, result.length);
+  * return result;
+  * }
+  * *
+  * private static byte[] decrypt(byte[] cipher, byte[] key, byte[] iv) throws Exception
+  * {
+  * PaddedBufferedBlockCipher aes = new PaddedBufferedBlockCipher(new CBCBlockCipher(
+  * new AESEngine()));
+  * CipherParameters ivAndKey = new ParametersWithIV(new KeyParameter(key), iv);
+  * aes.init(false, ivAndKey);
+  * return cipherData(aes, cipher);
+  * }
+  * *
+  * private static byte[] encrypt(byte[] plain, byte[] key, byte[] iv) throws Exception
+  * {
+  * PaddedBufferedBlockCipher aes = new PaddedBufferedBlockCipher(new CBCBlockCipher(
+  * new AESEngine()));
+  * CipherParameters ivAndKey = new ParametersWithIV(new KeyParameter(key), iv);
+  * aes.init(true, ivAndKey);
+  * return cipherData(aes, plain);
+  * }
   */

@@ -24,7 +24,7 @@ import org.bytabit.ft.wallet.model.TxTools.COIN_MINER_FEE
 object OpenTx extends TxTools {
 
   // create new unsigned open tx
-  def apply(coinOpenEscrow: Coin, n: Notary, s: Seller, b: Buyer) =
+  def apply(coinOpenEscrow: Coin, n: Arbitrator, s: Seller, b: Buyer) =
     new OpenTx(n.netParams, coinOpenEscrow, escrowAddress(n, s, b), s.openTxUtxo, s.changeAddr,
       b.openTxUtxo, b.changeAddr)
 }
@@ -65,7 +65,7 @@ case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
 
   // TODO FT-28: add hash of contract details in op return?
 
-  // TODO FT-29: add fee or tip to notary for publishing offer?
+  // TODO FT-29: add fee or tip to arbitrator for publishing offer?
 
   assert(verified)
 

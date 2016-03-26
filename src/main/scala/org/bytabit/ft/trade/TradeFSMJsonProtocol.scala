@@ -24,7 +24,7 @@ import spray.json._
 
 trait TradeFSMJsonProtocol extends WalletJsonProtocol {
 
-  implicit def contractJsonFormat = jsonFormat(Contract.apply, "text", "notary", "fiatCurrencyUnit", "fiatDeliveryMethod")
+  implicit def contractJsonFormat = jsonFormat(Contract.apply, "text", "arbitrator", "fiatCurrencyUnit", "fiatDeliveryMethod")
 
   implicit def offerJsonFormat = jsonFormat(Offer.apply, "contract", "fiatAmount", "btcAmount", "btcBond")
 
