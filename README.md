@@ -11,12 +11,12 @@ git clone git@bitbucket.org:bytabit/fiat-trader.git
 
 1. Install [JDK 8u73](https://jdk8.java.net/download.html)
 2. Install [Scala version  2.11.5](http://www.scala-lang.org/download/)
-3. Install [SBT version 0.13.7](http://www.scala-sbt.org/download.html)
+3. Install [Gradle version 2.12](https://gradle.org/gradle-download/)
 4. Verify your JAVA_HOME environment variable is set to your JDK home
 5. From the project directory run command:
 
 ```
-sbt run
+gradle run
 ```
 
 ### Run From Command Line with Custom Configs
@@ -24,16 +24,16 @@ sbt run
 1. From the project directory run command:
 
 ```
-sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/notary1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
-sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader1.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
-sbt '; set javaOptions += "-Dconfig.file=./src/test/resources/trader2.conf" ; runMain org.bytabit.ft.fxui.FiatTrader'
+gradle run gradle run -Dconfig.file=./src/test/resources/arbitrator1.conf
+gradle run gradle run -Dconfig.file=./src/test/resources/trader1.conf
+gradle run gradle run -Dconfig.file=./src/test/resources/trader2.conf
 ```
 
 ### Run From IntelliJ with Custom Configs 
 
 ```
 Main class: org.bytabit.ft.fxui.FiatTrader
-VM options: -Dconfig.file=./src/test/resources/notary1.conf
+VM options: -Dconfig.file=./src/test/resources/arbitrator1.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
@@ -54,12 +54,10 @@ Use classpath of module: fiat-trader
 
 ### IntelliJ Setup
 
-1. Install Scala and sbt plugins
-2. Create IntelliJ configs from project directory with sbt command: ```sbt gen-idea```
-3. Open project in IntelliJ (let IntelliJ upgrade the sbt generated config files)
+1. Install scala and gradle plugins (if not already installed)
+2. Create IntelliJ configs from project directory with gradle command: ```gradle idea```
+3. Open project in IntelliJ
 4. Verify the project JDK and Java Inspections settings are correct
-
-Note: Don't use the IntelliJ scala plugin project import, I found it doesn't work well with mixed Java/Scala projects 
 
 ### JavaFX Scene Builder
 

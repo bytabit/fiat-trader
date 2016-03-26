@@ -1,13 +1,14 @@
 *.class
 
-# sbt specific
 .cache
 .classpath
 .project
 .settings
 .lib/
+.gradle/
 dist/*
 target/
+build/
 lib_managed/
 src_managed/
 project/boot/
