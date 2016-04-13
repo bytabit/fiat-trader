@@ -53,11 +53,11 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, trade: TradeData) {
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
   val roleProperty = new SimpleStringProperty(role.toString)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
-  val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.toString)
+  val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
   val btcAmountProperty = new SimpleStringProperty(btcAmount.toString)
   val exchangeRateProperty = new SimpleStringProperty(exchangeRate.toString)
-  val deliveryMethodProperty = new SimpleStringProperty(deliveryMethod)
+  val deliveryMethodProperty = new SimpleStringProperty(deliveryMethod.name)
 
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val arbitratorFeeProperty = new SimpleStringProperty(arbitratorFee.toString)

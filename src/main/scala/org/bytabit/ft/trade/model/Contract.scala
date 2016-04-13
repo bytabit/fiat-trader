@@ -18,7 +18,7 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bytabit.ft.util.SignedHashId
+import org.bytabit.ft.util.{FiatDeliveryMethod, SignedHashId}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, Money}
 
@@ -33,16 +33,16 @@ object Contract {
     "6. Seller will transfer the $fiatAmount to the buyer using the $fiatDeliveryMethod fiat delivery method.\n" +
     "7. The buyer payment details are: $buyerFiatDeliveryDetails.\n"
 
-  def apply(arbitrator: Arbitrator, fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: String): Contract =
+  def apply(arbitrator: Arbitrator, fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod): Contract =
     Contract(text, arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
 }
 
 case class Contract(text: String, arbitrator: Arbitrator,
-                    fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: String) extends SignedHashId with Template {
+                    fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) extends SignedHashId with Template {
 
   val netParams = arbitrator.netParams
 
-  val id = hashId(netParams.getId, text, fiatCurrencyUnit.toString, fiatDeliveryMethod)
+  val id = hashId(netParams.getId, text, fiatCurrencyUnit.toString, fiatDeliveryMethod.toString)
 
   val btcNetworkName = netParams.getId.split('.')(2).toUpperCase
 

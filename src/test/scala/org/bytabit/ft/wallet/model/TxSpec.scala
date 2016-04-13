@@ -21,7 +21,7 @@ import java.util.UUID
 
 import org.bitcoinj.core._
 import org.bytabit.ft.trade.model.{Contract, SellOffer, SignedTakenOffer, TakenOffer}
-import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
+import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 import org.joda.money.CurrencyUnit
@@ -167,7 +167,7 @@ class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   def offer(arbitratorWallet: Wallet) = {
 
     val arbitratorUrl = new URL("http://bytabit.com/arbitrator")
-    val deliveryMethod = "CASH DEPOSIT"
+    val deliveryMethod = FiatDeliveryMethod.swish
     val fiatCurrencyUnit = CurrencyUnits.USD
     val bondPercent = 0.20
     val btcArbitratorFee = BTCMoney(0, 10)

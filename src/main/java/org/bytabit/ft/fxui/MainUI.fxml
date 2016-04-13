@@ -16,49 +16,53 @@
   ~ limitations under the License.
   -->
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.bytabit.ft.fxui.MainUI">
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.MainUI">
     <center>
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
             <tabs>
                 <Tab fx:id="traderTradesTab" text="Trades">
                     <content>
-                        <fx:include source="trade/TraderTradeUI.fxml"/>
+                        <fx:include source="trade/TraderTradeUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="arbitratorTradesTab" text="Trades">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorTradeUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorTradeUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="walletTab" text="Wallet">
                     <content>
-                        <fx:include source="wallet/WalletUI.fxml"/>
+                        <fx:include source="wallet/WalletUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="arbitratorsTab" text="Arbitrators">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorClientUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorClientUI.fxml" />
                     </content>
                 </Tab>
 
                 <Tab fx:id="arbitratorServerTab" text="Trade Server">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorServerUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitratorServerUI.fxml" />
                     </content>
                 </Tab>
             </tabs>
             <BorderPane.margin>
-                <Insets/>
+                <Insets />
             </BorderPane.margin>
         </TabPane>
     </center>
@@ -69,21 +73,21 @@
                     <children>
                         <ImageView fitHeight="40.0" fitWidth="100.0" pickOnBounds="true" preserveRatio="true">
                             <image>
-                                <Image url="@/logo.png"/>
+                                <Image url="@/logo.png" />
                             </image>
                         </ImageView>
                         <Label text="Fiat Trader">
                             <font>
-                                <Font name="System Bold" size="14.0"/>
+                                <Font name="System Bold" size="14.0" />
                             </font>
                         </Label>
-                        <Button mnemonicParsing="false" text="Preferences"/>
-                        <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About"/>
+                        <Button mnemonicParsing="false" text="Profile" />
+                        <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About" />
                     </children>
                 </HBox>
             </items>
             <BorderPane.margin>
-                <Insets/>
+                <Insets />
             </BorderPane.margin>
         </ToolBar>
     </top>

@@ -71,6 +71,17 @@ trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
     def write(cu: CurrencyUnit) = JsString(cu.getCode)
   }
 
+  // FiatDeliveryMethod json protocol
+  implicit object FiatDeliveryMethodJsonFormat extends JsonFormat[FiatDeliveryMethod] {
+
+    def read(value: JsValue) = value match {
+      case JsString(fdm) => FiatDeliveryMethod.getInstance(fdm).getOrElse(deserializationError("FiatDeliveryMethod name expected"))
+      case _ => deserializationError("FiatDeliveryMethod name expected")
+    }
+
+    def write(fdm: FiatDeliveryMethod) = JsString(fdm.name)
+  }
+
   // UUID json protocol
   implicit object UUIDJsonFormat extends JsonFormat[UUID] {
 
