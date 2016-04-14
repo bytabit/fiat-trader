@@ -1,3 +1,5 @@
+[![wercker status](https://app.wercker.com/status/4b45baa4a18cf289674fff2d3db7079a/s/master "wercker status")](https://app.wercker.com/project/bykey/4b45baa4a18cf289674fff2d3db7079a)
+
 Bytabit Fiat Trader
 ===================
 
