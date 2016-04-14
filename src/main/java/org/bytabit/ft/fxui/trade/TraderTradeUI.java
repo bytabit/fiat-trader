@@ -19,11 +19,13 @@ package org.bytabit.ft.fxui.trade;
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.util.StringConverter;
 import org.bytabit.ft.fxui.TraderTradeFxService;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.BTCMoney;
+import org.bytabit.ft.util.FiatDeliveryMethod;
 import org.bytabit.ft.util.FiatMoney;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
@@ -41,7 +43,7 @@ public class TraderTradeUI extends AbstractTradeUI {
     private Button sellButton;
 
     @FXML
-    private ChoiceBox<String> sellFiatCurrencyChoiceBox;
+    private ChoiceBox<CurrencyUnit> sellFiatCurrencyChoiceBox;
 
     @FXML
     private TextField sellFiatAmtField;
@@ -53,7 +55,7 @@ public class TraderTradeUI extends AbstractTradeUI {
     private TextField sellExchRateField;
 
     @FXML
-    private ChoiceBox<String> sellDeliveryMethodChoiceBox;
+    private ChoiceBox<FiatDeliveryMethod> sellDeliveryMethodChoiceBox;
 
     @FXML
     private Label sellBondPercentLabel;
@@ -94,15 +96,40 @@ public class TraderTradeUI extends AbstractTradeUI {
             sellButton.disableProperty().setValue(newValue1);
         });
 
+        sellFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
+            @Override
+            public String toString(CurrencyUnit cu) {
+                return cu.getCode();
+            }
+
+            @Override
+            public CurrencyUnit fromString(String code) {
+                return CurrencyUnit.of(code);
+            }
+        });
+
         sellFiatCurrencyChoiceBox.setOnAction((event) -> {
-            String selectedCurrencyUnit = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+            CurrencyUnit selectedCurrencyUnit = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
             tradeFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
             if (tradeFxService.sellDeliveryMethods().size() == 1)
                 sellDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
+        sellDeliveryMethodChoiceBox.setConverter(new StringConverter<FiatDeliveryMethod>() {
+            @Override
+            public String toString(FiatDeliveryMethod dm) {
+                return dm.name();
+            }
+
+            @Override
+            public FiatDeliveryMethod fromString(String name) {
+                // TODO need a better way to handle this
+                return FiatDeliveryMethod.getInstance(name).getOrElse(null);
+            }
+        });
+
         sellDeliveryMethodChoiceBox.setOnAction((event) -> {
-            String selectedDeliveryMethod = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
+            FiatDeliveryMethod selectedDeliveryMethod = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
             tradeFxService.setSelectedContract(selectedDeliveryMethod);
             if (tradeFxService.sellDeliveryMethods().size() == 1)
                 sellDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
@@ -118,10 +145,10 @@ public class TraderTradeUI extends AbstractTradeUI {
     }
 
     public void handleCreateSellOffer() {
-        CurrencyUnit cu = CurrencyUnit.getInstance(sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem());
+        CurrencyUnit cu = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
         Money fa = FiatMoney.apply(cu, sellFiatAmtField.getText());
         Money ba = BTCMoney.apply(sellBtcAmtField.getText());
-        String dm = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
+        FiatDeliveryMethod dm = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
         tradeFxService.createSellOffer(cu, fa, ba, dm);
     }
 

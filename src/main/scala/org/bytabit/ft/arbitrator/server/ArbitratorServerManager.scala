@@ -29,7 +29,7 @@ import org.bytabit.ft.arbitrator.server.ArbitratorServerManager._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater, Monies}
+import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.CurrencyUnit
@@ -57,7 +57,7 @@ object ArbitratorServerManager {
 
   case object Start extends Command
 
-  final case class AddContractTemplate(currencyUnit: CurrencyUnit, deliveryMethod: String) extends Command {
+  final case class AddContractTemplate(currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
     assert(Monies.isFiat(currencyUnit))
   }
 

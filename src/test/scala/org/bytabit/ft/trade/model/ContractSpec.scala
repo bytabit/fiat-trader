@@ -19,7 +19,7 @@ package org.bytabit.ft.trade.model
 import java.net.URL
 
 import org.bitcoinj.core.{Context, NetworkParameters, Wallet}
-import org.bytabit.ft.util.{BTCMoney, CurrencyUnits}
+import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.scalatest._
 
@@ -34,7 +34,7 @@ class ContractSpec extends FlatSpec with Matchers {
   val bondPercent = 0.20
   val btcArbitratorFee = BTCMoney(1, 0)
   val arbitratorURL = new URL("http://bytabit.org")
-  val fiatDeliveryMethod = "CASH DEPOSIT"
+  val fiatDeliveryMethod = FiatDeliveryMethod.swish
   val fiatCurrencyUnit = CurrencyUnits.USD
   val arbitrator = Arbitrator(arbitratorURL, bondPercent, btcArbitratorFee)(arbitratorWallet)
 

@@ -26,6 +26,8 @@ import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.fxui.model.TradeUIModel.Role
 import org.bytabit.ft.trade.TradeFSM._
 import org.bytabit.ft.trade.model._
+import org.bytabit.ft.util.FiatDeliveryMethod
+import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
@@ -35,8 +37,8 @@ trait TradeFxService extends ActorFxService {
   // UI Data
 
   val trades: ObservableList[TradeUIModel] = FXCollections.observableArrayList[TradeUIModel]
-  val sellCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
-  val sellDeliveryMethods: ObservableList[String] = FXCollections.observableArrayList[String]
+  val sellCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
+  val sellDeliveryMethods: ObservableList[FiatDeliveryMethod] = FXCollections.observableArrayList[FiatDeliveryMethod]
   val sellBondPercent = new SimpleStringProperty()
   val sellArbitratorFee = new SimpleStringProperty()
 

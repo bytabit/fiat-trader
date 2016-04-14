@@ -22,11 +22,13 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 import org.bitcoinj.core.Sha256Hash;
 import org.bytabit.ft.fxui.ArbitratorServerFxService;
 import org.bytabit.ft.fxui.model.ContractUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 import org.bytabit.ft.util.Config;
+import org.bytabit.ft.util.FiatDeliveryMethod;
 import org.joda.money.CurrencyUnit;
 
 import java.util.ResourceBundle;
@@ -56,10 +58,10 @@ public class ArbitratorServerUI implements ActorController {
     private Button addContractTemplateButton;
 
     @FXML
-    private ChoiceBox<String> addFiatCurrencyChoiceBox;
+    private ChoiceBox<CurrencyUnit> addFiatCurrencyChoiceBox;
 
     @FXML
-    private TextField fiatDeliveryMethodTextField;
+    private ChoiceBox<FiatDeliveryMethod> addFiatDeliveryMethodChoiceBox;
 
     @FXML
     private TextField btcArbitratorFeeTextField;
@@ -126,7 +128,42 @@ public class ArbitratorServerUI implements ActorController {
             //feeColumn.setCellValueFactory(ct -> ct.getValue().arbitratorFeeProperty());
 
             contractTemplateTable.setItems(arbitratorServerFxService.contractTemplates());
+
+            addFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
+                @Override
+                public String toString(CurrencyUnit cu) {
+                    return cu.getCode();
+                }
+
+                @Override
+                public CurrencyUnit fromString(String code) {
+                    return CurrencyUnit.of(code);
+                }
+            });
+
             addFiatCurrencyChoiceBox.setItems(arbitratorServerFxService.addCurrencyUnits());
+
+            addFiatDeliveryMethodChoiceBox.setConverter(new StringConverter<FiatDeliveryMethod>() {
+                @Override
+                public String toString(FiatDeliveryMethod dm) {
+                    return dm.name();
+                }
+
+                @Override
+                public FiatDeliveryMethod fromString(String name) {
+                    // TODO need a better way to handle this
+                    return FiatDeliveryMethod.getInstance(name).getOrElse(null);
+                }
+            });
+
+            addFiatDeliveryMethodChoiceBox.setItems(arbitratorServerFxService.addFiatDeliveryMethods());
+
+            addFiatCurrencyChoiceBox.setOnAction((event) -> {
+                CurrencyUnit selectedCurrencyUnit = addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+                arbitratorServerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
+                if (arbitratorServerFxService.addFiatDeliveryMethods().size() == 1)
+                    addFiatDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
+            });
 
             arbitratorServerFxService.start();
         }
@@ -135,8 +172,8 @@ public class ArbitratorServerUI implements ActorController {
     @FXML
     void handleAddContractTemplate() {
 
-        CurrencyUnit fiatCurrencyUnit = CurrencyUnit.of(addFiatCurrencyChoiceBox.getValue());
-        String fiatDeliveryMethod = fiatDeliveryMethodTextField.getText();
+        CurrencyUnit fiatCurrencyUnit = addFiatCurrencyChoiceBox.getValue();
+        FiatDeliveryMethod fiatDeliveryMethod = addFiatDeliveryMethodChoiceBox.getValue();
 
         arbitratorServerFxService.addContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod);
     }

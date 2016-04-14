@@ -33,7 +33,7 @@ import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{Contract, Offer}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
-import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
+import org.joda.money.{CurrencyUnit, Money}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
@@ -166,19 +166,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  def setSelectedAddCurrencyUnit(sacu: String) = {
-    sellCurrencyUnitSelected = try {
-      Some(CurrencyUnit.getInstance(sacu))
-    } catch {
-      case ice: IllegalCurrencyException =>
-        None
-      case npe: NullPointerException =>
-        None
-    }
+  def setSelectedAddCurrencyUnit(sacu: CurrencyUnit) = {
+    sellCurrencyUnitSelected = Some(sacu)
     updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
   }
 
-  def setSelectedContract(dm: String) = {
+  def setSelectedContract(dm: FiatDeliveryMethod) = {
     // TODO FT-21: allow user to rank arbitrators in arbitrator client screen so UI can auto pick top ranked one
     // for now pick lowest fee contract template that matches currency and delivery method
     sellContractSelected = for {
@@ -190,25 +183,25 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     updateSellContract(sellContractSelected)
   }
 
-  def updateCurrencyUnits(cts: Seq[Contract], acu: ObservableList[String]) = {
+  def updateCurrencyUnits(cts: Seq[Contract], acu: ObservableList[CurrencyUnit]) = {
     val existingCus = sellCurrencyUnits.toList
-    val foundCus = cts.map(ct => ct.fiatCurrencyUnit.toString).distinct
+    val foundCus = cts.map(ct => ct.fiatCurrencyUnit).distinct
     val addCus = foundCus.filterNot(existingCus.contains(_))
     val rmCus = existingCus.filterNot(foundCus.contains(_))
     acu.addAll(addCus)
     acu.removeAll(rmCus)
-    acu.sort(Ordering.String)
+    //acu.sort(Ordering.String)
   }
 
-  def updateDeliveryMethods(cts: Seq[Contract], adm: ObservableList[String], cuf: Option[CurrencyUnit]) = {
+  def updateDeliveryMethods(cts: Seq[Contract], adm: ObservableList[FiatDeliveryMethod], cuf: Option[CurrencyUnit]) = {
     val existingDms = sellDeliveryMethods.toList
     val filteredCts = cuf.map(cu => cts.filter(ct => ct.fiatCurrencyUnit.equals(cu))).getOrElse(cts)
-    val foundDms = filteredCts.map(ct => ct.fiatDeliveryMethod.toString).distinct
+    val foundDms = filteredCts.map(ct => ct.fiatDeliveryMethod).distinct
     val addDms = foundDms.filterNot(existingDms.contains(_))
     val rmDms = existingDms.filterNot(foundDms.contains(_))
     sellDeliveryMethods.addAll(addDms)
     sellDeliveryMethods.removeAll(rmDms)
-    sellDeliveryMethods.sort(Ordering.String)
+    //sellDeliveryMethods.sort(Ordering)
   }
 
   def updateSellContract(contract: Option[Contract]) = {
@@ -250,7 +243,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     }
   }
 
-  def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: String) = {
+  def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: FiatDeliveryMethod) = {
 
     sellContractSelected.foreach { c =>
       val o = Offer(UUID.randomUUID(), c, fiatAmount, btcAmount)

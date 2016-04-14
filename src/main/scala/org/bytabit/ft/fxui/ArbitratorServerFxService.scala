@@ -28,7 +28,7 @@ import org.bytabit.ft.arbitrator.server.ArbitratorServerManager
 import org.bytabit.ft.arbitrator.server.ArbitratorServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater}
+import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
@@ -45,6 +45,9 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
   val arbitratorServerMgrSel = system.actorSelection(s"/user/${ArbitratorServerManager.name}")
   lazy val arbitratorServerMgrRef = arbitratorServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
+  // Private Data
+  private var addCurrencyUnitSelected: Option[CurrencyUnit] = None
+
   // UI Data
 
   val arbitratorId: SimpleStringProperty = new SimpleStringProperty("Unknown")
@@ -57,18 +60,20 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
 
   val contractTemplates: ObservableList[ContractUIModel] = FXCollections.observableArrayList[ContractUIModel]
 
-  val addCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
+  val addCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
+
+  val addFiatDeliveryMethods: ObservableList[FiatDeliveryMethod] = FXCollections.observableArrayList[FiatDeliveryMethod]
 
   override def start() {
     super.start()
 
-    addCurrencyUnits.setAll(CurrencyUnits.FIAT.map(_.toString))
+    addCurrencyUnits.setAll(CurrencyUnits.FIAT)
 
     //sendCmd(AddListener(inbox.getRef()))
     sendCmd(Start)
   }
 
-  def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: String) = {
+  def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) = {
     sendCmd(AddContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod))
   }
 
@@ -94,7 +99,18 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
       log.error(s"Unexpected event: $e")
   }
 
-  def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: String) = {
+
+  def setSelectedCurrencyUnit(selectedCurrencyUnit: CurrencyUnit) = {
+
+    updateDeliveryMethods(addFiatDeliveryMethods, selectedCurrencyUnit)
+  }
+
+  def updateDeliveryMethods(fiatDeliveryMethods: ObservableList[FiatDeliveryMethod], currencyUnit: CurrencyUnit) = {
+    val addDms = FiatDeliveryMethod.forCurrencyUnit(currencyUnit)
+    fiatDeliveryMethods.setAll(addDms)
+  }
+
+  def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: FiatDeliveryMethod) = {
     val newContractTempUI = ContractUIModel(arbitratorURL, id, fcu, fdm)
     contractTemplates.find(t => t.getId == newContractTempUI.getId) match {
       case Some(ct) => contractTemplates.set(contractTemplates.indexOf(ct), newContractTempUI)

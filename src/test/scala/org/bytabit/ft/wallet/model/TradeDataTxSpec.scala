@@ -21,7 +21,7 @@ import java.util.UUID
 
 import org.bitcoinj.core._
 import org.bytabit.ft.trade.model.{Contract, Offer}
-import org.bytabit.ft.util.{AESCipher, BTCMoney, CurrencyUnits, FiatMoney}
+import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.scalatest._
 
@@ -104,7 +104,7 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     val arbitratorFee = BTCMoney(0.10)
     val arbitrator = Arbitrator(arbitratorUrl, bondPercent, arbitratorFee)(arbitratorWallet)
 
-    val deliveryMethod = "CASH DEPOSIT"
+    val deliveryMethod = FiatDeliveryMethod.swish
     val fiatCurrencyUnit = CurrencyUnits.USD
     val fiatAmount = FiatMoney(fiatCurrencyUnit, "100.00")
     val btcAmount = BTCMoney(0, 20)

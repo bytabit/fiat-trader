@@ -142,7 +142,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
     setHeaderText("Trade Information")
 
     btcTxFeeLabel.textProperty().setValue(tm.trade.btcMinerFee.toString)
-    fiatDeliveryMethodLabel.textProperty().setValue(tm.deliveryMethod)
+    fiatDeliveryMethodLabel.textProperty().setValue(tm.deliveryMethod.name)
     fiatAmountLabel.textProperty().setValue(tm.fiatAmount.toString)
     exchRateLabel.textProperty().setValue(tm.exchangeRate.toString)
     btcAmountLabel.textProperty().setValue(tm.btcAmount.toString)
