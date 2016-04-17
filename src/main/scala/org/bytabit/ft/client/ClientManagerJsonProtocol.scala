@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator
+package org.bytabit.ft.client
 
-import org.bytabit.ft.arbitrator.ArbitratorClientManager.{ArbitratorAdded, ArbitratorRemoved}
+import org.bytabit.ft.client.ClientManager.{ClientAdded, ClientRemoved}
 import org.bytabit.ft.util.{EventJsonFormat, UtilJsonProtocol}
 
-trait ArbitratorClientManagerJsonProtocol extends UtilJsonProtocol {
+trait ClientManagerJsonProtocol extends UtilJsonProtocol {
 
-  implicit def arbitratorAddedJsonFormat = jsonFormat(ArbitratorAdded.apply(_), "url")
+  implicit def clientAddedJsonFormat = jsonFormat(ClientAdded.apply(_), "url")
 
-  implicit def arbitratorRemovedJsonFormat = jsonFormat(ArbitratorRemoved.apply(_), "url")
+  implicit def clientRemovedJsonFormat = jsonFormat(ClientRemoved.apply(_), "url")
 
-  implicit def arbitratorClientManagerEventJsonFormat = new EventJsonFormat[ArbitratorClientManager.Event](
-    Map(simpleName(classOf[ArbitratorAdded]) -> arbitratorAddedJsonFormat,
-      simpleName(classOf[ArbitratorRemoved]) -> arbitratorRemovedJsonFormat)
+  implicit def clientManagerEventJsonFormat = new EventJsonFormat[ClientManager.Event](
+    Map(simpleName(classOf[ClientAdded]) -> clientAddedJsonFormat,
+      simpleName(classOf[ClientRemoved]) -> clientRemovedJsonFormat)
   )
 }

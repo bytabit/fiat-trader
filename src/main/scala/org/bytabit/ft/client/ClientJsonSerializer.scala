@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.trade
+package org.bytabit.ft.client
 
 import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer
 import spray.json._
 
-class TradeFSMJsonSerializer(override val system: ExtendedActorSystem)
-  extends AbstractSprayJsonSerializer[TradeFSM.Event](system)
-    with TradeFSMJsonProtocol {
+class ClientJsonSerializer(override val system: ExtendedActorSystem)
+  extends AbstractSprayJsonSerializer[ClientFSM.Event](system)
+    with ClientJsonProtocol {
 
-  override val identifier = hashId("TradeFSMJsonSerializer")
+  override val identifier = hashId(this.getClass.getSimpleName)
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
-      bytesToString(bytes).parseJson.convertTo[TradeFSM.Event]
+      bytesToString(bytes).parseJson.convertTo[ClientFSM.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
   def toBinary(obj: AnyRef) = obj match {
-    case o: TradeFSM.Event =>
+    case o: ClientFSM.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>
       throw new IllegalArgumentException("Wrong type found")

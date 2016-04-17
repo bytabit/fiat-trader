@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator
+package org.bytabit.ft.client
 
 import java.net.URL
 import java.util.UUID
@@ -28,9 +28,9 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.arbitrator.ArbitratorClient.{ReceivePostedArbitratorEvent, ReceivePostedTradeEvent}
-import org.bytabit.ft.arbitrator.ArbitratorFSM._
-import org.bytabit.ft.arbitrator.server.PostedEvents
+import org.bytabit.ft.client.ArbitratorClient.{ReceivePostedArbitratorEvent, ReceivePostedTradeEvent}
+import org.bytabit.ft.client.ClientFSM._
+import org.bytabit.ft.server.PostedEvents
 import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, Role, SELLER}
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.{Contract, SellOffer}
@@ -43,13 +43,13 @@ import scala.language.postfixOps
 import scala.reflect.{ClassTag, _}
 import scala.util.{Failure, Success}
 
-object ArbitratorFSM {
+object ClientFSM {
 
   // actor setup
 
   def props(url: URL, walletMgr: ActorRef) = Props(new ArbitratorClient(url, walletMgr))
 
-  def name(url: URL) = s"${ArbitratorFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
+  def name(url: URL) = s"${ClientFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 
   // events
 
@@ -109,20 +109,20 @@ object ArbitratorFSM {
 
   // data
 
-  trait ArbitratorData {
+  trait Data {
     val serverUrl: URL
 
     def latest(latestPosted: DateTime, newPosted: DateTime): DateTime = Seq(newPosted, latestPosted).reduce(DateTimeOrdering.max)
   }
 
-  case class AddedArbitrator(serverUrl: URL) extends ArbitratorData {
+  case class AddedArbitrator(serverUrl: URL) extends Data {
 
     def created(arbitrator: Arbitrator, posted: DateTime) = ActiveArbitrator(arbitrator, posted)
   }
 
   case class ActiveArbitrator(arbitrator: Arbitrator, latestPosted: DateTime,
                               contracts: Map[Sha256Hash, Contract] = Map(),
-                              activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends ArbitratorData {
+                              activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
 
     val serverUrl = arbitrator.url
 
@@ -152,7 +152,7 @@ object ArbitratorFSM {
 
 }
 
-trait ArbitratorFSM extends PersistentFSM[ArbitratorFSM.State, ArbitratorFSM.ArbitratorData, ArbitratorFSM.Event] with ArbitratorFSMJsonProtocol {
+trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM.Event] with ClientJsonProtocol {
 
   val url: URL
 
@@ -166,13 +166,13 @@ trait ArbitratorFSM extends PersistentFSM[ArbitratorFSM.State, ArbitratorFSM.Arb
 
   // persistence
 
-  override def persistenceId = ArbitratorFSM.name(url)
+  override def persistenceId = ClientFSM.name(url)
 
-  override def domainEventClassTag: ClassTag[ArbitratorFSM.Event] = classTag[ArbitratorFSM.Event]
+  override def domainEventClassTag: ClassTag[ClientFSM.Event] = classTag[ClientFSM.Event]
 
   // apply events to state and data
 
-  def applyEvent(event: ArbitratorFSM.Event, arbitratorData: ArbitratorFSM.ArbitratorData): ArbitratorData =
+  def applyEvent(event: ClientFSM.Event, arbitratorData: ClientFSM.Data): Data =
     (event, arbitratorData) match {
 
       case (ArbitratorCreated(u, n, Some(p)), an: AddedArbitrator) =>

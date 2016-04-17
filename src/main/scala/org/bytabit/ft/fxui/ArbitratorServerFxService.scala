@@ -23,9 +23,9 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
+import org.bytabit.ft.client.ClientFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.server.ServerManager
+import org.bytabit.ft.server.ServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
@@ -42,7 +42,7 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
 
   override val system = actorSystem
 
-  val arbitratorServerMgrSel = system.actorSelection(s"/user/${ArbitratorServerManager.name}")
+  val arbitratorServerMgrSel = system.actorSelection(s"/user/${ServerManager.name}")
   lazy val arbitratorServerMgrRef = arbitratorServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // Private Data
@@ -126,7 +126,7 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
     })
   }
 
-  def sendCmd(cmd: ArbitratorServerManager.Command) = sendMsg(arbitratorServerMgrRef, cmd)
+  def sendCmd(cmd: ServerManager.Command) = sendMsg(arbitratorServerMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorServerMgrRef, cmd)
 }

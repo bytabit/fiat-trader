@@ -22,8 +22,8 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator.ArbitratorFSM.{ContractAdded, ContractRemoved}
-import org.bytabit.ft.arbitrator._
+import org.bytabit.ft.client.ClientFSM.{ContractAdded, ContractRemoved}
+import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
@@ -46,7 +46,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   override val system = actorSystem
 
-  val arbitratorMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  val arbitratorMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
   lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // TODO FT-99: disable buy buttons if current trade is uncommitted
@@ -80,7 +80,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
 
-    case e: ArbitratorFSM.Event =>
+    case e: ClientFSM.Event =>
       log.debug(s"Unhandled ArbitratorFSM event: $e")
 
     // Handle Trade Events

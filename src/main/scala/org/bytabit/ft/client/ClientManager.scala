@@ -14,64 +14,64 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator
+package org.bytabit.ft.client
 
 import java.net.URL
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
-import org.bytabit.ft.arbitrator.ArbitratorClientManager._
+import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
 import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeFSM}
 import org.bytabit.ft.util.ListenerUpdater
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 
-object ArbitratorClientManager {
+object ClientManager {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new ArbitratorClientManager(walletMgr))
+  def props(walletMgr: ActorRef) = Props(new ClientManager(walletMgr))
 
-  val name = ArbitratorClientManager.getClass.getSimpleName
+  val name = ClientManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
   def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) = system.actorOf(props(walletMgr), name)
 
-  // arbitrator commands
+  // client manager commands
 
   sealed trait Command
 
   case object Start extends Command
 
-  final case class AddArbitrator(url: URL) extends Command
+  final case class AddClient(url: URL) extends Command
 
-  final case class RemoveArbitrator(url: URL) extends Command
+  final case class RemoveClient(url: URL) extends Command
 
   // events
 
   sealed trait Event
 
-  case class ArbitratorAdded(url: URL) extends Event
+  case class ClientAdded(url: URL) extends Event
 
-  case class ArbitratorRemoved(url: URL) extends Event
+  case class ClientRemoved(url: URL) extends Event
 
   // data
 
-  case class Data(arbitrators: Set[URL] = Set()) {
-    def arbitratorAdded(url: URL): Data = {
-      this.copy(arbitrators = arbitrators + url)
+  case class Data(clients: Set[URL] = Set()) {
+    def clientAdded(url: URL): Data = {
+      this.copy(clients = clients + url)
     }
 
-    def arbitratorRemoved(url: URL): Data = {
-      this.copy(arbitrators = arbitrators.filterNot(_ == url))
+    def clientRemoved(url: URL): Data = {
+      this.copy(clients = clients.filterNot(_ == url))
     }
   }
 
 }
 
-class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater {
+class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater {
 
   // implicits
 
@@ -83,15 +83,15 @@ class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with 
 
   // persistence
 
-  override def persistenceId: String = ArbitratorClientManager.persistenceId
+  override def persistenceId: String = ClientManager.persistenceId
 
   private var data = Data()
 
   // apply commands to data
 
   def applyEvent(evt: Event, data: Data): Data = evt match {
-    case ArbitratorAdded(url) => data.arbitratorAdded(url)
-    case ArbitratorRemoved(url) => data.arbitratorRemoved(url)
+    case ClientAdded(url) => data.clientAdded(url)
+    case ClientRemoved(url) => data.clientRemoved(url)
   }
 
   def updateData(evt: Event) = {
@@ -115,21 +115,21 @@ class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with 
 
     case Start =>
       self ! AddListener(context.sender())
-      data.arbitrators.foreach { u =>
+      data.clients.foreach { u =>
         startArbitratorClientFSM(u)
-        context.sender ! ArbitratorAdded(u)
+        context.sender ! ClientAdded(u)
       }
 
-    case AddArbitrator(url) if !data.arbitrators.contains(url) =>
+    case AddClient(url) if !data.clients.contains(url) =>
       startArbitratorClientFSM(url)
-      val aa = ArbitratorAdded(url)
+      val aa = ClientAdded(url)
       persist(aa)(updateData)
       context.sender ! aa
 
-    case RemoveArbitrator(u: URL) =>
-      // TODO FT-24: return errors if arbitrator in use for active trades
-      if (data.arbitrators.contains(u)) {
-        val ar = ArbitratorRemoved(u)
+    case RemoveClient(u: URL) =>
+      // TODO FT-24: return errors if client in use for active trades
+      if (data.clients.contains(u)) {
+        val ar = ClientRemoved(u)
         persist(ar)(updateData)
         context.sender ! ar
         stopArbitratorClientFSM(u)
@@ -162,7 +162,7 @@ class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with 
     case cfns: ArbitrateProcess.CertifyFiatNotSent =>
       arbitratorClientFSM(cfns.arbitratorUrl).foreach(_ ! cfns)
 
-    case evt: ArbitratorFSM.Event =>
+    case evt: ClientFSM.Event =>
       sendToListeners(evt)
 
     case evt: TradeFSM.Event =>
@@ -174,10 +174,10 @@ class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with 
       log.error(s"Unexpected event from ${context.sender()}: $e.toString")
   }
 
-  // start/stop arbitrator client FSMs
+  // start/stop client FSMs
 
   def startArbitratorClientFSM(url: URL) = {
-    val arbitratorClientRef = context.actorOf(ArbitratorFSM.props(url, walletMgr), ArbitratorFSM.name(url))
+    val arbitratorClientRef = context.actorOf(ClientFSM.props(url, walletMgr), ClientFSM.name(url))
     arbitratorClientRef ! ArbitratorClient.Start
   }
 
@@ -185,6 +185,6 @@ class ArbitratorClientManager(walletMgr: ActorRef) extends PersistentActor with 
     arbitratorClientFSM(url).foreach(context.stop)
   }
 
-  // find arbitrator client FSM
-  def arbitratorClientFSM(url: URL): Option[ActorRef] = context.child(ArbitratorFSM.name(url))
+  // find client FSM
+  def arbitratorClientFSM(url: URL): Option[ActorRef] = context.child(ClientFSM.name(url))
 }

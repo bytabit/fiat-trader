@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator
+package org.bytabit.ft.client
 
 import java.net.URL
 import java.util.UUID
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
-import org.bytabit.ft.arbitrator.ArbitratorClient._
-import org.bytabit.ft.arbitrator.ArbitratorFSM._
+import org.bytabit.ft.client.ArbitratorClient._
+import org.bytabit.ft.client.ClientFSM._
 import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, SELLER}
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
@@ -45,13 +45,13 @@ object ArbitratorClient {
 
   case object Start extends Command
 
-  final case class ReceivePostedArbitratorEvent(event: ArbitratorFSM.PostedEvent) extends Command
+  final case class ReceivePostedArbitratorEvent(event: ClientFSM.PostedEvent) extends Command
 
   final case class ReceivePostedTradeEvent(event: TradeFSM.PostedEvent) extends Command
 
 }
 
-class ArbitratorClient(serverUrl: URL, walletMgr: ActorRef) extends ArbitratorFSM {
+class ArbitratorClient(serverUrl: URL, walletMgr: ActorRef) extends ClientFSM {
 
   override val log = Logging(context.system, this)
 
@@ -224,7 +224,7 @@ class ArbitratorClient(serverUrl: URL, walletMgr: ActorRef) extends ArbitratorFS
       stay()
 
     // forward all other arbitrator events to parent
-    case Event(ne: ArbitratorFSM.Event, _) =>
+    case Event(ne: ClientFSM.Event, _) =>
       context.parent ! ne
       stay()
 

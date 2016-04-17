@@ -22,7 +22,7 @@ import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import spray.json._
 
-trait TradeFSMJsonProtocol extends WalletJsonProtocol {
+trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def contractJsonFormat = jsonFormat(Contract.apply, "text", "arbitrator", "fiatCurrencyUnit", "fiatDeliveryMethod")
 

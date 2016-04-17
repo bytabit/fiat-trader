@@ -20,7 +20,7 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator._
+import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.TradeUIModel.ARBITRATOR
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.TradeFSM._
@@ -38,7 +38,7 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
   override val system = actorSystem
 
-  val arbitratorMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  val arbitratorMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
   lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
@@ -103,7 +103,7 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
     // errors
 
-    case e: ArbitratorFSM.Event =>
+    case e: ClientFSM.Event =>
       log.debug(s"unhandled ArbitratorFSM event: $e")
 
     case e: TradeFSM.Event =>

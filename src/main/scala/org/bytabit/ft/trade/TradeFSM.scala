@@ -171,7 +171,7 @@ object TradeFSM {
 
 }
 
-trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
+trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeJsonProtocol {
 
   import spray.json._
 

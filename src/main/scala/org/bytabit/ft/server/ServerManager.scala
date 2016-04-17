@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.server
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
@@ -23,9 +23,9 @@ import akka.persistence.{PersistentActor, SnapshotOffer}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.arbitrator.ArbitratorFSM
-import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager._
+import org.bytabit.ft.client.ClientFSM
+import org.bytabit.ft.client.ClientFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.server.ServerManager._
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
@@ -39,13 +39,13 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ArbitratorServerManager {
+object ServerManager {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new ArbitratorServerManager(walletMgr))
+  def props(walletMgr: ActorRef) = Props(new ServerManager(walletMgr))
 
-  val name = ArbitratorServerManager.getClass.getSimpleName
+  val name = ServerManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
   def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) =
@@ -69,7 +69,7 @@ object ArbitratorServerManager {
 
   sealed trait Event
 
-  case class ArbitratorEventPosted(event: ArbitratorFSM.PostedEvent) extends Event {
+  case class ArbitratorEventPosted(event: ClientFSM.PostedEvent) extends Event {
     assert(event.posted.isDefined)
   }
 
@@ -80,7 +80,7 @@ object ArbitratorServerManager {
   // data
 
   case class Data(arbitrator: Option[Arbitrator] = None, contract: Seq[Contract] = Seq(),
-                  postedArbitratorEvents: Seq[ArbitratorFSM.PostedEvent] = Seq(),
+                  postedArbitratorEvents: Seq[ClientFSM.PostedEvent] = Seq(),
                   postedTradeEvents: Seq[TradeFSM.PostedEvent] = Seq()) {
 
     def arbitratorCreated(a: Arbitrator) =
@@ -92,7 +92,7 @@ object ArbitratorServerManager {
     def contractTemplateRemoved(id: Sha256Hash) =
       this.copy(contract = contract.filterNot(_.id == id))
 
-    def arbitratorEventPosted(event: ArbitratorFSM.PostedEvent) =
+    def arbitratorEventPosted(event: ClientFSM.PostedEvent) =
       this.copy(postedArbitratorEvents = postedArbitratorEvents :+ event)
 
     def tradeEventPosted(event: TradeFSM.PostedEvent) =
@@ -109,7 +109,7 @@ object ArbitratorServerManager {
 
 }
 
-class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with ArbitratorServerHttp {
+class ServerManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with ServerHttpProtocol {
 
   // implicits
 
@@ -129,7 +129,7 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
 
   // persistence
 
-  override def persistenceId: String = ArbitratorServerManager.persistenceId
+  override def persistenceId: String = ServerManager.persistenceId
 
   private var data = Data()
 
@@ -145,14 +145,14 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
 
   // apply events to data
 
-  def applyEvent(event: ArbitratorServerManager.Event, data: Data): Data = event match {
-    case ArbitratorEventPosted(ac: ArbitratorFSM.ArbitratorCreated) =>
+  def applyEvent(event: ServerManager.Event, data: Data): Data = event match {
+    case ArbitratorEventPosted(ac: ClientFSM.ArbitratorCreated) =>
       data.arbitratorEventPosted(ac).arbitratorCreated(ac.arbitrator)
 
-    case ArbitratorEventPosted(ca: ArbitratorFSM.ContractAdded) if data.arbitrator.isDefined =>
+    case ArbitratorEventPosted(ca: ClientFSM.ContractAdded) if data.arbitrator.isDefined =>
       data.arbitratorEventPosted(ca).contractTemplateAdded(ca.contract)
 
-    case ArbitratorEventPosted(ctr: ArbitratorFSM.ContractRemoved) =>
+    case ArbitratorEventPosted(ctr: ClientFSM.ContractRemoved) =>
       data.arbitratorEventPosted(ctr).contractTemplateRemoved(ctr.id)
 
     case TradeEventPosted(te: TradeFSM.PostedEvent) =>
@@ -193,7 +193,7 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
       walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
 
     case WalletManager.ArbitratorCreated(a) =>
-      val ac = ArbitratorFSM.ArbitratorCreated(a.url, a)
+      val ac = ClientFSM.ArbitratorCreated(a.url, a)
       persist(ArbitratorEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
       sendToListeners(ac)
 

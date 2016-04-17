@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.server
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
@@ -22,13 +22,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import org.bytabit.ft.arbitrator.ArbitratorFSMJsonProtocol
+import org.bytabit.ft.client.ClientJsonProtocol
 import org.bytabit.ft.trade.TradeFSM
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
 
-trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
+trait ServerHttpProtocol extends ServerManagerJsonProtocol {
 
   implicit val system: ActorSystem
 

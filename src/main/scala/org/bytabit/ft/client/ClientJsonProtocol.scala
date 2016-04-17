@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator
+package org.bytabit.ft.client
 
-import org.bytabit.ft.arbitrator.ArbitratorFSM._
-import org.bytabit.ft.arbitrator.server.PostedEvents
-import org.bytabit.ft.trade.TradeFSMJsonProtocol
+import org.bytabit.ft.client.ClientFSM._
+import org.bytabit.ft.server.PostedEvents
+import org.bytabit.ft.trade.TradeJsonProtocol
 import org.bytabit.ft.util.EventJsonFormat
 import spray.json._
 
-trait ArbitratorFSMJsonProtocol extends TradeFSMJsonProtocol {
+trait ClientJsonProtocol extends TradeJsonProtocol {
 
   implicit def arbitratorCreatedJsonFormat = jsonFormat3(ArbitratorCreated)
 
@@ -40,7 +40,7 @@ trait ArbitratorFSMJsonProtocol extends TradeFSMJsonProtocol {
 
   implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedTradeEventReceived)
 
-  val arbitratorEventJsonFormatMap: Map[String, RootJsonFormat[_ <: ArbitratorFSM.Event]] = Map(
+  val arbitratorEventJsonFormatMap: Map[String, RootJsonFormat[_ <: ClientFSM.Event]] = Map(
     simpleName(classOf[ArbitratorCreated]) -> arbitratorCreatedJsonFormat,
     simpleName(classOf[ContractAdded]) -> contractAddedJsonFormat,
     simpleName(classOf[ContractRemoved]) -> contractRemovedJsonFormat,
@@ -51,17 +51,17 @@ trait ArbitratorFSMJsonProtocol extends TradeFSMJsonProtocol {
     simpleName(classOf[PostedTradeEventReceived]) -> postedTradeEventReceivedJsonFormat
   )
 
-  implicit def arbitratorEventJsonFormat = new EventJsonFormat[ArbitratorFSM.Event](arbitratorEventJsonFormatMap)
+  implicit def arbitratorEventJsonFormat = new EventJsonFormat[ClientFSM.Event](arbitratorEventJsonFormatMap)
 
-  implicit def arbitratorPostedEventJsonFormat = new RootJsonFormat[ArbitratorFSM.PostedEvent] {
+  implicit def arbitratorPostedEventJsonFormat = new RootJsonFormat[ClientFSM.PostedEvent] {
 
-    override def read(json: JsValue): ArbitratorFSM.PostedEvent =
+    override def read(json: JsValue): ClientFSM.PostedEvent =
       arbitratorEventJsonFormat.read(json) match {
-        case pe: ArbitratorFSM.PostedEvent => pe
+        case pe: ClientFSM.PostedEvent => pe
         case _ => throw new DeserializationException("ArbitratorClientFSM PostedEvent expected")
       }
 
-    override def write(obj: ArbitratorFSM.PostedEvent): JsValue =
+    override def write(obj: ClientFSM.PostedEvent): JsValue =
       arbitratorEventJsonFormat.write(obj)
   }
 

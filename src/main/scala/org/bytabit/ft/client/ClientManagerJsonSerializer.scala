@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.client
 
 import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer
 import spray.json._
 
-class ArbitratorServerManagerJsonSerializer(override val system: ExtendedActorSystem)
-  extends AbstractSprayJsonSerializer[ArbitratorServerManager.Event](system)
-    with ArbitratorServerJsonProtocol {
+class ClientManagerJsonSerializer(override val system: ExtendedActorSystem)
+  extends AbstractSprayJsonSerializer[ClientManager.Event](system)
+    with ClientManagerJsonProtocol {
 
   override val identifier = hashId(this.getClass.getSimpleName)
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
-      bytesToString(bytes).parseJson.convertTo[ArbitratorServerManager.Event]
+      bytesToString(bytes).parseJson.convertTo[ClientManager.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
   def toBinary(obj: AnyRef) = obj match {
-    case o: ArbitratorServerManager.Event =>
+    case o: ClientManager.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>
       throw new IllegalArgumentException("Wrong type found")
