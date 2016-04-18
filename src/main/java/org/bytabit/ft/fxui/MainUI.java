@@ -57,11 +57,11 @@ public class MainUI implements ActorController {
     void initialize() {
 
         // remove arbitrator server tab if arbitrator is not enabled
-        arbitratorTradesTab.setDisable(!Config.serverEnabled());
+        arbitratorTradesTab.setDisable(!Config.arbitratorEnabled());
         arbitratorServerTab.setDisable(!Config.serverEnabled());
 
         // remove trader trades tab if arbitrator is enabled
-        traderTradesTab.setDisable(Config.serverEnabled());
+        traderTradesTab.setDisable(Config.arbitratorEnabled());
 
         tabPane.getTabs().removeIf(Tab::isDisable);
     }

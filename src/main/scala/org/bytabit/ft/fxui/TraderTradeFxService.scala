@@ -58,7 +58,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   private var sellContractSelected: Option[Contract] = None
 
   override def start() {
-    if (!Config.serverEnabled) {
+    if (!Config.arbitratorEnabled) {
       super.start()
       sendCmd(AddListener(inbox.getRef()))
     }
@@ -281,8 +281,6 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   def updateUncommitted() = {
     tradeUncommitted.set(trades.exists(_.uncommitted))
   }
-
-  def sendCmd(cmd: ArbitratorClient.Command) = sendMsg(arbitratorMgrRef, cmd)
 
   def sendCmd(cmd: SellProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
 

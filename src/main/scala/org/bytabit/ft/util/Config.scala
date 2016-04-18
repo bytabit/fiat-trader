@@ -37,20 +37,24 @@ object Config {
   val walletNet = getString(s"$configRoot.wallet.net").getOrElse("org.bitcoin.test")
   val walletDir = getString(s"$configRoot.wallet.dir").getOrElse(s"$home/.bytabit/$config/wallet")
 
-  // arbitrator server configs
+  // arbitrator configs
 
-  val serverEnabled = getBoolean(s"$configRoot.arbitrator-server.enabled").getOrElse(false)
+  val arbitratorEnabled = getBoolean(s"$configRoot.arbitrator.enabled").getOrElse(false)
 
-  val bondPercent = getDouble(s"$configRoot.arbitrator-server.bond-percent").getOrElse(0.0)
-  val btcArbitratorFee = getDouble(s"$configRoot.arbitrator-server.btc-arbitrator-fee").getOrElse(0.0)
+  val bondPercent = getDouble(s"$configRoot.arbitrator.bond-percent").getOrElse(0.0)
+  val btcArbitratorFee = getDouble(s"$configRoot.arbitrator.btc-arbitrator-fee").getOrElse(0.0)
 
-  val localAddress = getString(s"$configRoot.arbitrator-server.local-address").getOrElse("0.0.0.0")
-  val localPort = getInt(s"$configRoot.arbitrator-server.local-port").getOrElse(9000)
-  val localProtocol = getString(s"$configRoot.arbitrator-server.local-protocol").getOrElse("http")
+  // server configs
 
-  val publicAddress = getString(s"$configRoot.arbitrator-server.public-address").getOrElse("127.0.0.1")
-  val publicPort = getInt(s"$configRoot.arbitrator-server.public-port").getOrElse(9000)
-  val publicProtocol = getString(s"$configRoot.arbitrator-server.public-protocol").getOrElse("http")
+  val serverEnabled = getBoolean(s"$configRoot.server.enabled").getOrElse(false)
+
+  val localAddress = getString(s"$configRoot.server.local-address").getOrElse("0.0.0.0")
+  val localPort = getInt(s"$configRoot.server.local-port").getOrElse(9000)
+  val localProtocol = getString(s"$configRoot.server.local-protocol").getOrElse("http")
+
+  val publicAddress = getString(s"$configRoot.server.public-address").getOrElse("127.0.0.1")
+  val publicPort = getInt(s"$configRoot.server.public-port").getOrElse(9000)
+  val publicProtocol = getString(s"$configRoot.server.public-protocol").getOrElse("http")
 
   val publicUrl = new URL(s"$publicProtocol://$publicAddress:$publicPort")
 

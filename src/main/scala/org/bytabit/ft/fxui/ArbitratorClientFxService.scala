@@ -78,10 +78,10 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     case ClientRemoved(u) =>
       removeArbitratorUIModel(u)
 
-    case ArbitratorOnline(u) =>
+    case ServerOnline(u) =>
       updateArbitratorUIModel(ONLINE, u, None)
 
-    case ArbitratorOffline(u) =>
+    case ServerOffline(u) =>
       updateArbitratorUIModel(OFFLINE, u, None)
 
     case e: ClientFSM.Event =>

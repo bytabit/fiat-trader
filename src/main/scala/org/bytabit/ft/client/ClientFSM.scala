@@ -19,7 +19,7 @@ package org.bytabit.ft.client
 import java.net.URL
 import java.util.UUID
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorRef
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.unmarshalling.Unmarshal
@@ -28,10 +28,9 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.client.ArbitratorClient.{ReceivePostedArbitratorEvent, ReceivePostedTradeEvent}
 import org.bytabit.ft.client.ClientFSM._
-import org.bytabit.ft.server.PostedEvents
 import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, Role, SELLER}
+import org.bytabit.ft.server.PostedEvents
 import org.bytabit.ft.trade.TradeFSM
 import org.bytabit.ft.trade.model.{Contract, SellOffer}
 import org.bytabit.ft.util.{DateTimeOrdering, Posted}
@@ -45,11 +44,15 @@ import scala.util.{Failure, Success}
 
 object ClientFSM {
 
-  // actor setup
+  // commands
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new ArbitratorClient(url, walletMgr))
+  sealed trait Command
 
-  def name(url: URL) = s"${ClientFSM.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
+  case object Start extends Command
+
+  final case class ReceivePostedArbitratorEvent(event: ClientFSM.PostedEvent) extends Command
+
+  final case class ReceivePostedTradeEvent(event: TradeFSM.PostedEvent) extends Command
 
   // events
 
@@ -58,6 +61,12 @@ object ClientFSM {
   }
 
   sealed trait PostedEvent extends Event with Posted
+
+  // server events
+
+  final case class ServerOnline(url: URL) extends Event
+
+  final case class ServerOffline(url: URL) extends Event
 
   // arbitrator events
 
@@ -69,10 +78,6 @@ object ClientFSM {
 
   final case class ContractRemoved(url: URL, id: Sha256Hash,
                                    posted: Option[DateTime] = None) extends PostedEvent
-
-  final case class ArbitratorOnline(url: URL) extends Event
-
-  final case class ArbitratorOffline(url: URL) extends Event
 
   // trade events
 
@@ -115,14 +120,14 @@ object ClientFSM {
     def latest(latestPosted: DateTime, newPosted: DateTime): DateTime = Seq(newPosted, latestPosted).reduce(DateTimeOrdering.max)
   }
 
-  case class AddedArbitrator(serverUrl: URL) extends Data {
+  case class AddedServer(serverUrl: URL) extends Data {
 
-    def created(arbitrator: Arbitrator, posted: DateTime) = ActiveArbitrator(arbitrator, posted)
+    def created(arbitrator: Arbitrator, posted: DateTime) = ActiveServer(arbitrator, posted)
   }
 
-  case class ActiveArbitrator(arbitrator: Arbitrator, latestPosted: DateTime,
-                              contracts: Map[Sha256Hash, Contract] = Map(),
-                              activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
+  case class ActiveServer(arbitrator: Arbitrator, latestPosted: DateTime,
+                          contracts: Map[Sha256Hash, Contract] = Map(),
+                          activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
 
     val serverUrl = arbitrator.url
 
@@ -156,6 +161,8 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
   val url: URL
 
+  val walletMgr: ActorRef
+
   // implicits
 
   implicit val system = context.system
@@ -166,8 +173,6 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
   // persistence
 
-  override def persistenceId = ClientFSM.name(url)
-
   override def domainEventClassTag: ClassTag[ClientFSM.Event] = classTag[ClientFSM.Event]
 
   // apply events to state and data
@@ -175,28 +180,28 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
   def applyEvent(event: ClientFSM.Event, arbitratorData: ClientFSM.Data): Data =
     (event, arbitratorData) match {
 
-      case (ArbitratorCreated(u, n, Some(p)), an: AddedArbitrator) =>
+      case (ArbitratorCreated(u, n, Some(p)), an: AddedServer) =>
         an.created(n, p)
 
-      case (ContractAdded(u, c, Some(p)), an: ActiveArbitrator) =>
+      case (ContractAdded(u, c, Some(p)), an: ActiveServer) =>
         an.contractAdded(c, p)
 
-      case (ContractRemoved(u, id, Some(p)), an: ActiveArbitrator) =>
+      case (ContractRemoved(u, id, Some(p)), an: ActiveServer) =>
         an.contractRemoved(id, p)
 
-      case (SellTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
+      case (SellTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
         an.tradeAdded(SELLER, i, o, p)
 
-      case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
+      case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
         an.tradeAdded(BUYER, i, o, p)
 
-      case (ArbitrateTradeAdded(u, i, o, Some(p)), an: ActiveArbitrator) =>
+      case (ArbitrateTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
         an.tradeAdded(ARBITRATOR, i, o, p)
 
-      case (TradeRemoved(u, i, Some(p)), an: ActiveArbitrator) =>
+      case (TradeRemoved(u, i, Some(p)), an: ActiveServer) =>
         an.tradeRemoved(i, p)
 
-      case (PostedTradeEventReceived(u, Some(p)), an: ActiveArbitrator) =>
+      case (PostedTradeEventReceived(u, Some(p)), an: ActiveServer) =>
         an.postedEventReceived(p)
 
       case _ => arbitratorData
@@ -227,7 +232,7 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
         log.debug(s"Response from ${url.toString} $arbitratorUri OK")
         Unmarshal(entity).to[PostedEvents].onSuccess {
           case PostedEvents(aes, tes) =>
-            self ! ArbitratorOnline(url)
+            self ! ServerOnline(url)
             aes.foreach(self ! ReceivePostedArbitratorEvent(_))
             tes.foreach(self ! ReceivePostedTradeEvent(_))
           case _ =>
@@ -236,14 +241,14 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
       case Success(HttpResponse(StatusCodes.NoContent, headers, entity, protocol)) =>
         log.debug(s"No new events from ${url.toString}$arbitratorUri")
-        self ! ArbitratorOnline(url)
+        self ! ServerOnline(url)
 
       case Success(HttpResponse(sc, headers, entity, protocol)) =>
         log.error(s"Response from ${url.toString}$arbitratorUri ${sc.toString()}")
 
       case Failure(failure) =>
         log.debug(s"No Response from ${url.toString}: $failure")
-        self ! ArbitratorOffline(url)
+        self ! ServerOffline(url)
     }
   }
 
@@ -253,5 +258,4 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
   // find trade FSM
   def tradeFSM(id: UUID): Option[ActorRef] = context.child(TradeFSM.name(id))
-
 }

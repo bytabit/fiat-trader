@@ -25,8 +25,8 @@ import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
 import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeFSM}
-import org.bytabit.ft.util.ListenerUpdater
 import org.bytabit.ft.util.ListenerUpdater.AddListener
+import org.bytabit.ft.util.{Config, ListenerUpdater}
 
 object ClientManager {
 
@@ -116,12 +116,12 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
     case Start =>
       self ! AddListener(context.sender())
       data.clients.foreach { u =>
-        startArbitratorClientFSM(u)
+        startClient(u)
         context.sender ! ClientAdded(u)
       }
 
     case AddClient(url) if !data.clients.contains(url) =>
-      startArbitratorClientFSM(url)
+      startClient(url)
       val aa = ClientAdded(url)
       persist(aa)(updateData)
       context.sender ! aa
@@ -132,35 +132,35 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
         val ar = ClientRemoved(u)
         persist(ar)(updateData)
         context.sender ! ar
-        stopArbitratorClientFSM(u)
+        stopClient(u)
       }
 
     case cso: AddSellOffer =>
-      arbitratorClientFSM(cso.offer.contract.arbitrator.url).foreach(_ ! cso)
+      client(cso.offer.contract.arbitrator.url).foreach(_ ! cso)
 
     case cso: CancelSellOffer =>
-      arbitratorClientFSM(cso.arbitratorUrl).foreach(_ ! cso)
+      client(cso.arbitratorUrl).foreach(_ ! cso)
 
     case TakeSellOffer(url, oid, fdd) =>
-      arbitratorClientFSM(url).foreach(_ ! TakeSellOffer(url, oid, fdd))
+      client(url).foreach(_ ! TakeSellOffer(url, oid, fdd))
 
     case ReceiveFiat(url, oid) =>
-      arbitratorClientFSM(url).foreach(_ ! ReceiveFiat(url, oid))
+      client(url).foreach(_ ! ReceiveFiat(url, oid))
 
     case SendFiat(url, oid) =>
-      arbitratorClientFSM(url).foreach(_ ! SendFiat(url, oid))
+      client(url).foreach(_ ! SendFiat(url, oid))
 
     case rcd: SellProcess.RequestCertifyDelivery =>
-      arbitratorClientFSM(rcd.arbitratorUrl).foreach(_ ! rcd)
+      client(rcd.arbitratorUrl).foreach(_ ! rcd)
 
     case rcd: BuyProcess.RequestCertifyDelivery =>
-      arbitratorClientFSM(rcd.arbitratorUrl).foreach(_ ! rcd)
+      client(rcd.arbitratorUrl).foreach(_ ! rcd)
 
     case cfs: ArbitrateProcess.CertifyFiatSent =>
-      arbitratorClientFSM(cfs.arbitratorUrl).foreach(_ ! cfs)
+      client(cfs.arbitratorUrl).foreach(_ ! cfs)
 
     case cfns: ArbitrateProcess.CertifyFiatNotSent =>
-      arbitratorClientFSM(cfns.arbitratorUrl).foreach(_ ! cfns)
+      client(cfns.arbitratorUrl).foreach(_ ! cfns)
 
     case evt: ClientFSM.Event =>
       sendToListeners(evt)
@@ -174,17 +174,33 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
       log.error(s"Unexpected event from ${context.sender()}: $e.toString")
   }
 
-  // start/stop client FSMs
+  // start/stop clients
 
-  def startArbitratorClientFSM(url: URL) = {
-    val arbitratorClientRef = context.actorOf(ClientFSM.props(url, walletMgr), ClientFSM.name(url))
-    arbitratorClientRef ! ArbitratorClient.Start
+  def name(url: URL): String = {
+    if (Config.arbitratorEnabled) {
+      ArbitratorClient.name(url)
+    } else {
+      TraderClient.name(url)
+    }
   }
 
-  def stopArbitratorClientFSM(url: URL) = {
-    arbitratorClientFSM(url).foreach(context.stop)
+  def props(url: URL, walletMgr: ActorRef): Props = {
+    if (Config.arbitratorEnabled) {
+      ArbitratorClient.props(url, walletMgr)
+    } else {
+      TraderClient.props(url, walletMgr)
+    }
   }
 
-  // find client FSM
-  def arbitratorClientFSM(url: URL): Option[ActorRef] = context.child(ClientFSM.name(url))
+  def startClient(url: URL): Unit = {
+    val clientRef = context.actorOf(props(url, walletMgr), name(url))
+    clientRef ! ClientFSM.Start
+  }
+
+  def stopClient(url: URL): Unit = {
+    client(url).foreach(context.stop)
+  }
+
+  // find client
+  def client(url: URL): Option[ActorRef] = context.child(name(url))
 }

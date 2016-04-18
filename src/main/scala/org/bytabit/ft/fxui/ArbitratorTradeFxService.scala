@@ -42,7 +42,7 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
   lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
-    if (Config.serverEnabled) {
+    if (Config.arbitratorEnabled) {
       super.start()
       sendCmd(AddListener(inbox.getRef()))
     }

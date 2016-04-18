@@ -21,26 +21,28 @@ import java.util.UUID
 
 import akka.actor.{ActorRef, Props}
 import org.bytabit.ft.client.ClientFSM._
-import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, SELLER}
+import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
+import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
 import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
-import org.bytabit.ft.trade.model.SellOffer
-import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeFSM}
+import org.bytabit.ft.trade.model.{Offer, SellOffer}
+import org.bytabit.ft.trade.{BuyProcess, SellProcess, TradeFSM}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ArbitratorClient {
+object TraderClient {
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new ArbitratorClient(url, walletMgr))
+  def props(url: URL, walletMgr: ActorRef) = Props(new TraderClient(url, walletMgr))
 
-  def name(url: URL) = s"${ArbitratorClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
+  def name(url: URL) = s"${TraderClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
+case class TraderClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
 
   // persistence
 
-  override def persistenceId = ArbitratorClient.name(url)
+  override def persistenceId = TraderClient.name(url)
 
   startWith(ADDED, AddedServer(url))
 
@@ -74,7 +76,8 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
       cm.values.foreach(c => context.parent ! ContractAdded(c.arbitrator.url, c))
 
       // start active trade FSMs and notify parent
-      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
 
       // request new events from event server
       reqArbitratorEvents(url, Some(lp))
@@ -100,7 +103,67 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
         context.parent ! pe
       }
 
+    // handle trade commands
+
+    case Event(AddSellOffer(o), d) =>
+      createSellTrade(o.id, o) ! SellProcess.Start
+      stay()
+
+    case Event(cso: CancelSellOffer, d) =>
+      tradeFSM(cso.id) match {
+        case Some(ref) => ref ! cso
+        case None => log.error(s"Could not cancel offer ${cso.id}")
+      }
+      stay()
+
+    case Event(tso: TakeSellOffer, d) =>
+      tradeFSM(tso.id) match {
+        case Some(ref) => ref ! tso
+        case None => log.error(s"Could not take offer ${tso.id}")
+      }
+      stay()
+
+    case Event(rf: ReceiveFiat, d) =>
+      tradeFSM(rf.id) match {
+        case Some(ref) => ref ! rf
+        case None => log.error(s"Could not receive fiat ${rf.id}")
+      }
+      stay()
+
+    case Event(sf: SendFiat, d) =>
+      tradeFSM(sf.id) match {
+        case Some(ref) => ref ! sf
+        case None => log.error(s"Could not send fiat ${sf.id}")
+      }
+      stay()
+
+    case Event(rcd: BuyProcess.RequestCertifyDelivery, d) =>
+      tradeFSM(rcd.id) match {
+        case Some(ref) => ref ! rcd
+        case None => log.error(s"Could not request certify delivery ${rcd.id}")
+      }
+      stay()
+
+    case Event(rcd: SellProcess.RequestCertifyDelivery, d) =>
+      tradeFSM(rcd.id) match {
+        case Some(ref) => ref ! rcd
+        case None => log.error(s"Could not request certify delivery ${rcd.id}")
+      }
+      stay()
+
     // handle trade events
+
+    // add local trade and update latestUpdate
+    case Event(lsco: TradeFSM.LocalSellerCreatedOffer, ActiveServer(n, lp, cm, at)) if lsco.posted.isDefined =>
+      stay() applying SellTradeAdded(n.url, lsco.id, lsco.offer, lsco.posted) andThen { ud =>
+        context.parent ! lsco
+      }
+
+    // add remote trade and update latestUpdate
+    case Event(sco: TradeFSM.SellerCreatedOffer, ActiveServer(n, lp, cm, at)) if sco.posted.isDefined =>
+      stay() applying BuyTradeAdded(n.url, sco.id, sco.offer, sco.posted) andThen { ud =>
+        context.parent ! sco
+      }
 
     // add arbitrated remote trade and update latestUpdate
     case Event(sco: TradeFSM.SellerCreatedOffer, ActiveServer(n, lp, cm, at)) if sco.posted.isDefined =>
@@ -122,24 +185,9 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
       }
 
     // forward all other trade events to parent
+
     case Event(te: TradeFSM.Event, _) =>
       context.parent ! te
-      stay()
-
-    // handle arbitrator commands
-
-    case Event(cfs: ArbitrateProcess.CertifyFiatSent, d) =>
-      tradeFSM(cfs.id) match {
-        case Some(ref) => ref ! cfs
-        case None => log.error(s"Could not arbitrate fiat sent ${cfs.id}")
-      }
-      stay()
-
-    case Event(cfns: ArbitrateProcess.CertifyFiatNotSent, d) =>
-      tradeFSM(cfns.id) match {
-        case Some(ref) => ref ! cfns
-        case None => log.error(s"Could not arbitrate fiat not sent ${cfns.id}")
-      }
       stay()
 
     // forward all client events to parent
@@ -155,7 +203,7 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
         case Some(ref) =>
           ref ! sco
         case None =>
-          createArbitrateTrade(sco.id, sco.offer) ! sco
+          createBuyTrade(sco.id, sco.offer) ! sco
       }
       stay()
 
@@ -178,13 +226,14 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
 
       // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
       // start active trade FSMs and notify parent
-      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
+      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
 
       reqArbitratorEvents(n.url, Some(lp))
       stay()
 
     case Event(Start, AddedServer(u)) =>
-      // notify parent server is offline, arbitrator not created
+      // notify parent arbitrator is offline, not yet contacted
       context.parent ! ServerOffline(u)
 
       reqArbitratorEvents(u, None)
@@ -228,8 +277,12 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
 
   // create trade FSMs
 
-  def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
-    context.actorOf(TradeFSM.arbitrateProps(so, walletMgr), TradeFSM.name(id))
+  def createSellTrade(id: UUID, o: Offer): ActorRef = {
+    context.actorOf(TradeFSM.sellProps(o, walletMgr), TradeFSM.name(id))
+  }
+
+  def createBuyTrade(id: UUID, so: SellOffer): ActorRef = {
+    context.actorOf(TradeFSM.buyProps(so, walletMgr), TradeFSM.name(id))
   }
 
 }
