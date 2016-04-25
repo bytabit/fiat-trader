@@ -24,15 +24,15 @@ import javafx.scene.layout.VBox
 
 import org.bytabit.ft.fxui.TraderTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, Role, SELLER}
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{CREATED, FIAT_SENT, FUNDED}
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.TradeProcess.{CREATED, FIAT_SENT, FUNDED}
+import org.bytabit.ft.trade.model.{BUYER, Role, SELLER}
 
 import scala.collection.JavaConversions._
 
 object TradeUIActionTableCell {
 
-  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
+  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State)
 
 }
 

@@ -16,18 +16,19 @@
 
 package org.bytabit.ft.server
 
-import org.bytabit.ft.client.ClientJsonProtocol
-import org.bytabit.ft.server.ServerManager.{ArbitratorEventPosted, TradeEventPosted}
+import org.bytabit.ft.client.EventClientJsonProtocol
+import org.bytabit.ft.server.EventServer.{ArbitratorEventPosted, TradeEventPosted}
 import org.bytabit.ft.util.EventJsonFormat
 
-trait ServerManagerJsonProtocol extends ClientJsonProtocol {
+trait EventServerJsonProtocol extends EventClientJsonProtocol {
 
   implicit def arbitratorEventPostedJsonFormat = jsonFormat1(ArbitratorEventPosted)
 
   implicit def tradeEventPostedJsonFormat = jsonFormat1(TradeEventPosted)
 
-  implicit def arbitratorServerManagerEventJsonFormat = new EventJsonFormat[ServerManager.Event](
+  implicit def arbitratorServerManagerEventJsonFormat = new EventJsonFormat[EventServer.Event](
     Map(simpleName(classOf[ArbitratorEventPosted]) -> arbitratorEventPostedJsonFormat,
       simpleName(classOf[TradeEventPosted]) -> tradeEventPostedJsonFormat)
   )
+
 }

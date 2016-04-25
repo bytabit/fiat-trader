@@ -24,15 +24,15 @@ import javafx.scene.layout.VBox
 
 import org.bytabit.ft.fxui.ArbitratorTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, Role}
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.CERT_DELIVERY_REQD
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.TradeProcess.CERT_DELIVERY_REQD
+import org.bytabit.ft.trade.model.{ARBITRATOR, Role}
 
 import scala.collection.JavaConversions._
 
 object ArbitratorUIActionTableCell {
 
-  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeFSM.State)
+  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State)
 
 }
 

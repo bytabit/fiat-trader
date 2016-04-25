@@ -16,12 +16,12 @@
 
 package org.bytabit.ft.server
 
-import org.bytabit.ft.client.{ClientFSM, ClientFSM$}
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.util.DateTimeOrdering
 
-final case class PostedEvents(arbitratorEvents: Seq[ClientFSM.PostedEvent],
-                              tradeEvents: Seq[TradeFSM.PostedEvent]) {
+final case class PostedEvents(arbitratorEvents: Seq[ArbitratorManager.PostedEvent],
+                              tradeEvents: Seq[TradeProcess.PostedEvent]) {
 
   val latestUpdate = (arbitratorEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))
     .reduceOption(DateTimeOrdering.max)

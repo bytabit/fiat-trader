@@ -24,7 +24,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.bytabit.ft.client.ClientManager;
-import org.bytabit.ft.server.ServerManager;
+import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.wallet.WalletManager;
@@ -43,7 +43,7 @@ public class FiatTrader extends Application {
         ActorRef walletMgrRef = WalletManager.actorOf(system);
         ClientManager.actorOf(walletMgrRef, system);
         if (Config.serverEnabled()) {
-            ServerManager.actorOf(walletMgrRef, system);
+            EventServer.actorOf(walletMgrRef, system);
         }
 
         // Load  UI

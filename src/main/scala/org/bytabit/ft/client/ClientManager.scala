@@ -22,9 +22,7 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import org.bytabit.ft.client.ClientManager._
-import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
-import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeFSM}
+import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{Config, ListenerUpdater}
 
@@ -122,50 +120,26 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
 
     case AddClient(url) if !data.clients.contains(url) =>
       startClient(url)
-      val aa = ClientAdded(url)
-      persist(aa)(updateData)
-      context.sender ! aa
+      val ca = ClientAdded(url)
+      persist(ca)(updateData)
+      context.sender ! ca
 
     case RemoveClient(u: URL) =>
       // TODO FT-24: return errors if client in use for active trades
       if (data.clients.contains(u)) {
-        val ar = ClientRemoved(u)
-        persist(ar)(updateData)
-        context.sender ! ar
+        val cr = ClientRemoved(u)
+        persist(cr)(updateData)
+        context.sender ! cr
         stopClient(u)
       }
 
-    case cso: AddSellOffer =>
-      client(cso.offer.contract.arbitrator.url).foreach(_ ! cso)
+//    case cc: clientCommand =>
+//      client(cc.serverUrl).foreach(_ ! cc)
 
-    case cso: CancelSellOffer =>
-      client(cso.arbitratorUrl).foreach(_ ! cso)
-
-    case TakeSellOffer(url, oid, fdd) =>
-      client(url).foreach(_ ! TakeSellOffer(url, oid, fdd))
-
-    case ReceiveFiat(url, oid) =>
-      client(url).foreach(_ ! ReceiveFiat(url, oid))
-
-    case SendFiat(url, oid) =>
-      client(url).foreach(_ ! SendFiat(url, oid))
-
-    case rcd: SellProcess.RequestCertifyDelivery =>
-      client(rcd.arbitratorUrl).foreach(_ ! rcd)
-
-    case rcd: BuyProcess.RequestCertifyDelivery =>
-      client(rcd.arbitratorUrl).foreach(_ ! rcd)
-
-    case cfs: ArbitrateProcess.CertifyFiatSent =>
-      client(cfs.arbitratorUrl).foreach(_ ! cfs)
-
-    case cfns: ArbitrateProcess.CertifyFiatNotSent =>
-      client(cfns.arbitratorUrl).foreach(_ ! cfns)
-
-    case evt: ClientFSM.Event =>
+    case evt: EventClient.Event =>
       sendToListeners(evt)
 
-    case evt: TradeFSM.Event =>
+    case evt: TradeProcess.Event =>
       sendToListeners(evt)
 
     case "snap" => saveSnapshot(data)
@@ -177,24 +151,24 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
   // start/stop clients
 
   def name(url: URL): String = {
-    if (Config.arbitratorEnabled) {
+//    if (Config.arbitratorEnabled) {
       ArbitratorClient.name(url)
-    } else {
-      TraderClient.name(url)
-    }
+//    } else {
+//      TraderClient.name(url)
+//    }
   }
 
   def props(url: URL, walletMgr: ActorRef): Props = {
-    if (Config.arbitratorEnabled) {
+//    if (Config.arbitratorEnabled && Config.publicUrl == url) {
       ArbitratorClient.props(url, walletMgr)
-    } else {
-      TraderClient.props(url, walletMgr)
-    }
+//    } else {
+//      TraderClient.props(url, walletMgr)
+//    }
   }
 
   def startClient(url: URL): Unit = {
     val clientRef = context.actorOf(props(url, walletMgr), name(url))
-    clientRef ! ClientFSM.Start
+    clientRef ! EventClient.Start
   }
 
   def stopClient(url: URL): Unit = {

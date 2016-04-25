@@ -21,10 +21,10 @@ import java.util.UUID
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.model.TradeUIModel.ARBITRATOR
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
+import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 
@@ -103,10 +103,10 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
     // errors
 
-    case e: ClientFSM.Event =>
+    case e: EventClient.Event =>
       log.debug(s"unhandled ArbitratorFSM event: $e")
 
-    case e: TradeFSM.Event =>
+    case e: TradeProcess.Event =>
       log.error(s"unhandled TradeFSM event: $e")
 
     case u =>

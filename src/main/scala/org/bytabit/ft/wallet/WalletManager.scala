@@ -29,6 +29,8 @@ import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.client.EventClient
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._
@@ -144,7 +146,7 @@ class WalletManager extends Actor with ListenerUpdater {
       sender ! CurrentAddressFound(a)
 
     case CreateArbitrator(u, bp, nf) =>
-      sender ! ArbitratorCreated(Arbitrator(u, bp, nf))
+      sender ! ArbitratorManager.ArbitratorCreated(u, Arbitrator(u, bp, nf))
 
     case CreateSellOffer(offer: Offer) =>
       sender ! SellOfferCreated(offer.withSeller)

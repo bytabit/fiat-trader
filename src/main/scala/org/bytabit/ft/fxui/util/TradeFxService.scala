@@ -23,8 +23,7 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel
-import org.bytabit.ft.fxui.model.TradeUIModel.Role
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.FiatDeliveryMethod
 import org.joda.money.CurrencyUnit

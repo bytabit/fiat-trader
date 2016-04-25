@@ -22,15 +22,14 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.client.ClientFSM.{ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.model.TradeUIModel.{BUYER, SELLER}
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
 import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{Contract, Offer}
+import org.bytabit.ft.trade.model.{BUYER, Contract, Offer, SELLER}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 import org.joda.money.{CurrencyUnit, Money}
@@ -80,7 +79,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
 
-    case e: ClientFSM.Event =>
+    case e: EventClient.Event =>
       log.debug(s"Unhandled ArbitratorFSM event: $e")
 
     // Handle Trade Events
@@ -159,7 +158,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     // errors
 
-    case e: TradeFSM.Event =>
+    case e: TradeProcess.Event =>
       log.error(s"Unhandled TradeFSM event: $e")
 
     case u =>
@@ -247,7 +246,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     sellContractSelected.foreach { c =>
       val o = Offer(UUID.randomUUID(), c, fiatAmount, btcAmount)
-      sendCmd(AddSellOffer(o))
+      sendCmd(AddSellOffer(o.url, o.id, o))
     }
   }
 

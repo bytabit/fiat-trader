@@ -16,7 +16,7 @@
 
 package org.bytabit.ft.trade
 
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model.{Contract, SellOffer, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
@@ -40,7 +40,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def fiatNotSentCertifiedJsonFormat = jsonFormat(FiatNotSentCertified.apply, "id", "payoutSigs", "posted")
 
-  implicit object tradeStateJsonFormat extends JsonFormat[TradeFSM.State] {
+  implicit object tradeStateJsonFormat extends JsonFormat[TradeProcess.State] {
 
     def read(value: JsValue) = value match {
       case JsString(CREATED.identifier) => CREATED
@@ -59,7 +59,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
       case _ => deserializationError("TradeStatus expected")
     }
 
-    def write(state: TradeFSM.State) = JsString(state.identifier)
+    def write(state: TradeProcess.State) = JsString(state.identifier)
   }
 
   // events
@@ -90,7 +90,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def buyerRefundedJsonFormat = jsonFormat3(BuyerRefunded)
 
-  val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeFSM.Event]] = Map(
+  val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeProcess.Event]] = Map(
     simpleName(classOf[LocalSellerCreatedOffer]) -> localSellerCreatedOfferJsonFormat,
     simpleName(classOf[SellerCreatedOffer]) -> sellerCreatedOfferJsonFormat,
     simpleName(classOf[SellerCanceledOffer]) -> sellerCanceledOfferJsonFormat,
@@ -109,17 +109,31 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[SellerFunded]) -> sellerFundedJsonFormat
   )
 
-  implicit def tradeEventJsonFormat = new EventJsonFormat[TradeFSM.Event](tradeEventJsonFormatMap)
+  implicit def tradeEventJsonFormat = new EventJsonFormat[TradeProcess.Event](tradeEventJsonFormatMap)
 
-  implicit def tradePostedEventJsonFormat = new RootJsonFormat[TradeFSM.PostedEvent] {
+  implicit def tradePostedEventJsonFormat = new RootJsonFormat[TradeProcess.PostedEvent] {
 
-    override def read(json: JsValue): TradeFSM.PostedEvent =
+    override def read(json: JsValue): TradeProcess.PostedEvent =
       tradeEventJsonFormat.read(json) match {
-        case pe: TradeFSM.PostedEvent => pe
+        case pe: TradeProcess.PostedEvent => pe
         case _ => throw new DeserializationException("TradeFSM PostedEvent expected")
       }
 
-    override def write(obj: TradeFSM.PostedEvent): JsValue =
+    override def write(obj: TradeProcess.PostedEvent): JsValue =
       tradeEventJsonFormat.write(obj)
   }
+
+  implicit object roleJsonFormat extends JsonFormat[Role] {
+
+    def read(value: JsValue) = value match {
+      case JsString(ARBITRATOR.identifier) => ARBITRATOR
+      case JsString(SELLER.identifier) => SELLER
+      case JsString(BUYER.identifier) => BUYER
+
+      case _ => deserializationError("TradeStatus expected")
+    }
+
+    def write(role: Role) = JsString(role.identifier)
+  }
+
 }

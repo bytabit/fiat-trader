@@ -15,8 +15,8 @@ import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.fxui.util.ActorController
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM.{BUYER_REFUNDED, SELLER_FUNDED}
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.TradeProcess.{BUYER_REFUNDED, SELLER_FUNDED}
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{BTCMoney, Monies}
 import org.joda.money.Money
@@ -215,7 +215,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
   }
 
 
-  def addEscrowTxHistory(s: TradeFSM.State, ot: OpenedTrade, ft: Option[FundedTrade], st: Option[SettledTrade],
+  def addEscrowTxHistory(s: TradeProcess.State, ot: OpenedTrade, ft: Option[FundedTrade], st: Option[SettledTrade],
                          cs: Option[CertifiedSettledTrade]) = {
 
     val TX_FEE_MSG = "Transaction fee to BTC network"

@@ -23,7 +23,7 @@ import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, BroadcastTx, EscrowTransactionUpdated, RemoveWatchEscrowAddress}
@@ -35,19 +35,22 @@ object BuyProcess {
 
   // commands
 
-  sealed trait Command
+  sealed trait Command {
+    val url:URL
+    val id:UUID
+  }
 
-  case object Start extends Command
+  final case class Start(url:URL, id:UUID) extends Command
 
-  final case class TakeSellOffer(arbitratorUrl: URL, id: UUID, fiatDeliveryDetails: String) extends Command
+  final case class TakeSellOffer(url: URL, id: UUID, fiatDeliveryDetails: String) extends Command
 
-  final case class ReceiveFiat(arbitratorUrl: URL, id: UUID) extends Command
+  final case class ReceiveFiat(url: URL, id: UUID) extends Command
 
-  final case class RequestCertifyDelivery(arbitratorUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
+  final case class RequestCertifyDelivery(url: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
-class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
+class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeProcess {
 
   override val id = sellOffer.id
 
@@ -196,7 +199,7 @@ class BuyProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM 
       }
 
     case Event(rcf: RequestCertifyDelivery, ft: FundedTrade) =>
-      postTradeEvent(rcf.arbitratorUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
+      postTradeEvent(rcf.url, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
       stay()
 
     case Event(cdr: CertifyDeliveryRequested, ft: FundedTrade) if cdr.posted.isDefined =>

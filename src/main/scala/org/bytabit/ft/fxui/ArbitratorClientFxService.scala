@@ -21,12 +21,13 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
+import org.bytabit.ft.arbitrator.ArbitratorManager.ArbitratorCreated
 import org.bytabit.ft.client.ClientManager.{Start, _}
-import org.bytabit.ft.client.ClientFSM._
+import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
 import org.bytabit.ft.wallet.model.Arbitrator
@@ -84,17 +85,17 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     case ServerOffline(u) =>
       updateArbitratorUIModel(OFFLINE, u, None)
 
-    case e: ClientFSM.Event =>
+    case e: EventClient.Event =>
       log.debug(s"unhandled ArbitratorFSM event: $e")
 
-    case e: TradeFSM.Event =>
+    case e: TradeProcess.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  private def updateArbitratorUIModel(state: ClientFSM.State, url: URL, arbitrator: Option[Arbitrator]) = {
+  private def updateArbitratorUIModel(state: EventClient.State, url: URL, arbitrator: Option[Arbitrator]) = {
     arbitrators.find(n => n.getUrl == url.toString) match {
       case Some(n) if arbitrator.isDefined =>
         val newArbitratorUI = ArbitratorUIModel(state, url, arbitrator)

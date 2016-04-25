@@ -23,7 +23,7 @@ import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.SellProcess.{CancelSellOffer, RequestCertifyDelivery, SendFiat, Start}
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model.{SellOffer, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{AddWatchEscrowAddress, EscrowTransactionUpdated, RemoveWatchEscrowAddress}
@@ -35,21 +35,24 @@ object SellProcess {
 
   // commands
 
-  sealed trait Command
+  sealed trait Command {
+    val url: URL
+    val id: UUID
+  }
 
-  case object Start extends Command
+  final case class Start(url: URL, id: UUID) extends Command
 
-  final case class AddSellOffer(offer: Offer) extends Command
+  final case class AddSellOffer(url: URL, id: UUID, offer: Offer) extends Command
 
-  final case class CancelSellOffer(arbitratorUrl: URL, id: UUID) extends Command
+  final case class CancelSellOffer(url: URL, id: UUID) extends Command
 
-  final case class SendFiat(arbitratorUrl: URL, id: UUID) extends Command
+  final case class SendFiat(url: URL, id: UUID) extends Command
 
-  final case class RequestCertifyDelivery(arbitratorUrl: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
+  final case class RequestCertifyDelivery(url: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
-class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
+class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeProcess {
 
   override val id = offer.id
 
@@ -215,7 +218,7 @@ class SellProcess(offer: Offer, walletMgrRef: ActorRef) extends TradeFSM {
       stay()
 
     case Event(rcf: RequestCertifyDelivery, ft: FundedTrade) =>
-      postTradeEvent(rcf.arbitratorUrl, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
+      postTradeEvent(rcf.url, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
       stay()
 
     case Event(cdr: CertifyDeliveryRequested, ft: FundedTrade) if cdr.posted.isDefined =>

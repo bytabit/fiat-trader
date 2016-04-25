@@ -24,7 +24,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 import org.bitcoinj.core.Sha256Hash;
-import org.bytabit.ft.fxui.ArbitratorServerFxService;
+import org.bytabit.ft.fxui.ArbitratorManagerFxService;
 import org.bytabit.ft.fxui.model.ContractUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 import org.bytabit.ft.util.Config;
@@ -35,7 +35,7 @@ import java.util.ResourceBundle;
 
 public class ArbitratorServerUI implements ActorController {
 
-    private ArbitratorServerFxService arbitratorServerFxService;
+    private ArbitratorManagerFxService arbitratorServerFxService;
 
     @FXML
     private ResourceBundle resources;
@@ -87,7 +87,7 @@ public class ArbitratorServerUI implements ActorController {
 
     public ArbitratorServerUI(ActorSystem system) {
         sys = system;
-        arbitratorServerFxService = new ArbitratorServerFxService(system);
+        arbitratorServerFxService = new ArbitratorManagerFxService(system);
     }
 
     // handlers

@@ -20,21 +20,21 @@ import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer
 import spray.json._
 
-class ClientJsonSerializer(override val system: ExtendedActorSystem)
-  extends AbstractSprayJsonSerializer[ClientFSM.Event](system)
-    with ClientJsonProtocol {
+class EventClientJsonSerializer(override val system: ExtendedActorSystem)
+  extends AbstractSprayJsonSerializer[EventClient.Event](system)
+    with EventClientJsonProtocol {
 
   override val identifier = hashId(this.getClass.getSimpleName)
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
-      bytesToString(bytes).parseJson.convertTo[ClientFSM.Event]
+      bytesToString(bytes).parseJson.convertTo[EventClient.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
   def toBinary(obj: AnyRef) = obj match {
-    case o: ClientFSM.Event =>
+    case o: EventClient.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>
       throw new IllegalArgumentException("Wrong type found")

@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.trade
+package org.bytabit.ft.server
 
 import akka.actor.ExtendedActorSystem
 import org.bytabit.ft.util.AbstractSprayJsonSerializer
 import spray.json._
 
-class TradeJsonSerializer(override val system: ExtendedActorSystem)
-  extends AbstractSprayJsonSerializer[TradeProcess.Event](system)
-    with TradeJsonProtocol {
+class EventServerJsonSerializer(override val system: ExtendedActorSystem)
+  extends AbstractSprayJsonSerializer[EventServer.Event](system)
+    with EventServerJsonProtocol {
 
-  override val identifier = hashId("TradeJsonSerializer")
+  override val identifier = hashId(this.getClass.getSimpleName)
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
-      bytesToString(bytes).parseJson.convertTo[TradeProcess.Event]
+      bytesToString(bytes).parseJson.convertTo[EventServer.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
   def toBinary(obj: AnyRef) = obj match {
-    case o: TradeProcess.Event =>
+    case o: EventServer.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>
       throw new IllegalArgumentException("Wrong type found")

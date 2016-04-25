@@ -17,17 +17,22 @@
 package org.bytabit.ft.client
 
 import java.net.URL
-import java.util.UUID
 
 import akka.actor.{ActorRef, Props}
-import org.bytabit.ft.client.ClientFSM._
-import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, SELLER}
-import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
-import org.bytabit.ft.trade.model.SellOffer
-import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeFSM}
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.{StatusCodes, _}
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.scaladsl.{Sink, Source}
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.client.EventClient._
+import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
+import org.bytabit.ft.trade.model.ARBITRATOR
+import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeProcess}
+import org.bytabit.ft.util.Config
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 object ArbitratorClient {
 
@@ -36,7 +41,7 @@ object ArbitratorClient {
   def name(url: URL) = s"${ArbitratorClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
+case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
   // persistence
 
@@ -46,112 +51,120 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
 
   when(ADDED, stateTimeout = 30 second) {
 
+    // startup
+
     case Event(Start | StateTimeout, d) =>
-      reqArbitratorEvents(url, None)
+      reqPostedEvents(url, None)
       stay()
 
+    // create and start arbitrator
+
     case Event(son: ServerOnline, d) =>
-      goto(ONLINE) andThen { ud =>
-        context.parent ! son
+      createArbitratorManager(url) ! ArbitratorManager.Start
+      stay()
+
+    // arbitrator created
+
+    case Event(ac: ArbitratorManager.ArbitratorCreated, d) =>
+      goto(ONLINE) applying ArbitratorAdded(url, ac.arbitrator, ac.posted) andThen { ud =>
+        context.parent ! ac
       }
 
-    case Event(soff: ServerOffline, d) =>
-      goto(OFFLINE) andThen { ud =>
-        context.parent ! soff
+    case Event(ReceivePostedArbitratorEvent(ac: ArbitratorManager.ArbitratorCreated), d) =>
+      createArbitratorManager(url) ! ac
+      goto(ONLINE) applying ArbitratorAdded(url, ac.arbitrator, ac.posted) andThen { ud =>
+        context.parent ! ac
       }
+
+    // server offline
+
+    case Event(soff: ServerOffline, d) =>
+      context.parent ! soff
+      stay()
   }
 
   when(ONLINE, stateTimeout = 10 second) {
 
-    // handle server commands
+    // startup
 
-    case Event(Start, ActiveServer(n, lp, cm, at)) =>
-      // notify parent server is online
-      context.parent ! ArbitratorCreated(n.url, n)
-      context.parent ! ServerOnline(n.url)
+    case Event(Start, ActiveServer(lp, a, at)) =>
 
-      // notify parent of arbitrator contract
-      cm.values.foreach(c => context.parent ! ContractAdded(c.arbitrator.url, c))
+      // create and start arbitrator
+      createArbitratorManager(a.url) ! ArbitratorManager.Start
 
-      // start active trade FSMs and notify parent
+      // create and start active trades
       at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
       // request new events from event server
-      reqArbitratorEvents(url, Some(lp))
+      reqPostedEvents(url, Some(lp))
       stay()
 
-    case Event(StateTimeout, ActiveServer(n, lp, cm, at)) =>
-      reqArbitratorEvents(url, Some(lp))
+    case Event(StateTimeout, ActiveServer(lp, a, at)) =>
+      reqPostedEvents(url, Some(lp))
       stay()
 
     case Event(son: ServerOnline, d) =>
       stay()
 
-    case Event(soff: ServerOffline, ActiveServer(n, lp, cm, at)) =>
+    case Event(soff: ServerOffline, ActiveServer(lp, a, at)) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! soff
-        cm.keys.foreach(context.parent ! ContractRemoved(n.url, _))
+        stopArbitrator(a.url)
       }
 
-    // handle arbitrator events
+    // send arbitrator commands to ArbitratorManager
 
-    case Event(ReceivePostedArbitratorEvent(pe), _) =>
-      stay applying pe andThen { ud =>
-        context.parent ! pe
-      }
-
-    // handle trade events
-
-    // add arbitrated remote trade and update latestUpdate
-    case Event(sco: TradeFSM.SellerCreatedOffer, ActiveServer(n, lp, cm, at)) if sco.posted.isDefined =>
-      stay() applying ArbitrateTradeAdded(n.url, sco.id, sco.offer, sco.posted) andThen { ud =>
-        context.parent ! sco
-      }
-
-    // remove trade and update latestUpdate
-    case Event(sco: TradeFSM.SellerCanceledOffer, ActiveServer(n, lp, cm, at)) if sco.posted.isDefined =>
-      stay() applying TradeRemoved(n.url, sco.id, sco.posted) andThen { ud =>
-        context.parent ! sco
-        stopTrade(sco.id)
-      }
-
-    // update latestUpdate for other posted events
-    case Event(te: TradeFSM.PostedEvent, ActiveServer(n, lp, cm, at)) if te.posted.isDefined =>
-      stay() applying PostedTradeEventReceived(n.url, te.posted) andThen { ud =>
-        context.parent ! te
-      }
-
-    // forward all other trade events to parent
-    case Event(te: TradeFSM.Event, _) =>
-      context.parent ! te
-      stay()
-
-    // handle arbitrator commands
-
-    case Event(cfs: ArbitrateProcess.CertifyFiatSent, d) =>
-      tradeFSM(cfs.id) match {
-        case Some(ref) => ref ! cfs
-        case None => log.error(s"Could not arbitrate fiat sent ${cfs.id}")
+    case Event(ac: ArbitratorManager.Command, ActiveServer(lp, a, at)) if isArbitrator(a.url) =>
+      arbitratorManager(a.url) match {
+        case Some(ref) => ref ! ac
+        case None => log.error(s"Could not send command to arbitrator ${a.url}")
       }
       stay()
 
-    case Event(cfns: ArbitrateProcess.CertifyFiatNotSent, d) =>
-      tradeFSM(cfns.id) match {
-        case Some(ref) => ref ! cfns
-        case None => log.error(s"Could not arbitrate fiat not sent ${cfns.id}")
+    // send received posted arbitrator events to ArbitratorManager
+
+    case Event(ReceivePostedArbitratorEvent(ae), ActiveServer(lp, a, at)) =>
+      arbitratorManager(a.url) match {
+        case Some(ref) => ref ! ae
+        case None => log.error(s"Could not send event to arbitrator ${a.url}")
       }
       stay()
 
-    // forward all client events to parent
+    // update latest posted time and send posted arbitrator events to parent
 
-    case Event(ne: ClientFSM.Event, _) =>
-      context.parent ! ne
+    case Event(ae: ArbitratorManager.PostedEvent, ActiveServer(lp, a, at)) =>
+      stay() applying PostedEventReceived(a.url, ae.posted) andThen { ud =>
+        context.parent ! ae
+      }
+
+    // send trade commands to trades
+
+    case Event(ac: ArbitrateProcess.Command, d) if isArbitrator(ac.url) =>
+      tradeProcess(ac.id) match {
+        case Some(ref) => ref ! ac
+        case None => log.error(s"Could not send arbitrate process command to trade ${ac.id}")
+      }
       stay()
 
-    // handle receive posted trade events
+    case Event(sc: SellProcess.Command, d) if !isArbitrator(sc.url) =>
+      tradeProcess(sc.id) match {
+        case Some(ref) => ref ! sc
+        case None => log.error(s"Could not send sell process command to trade ${sc.id}")
+      }
+      stay()
 
-    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), d) =>
-      tradeFSM(sco.id) match {
+    case Event(bc: BuyProcess.Command, d) if !isArbitrator(bc.url) =>
+      tradeProcess(bc.id) match {
+        case Some(ref) => ref ! bc
+        case None => log.error(s"Could not buy sell process command to trade ${bc.id}")
+      }
+      stay()
+
+    // handle posted trade events
+
+    // add trade and update latestUpdate
+    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), ActiveServer(lp, a, at)) =>
+      tradeProcess(sco.id) match {
         case Some(ref) =>
           ref ! sco
         case None =>
@@ -159,49 +172,53 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
       }
       stay()
 
-    case Event(ReceivePostedTradeEvent(pe), d) =>
-      tradeFSM(pe.id) match {
-        case Some(ref) =>
-          ref ! pe
-        case None =>
-          log.error(s"No tradeFSM found for ${pe.id}")
+    // remove trade and update latestUpdate
+    case Event(sco: TradeProcess.SellerCanceledOffer, ActiveServer(lp, a, at)) =>
+      stay() applying TradeRemoved(a.url, sco.id, sco.posted) andThen { ud =>
+        context.parent ! sco
+        stopTrade(sco.id)
+      }
+
+    // send received posted trade events to trades
+
+    case Event(ReceivePostedTradeEvent(te), ActiveServer(lp, a, at)) =>
+      tradeProcess(te.id) match {
+        case Some(ref) => ref ! te
+        case None => log.error(s"Could not send event to trade ${te.id}")
       }
       stay()
+
+    // update latest posted time and send posted trade events to parent
+
+    case Event(te: TradeProcess.PostedEvent, ActiveServer(lp, a, at)) =>
+      stay() applying PostedEventReceived(a.url, te.posted) andThen { ud =>
+        context.parent ! te
+      }
   }
 
   when(OFFLINE, stateTimeout = 30 second) {
 
-    case Event(Start, ActiveServer(n, lp, cm, at)) =>
-      // notify parent arbitrator was created but server is offline
-      context.parent ! ArbitratorCreated(n.url, n)
-      context.parent ! ServerOffline(n.url)
+    case Event(Start, ActiveServer(lp, a, at)) =>
 
+      // create and start active trades
       // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
-      // start active trade FSMs and notify parent
       at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
-      reqArbitratorEvents(n.url, Some(lp))
+      // request new events from event server
+      reqPostedEvents(url, Some(lp))
+
+      context.parent ! ServerOffline(a.url)
       stay()
 
-    case Event(Start, AddedServer(u)) =>
-      // notify parent server is offline, arbitrator not created
-      context.parent ! ServerOffline(u)
-
-      reqArbitratorEvents(u, None)
+    case Event(StateTimeout, ActiveServer(lp, a, at)) =>
+      reqPostedEvents(a.url, Some(lp))
       stay()
 
-    case Event(StateTimeout, ActiveServer(n, lp, cm, at)) =>
-      reqArbitratorEvents(n.url, Some(lp))
-      stay()
-
-    case Event(StateTimeout, AddedServer(u)) =>
-      reqArbitratorEvents(u, None)
-      stay()
-
-    case Event(ServerOnline(_), ActiveServer(n, lp, cm, at)) =>
+    case Event(ServerOnline(_), ActiveServer(lp, a, at)) =>
       goto(ONLINE) andThen { ud =>
-        context.parent ! ServerOnline(n.url)
-        cm.values.foreach(c => context.parent ! ContractAdded(c.arbitrator.url, c))
+        context.parent ! ServerOnline(a.url)
+        // create and start arbitrator
+        createArbitratorManager(a.url) ! ArbitratorManager.Start
       }
 
     case Event(ServerOnline(_), AddedServer(u)) =>
@@ -212,24 +229,67 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends ClientFSM {
     case Event(ServerOffline(_), _) =>
       stay()
 
-    // update latestUpdate for other posted events
-    case Event(te: TradeFSM.PostedEvent, ActiveServer(n, lp, cm, at)) if te.posted.isDefined =>
-      stay() applying PostedTradeEventReceived(n.url, te.posted) andThen { ud =>
-        context.parent ! te
-      }
+    // send trade commands to trades
 
-    // forward all other trade events to parent
-    case Event(te: TradeFSM.Event, _) =>
-      context.parent ! te
+    case Event(ac: ArbitrateProcess.Command, d) if isArbitrator(ac.url) =>
+      tradeProcess(ac.id) match {
+        case Some(ref) => ref ! ac
+        case None => log.error(s"Could not send arbitrate process command to trade ${ac.id}")
+      }
       stay()
+
+    case Event(sc: SellProcess.Command, d) if !isArbitrator(sc.url) =>
+      tradeProcess(sc.id) match {
+        case Some(ref) => ref ! sc
+        case None => log.error(s"Could not send sell process command to trade ${sc.id}")
+      }
+      stay()
+
+    case Event(bc: BuyProcess.Command, d) if !isArbitrator(bc.url) =>
+      tradeProcess(bc.id) match {
+        case Some(ref) => ref ! bc
+        case None => log.error(s"Could not buy sell process command to trade ${bc.id}")
+      }
+      stay()
+
   }
 
   initialize()
 
-  // create trade FSMs
+  def isArbitrator(url: URL) = Config.arbitratorEnabled && Config.publicUrl == url
 
-  def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
-    context.actorOf(TradeFSM.arbitrateProps(so, walletMgr), TradeFSM.name(id))
+  import spray.json._
+
+  def postTradeEvent(url: URL, postedEvent: TradeProcess.PostedEvent, self: ActorRef): Unit = {
+
+    val tradeUri = s"/trade"
+
+    Marshal(postedEvent.toJson).to[RequestEntity].onSuccess {
+
+      case reqEntity =>
+
+        val req = Source.single(HttpRequest(uri = tradeUri, method = HttpMethods.POST,
+          entity = reqEntity.withContentType(ContentTypes.`application/json`)))
+          .via(connectionFlow(url))
+
+        req.runWith(Sink.head).onComplete {
+
+          case Success(HttpResponse(StatusCodes.OK, headers, respEntity, protocol)) =>
+            log.debug(s"Response from ${url.toString}$tradeUri OK, $respEntity")
+            Unmarshal(respEntity).to[TradeProcess.PostedEvent].onSuccess {
+              case pe: TradeProcess.PostedEvent if pe.posted.isDefined =>
+                self ! pe
+              case _ =>
+                log.error("No posted event in response.")
+            }
+
+          case Success(HttpResponse(sc, h, e, p)) =>
+            log.error(s"Response from ${url.toString}$tradeUri ${sc.toString()}")
+
+          case Failure(failure) =>
+            log.debug(s"No Response from ${url.toString}: $failure")
+        }
+    }
   }
 
 }

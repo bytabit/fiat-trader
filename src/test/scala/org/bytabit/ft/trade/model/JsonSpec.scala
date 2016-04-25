@@ -20,8 +20,8 @@ import java.net.URL
 import java.util.UUID
 
 import org.bitcoinj.core._
-import org.bytabit.ft.trade.TradeFSM.SellerCreatedOffer
-import org.bytabit.ft.trade.{TradeFSM, TradeJsonProtocol}
+import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
+import org.bytabit.ft.trade.{TradeProcess, TradeJsonProtocol}
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod, FiatMoney}
 import org.bytabit.ft.wallet.model.{Arbitrator, Seller}
 import org.scalatest._
@@ -54,12 +54,12 @@ class JsonSpec extends FlatSpec with Matchers with TradeJsonProtocol {
 
   it should "serialize Offer to json" in {
 
-    val evt: TradeFSM.PostedEvent = SellerCreatedOffer(UUID.randomUUID(), sellOffer)
+    val evt: TradeProcess.PostedEvent = SellerCreatedOffer(UUID.randomUUID(), sellOffer)
 
     val json: String = tradePostedEventJsonFormat.write(evt).toString()
     //System.out.println(json)
 
-    val obj: TradeFSM.PostedEvent = tradePostedEventJsonFormat.read(json.parseJson)
+    val obj: TradeProcess.PostedEvent = tradePostedEventJsonFormat.read(json.parseJson)
     //System.out.println(obj)
 
     json should equal(tradePostedEventJsonFormat.write(obj).toString())

@@ -21,18 +21,18 @@ import java.util.UUID
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.client.ClientFSM._
-import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, Role, SELLER}
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.server.PostedEvents
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.model.{Contract, SellOffer}
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{DateTimeOrdering, Posted}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.time.DateTime
@@ -42,7 +42,7 @@ import scala.language.postfixOps
 import scala.reflect.{ClassTag, _}
 import scala.util.{Failure, Success}
 
-object ClientFSM {
+object EventClient {
 
   // commands
 
@@ -50,9 +50,13 @@ object ClientFSM {
 
   case object Start extends Command
 
-  final case class ReceivePostedArbitratorEvent(event: ClientFSM.PostedEvent) extends Command
+  final case class ReceivePostedArbitratorEvent(event: ArbitratorManager.PostedEvent) extends Command {
+    assert(event.posted.isDefined)
+  }
 
-  final case class ReceivePostedTradeEvent(event: TradeFSM.PostedEvent) extends Command
+  final case class ReceivePostedTradeEvent(event: TradeProcess.PostedEvent) extends Command {
+    assert(event.posted.isDefined)
+  }
 
   // events
 
@@ -60,41 +64,26 @@ object ClientFSM {
     val url: URL
   }
 
-  sealed trait PostedEvent extends Event with Posted
-
   // server events
 
   final case class ServerOnline(url: URL) extends Event
 
   final case class ServerOffline(url: URL) extends Event
 
+  final case class PostedEventReceived(url: URL, posted: Option[DateTime]) extends Event
+
   // arbitrator events
 
-  final case class ArbitratorCreated(url: URL, arbitrator: Arbitrator,
-                                     posted: Option[DateTime] = None) extends PostedEvent
+  final case class ArbitratorAdded(url: URL, arbitrator: Arbitrator, posted: Option[DateTime] = None) extends Event
 
-  final case class ContractAdded(url: URL, contract: Contract,
-                                 posted: Option[DateTime] = None) extends PostedEvent
+  final case class ArbitratorRemoved(url: URL, posted: Option[DateTime] = None) extends Event
 
-  final case class ContractRemoved(url: URL, id: Sha256Hash,
-                                   posted: Option[DateTime] = None) extends PostedEvent
 
   // trade events
 
-  final case class SellTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                  posted: Option[DateTime] = None) extends Event
+  final case class TradeAdded(url: URL, role:Role, tradeId: UUID, offer: SellOffer, posted: Option[DateTime] = None) extends Event
 
-  final case class BuyTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                 posted: Option[DateTime] = None) extends Event
-
-  final case class ArbitrateTradeAdded(url: URL, tradeId: UUID, offer: SellOffer,
-                                       posted: Option[DateTime] = None) extends Event
-
-  final case class TradeRemoved(url: URL, tradeId: UUID,
-                                posted: Option[DateTime]) extends Event
-
-  final case class PostedTradeEventReceived(url: URL,
-                                            posted: Option[DateTime]) extends PostedEvent
+  final case class TradeRemoved(url: URL, tradeId: UUID, posted: Option[DateTime]) extends Event
 
   // states
 
@@ -122,42 +111,33 @@ object ClientFSM {
 
   case class AddedServer(serverUrl: URL) extends Data {
 
-    def created(arbitrator: Arbitrator, posted: DateTime) = ActiveServer(arbitrator, posted)
+    def added(arbitrator: Arbitrator, posted: DateTime) = ActiveServer(posted, arbitrator)
   }
 
-  case class ActiveServer(arbitrator: Arbitrator, latestPosted: DateTime,
-                          contracts: Map[Sha256Hash, Contract] = Map(),
-                          activeTrades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
+  case class ActiveServer(latestPosted: DateTime, arbitrator: Arbitrator,
+                          trades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
 
     val serverUrl = arbitrator.url
 
     def postedEventReceived(posted: DateTime) =
       this.copy(latestPosted = latest(posted, latestPosted))
 
-    def contractAdded(contract: Contract, posted: DateTime) =
-      this.copy(contracts = contracts + (contract.id -> contract),
-        latestPosted = latest(posted, latestPosted))
-
-    def contractRemoved(id: Sha256Hash, posted: DateTime) =
-      this.copy(contracts = contracts - id,
-        latestPosted = latest(posted, latestPosted))
-
     def tradeAdded(role: Role, id: UUID, offer: SellOffer, posted: DateTime) = {
-      val updatedRoleTrades: Map[UUID, SellOffer] = activeTrades.getOrElse(role, Map()) + (id -> offer)
-      this.copy(activeTrades = activeTrades + (role -> updatedRoleTrades),
+      val updatedRoleTrades: Map[UUID, SellOffer] = trades.getOrElse(role, Map()) + (id -> offer)
+      this.copy(trades = trades + (role -> updatedRoleTrades),
         latestPosted = latest(posted, latestPosted))
     }
 
     def tradeRemoved(id: UUID, posted: DateTime) = {
-      val updatedTrades = activeTrades.map { rm => rm._1 -> (rm._2 - id) }
-      this.copy(activeTrades = updatedTrades,
+      val updatedTrades = trades.map { rm => rm._1 -> (rm._2 - id) }
+      this.copy(trades = updatedTrades,
         latestPosted = latest(posted, latestPosted))
     }
   }
 
 }
 
-trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM.Event] with ClientJsonProtocol {
+trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, EventClient.Event] with EventClientJsonProtocol {
 
   val url: URL
 
@@ -173,38 +153,26 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
   // persistence
 
-  override def domainEventClassTag: ClassTag[ClientFSM.Event] = classTag[ClientFSM.Event]
+  override def domainEventClassTag: ClassTag[EventClient.Event] = classTag[EventClient.Event]
 
   // apply events to state and data
 
-  def applyEvent(event: ClientFSM.Event, arbitratorData: ClientFSM.Data): Data =
-    (event, arbitratorData) match {
+  def applyEvent(event: EventClient.Event, data: EventClient.Data): Data =
+    (event, data) match {
 
-      case (ArbitratorCreated(u, n, Some(p)), an: AddedServer) =>
-        an.created(n, p)
+      case (ArbitratorAdded(u, a, Some(p)), as: AddedServer) =>
+        as.added(a, p)
 
-      case (ContractAdded(u, c, Some(p)), an: ActiveServer) =>
-        an.contractAdded(c, p)
-
-      case (ContractRemoved(u, id, Some(p)), an: ActiveServer) =>
-        an.contractRemoved(id, p)
-
-      case (SellTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
-        an.tradeAdded(SELLER, i, o, p)
-
-      case (BuyTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
-        an.tradeAdded(BUYER, i, o, p)
-
-      case (ArbitrateTradeAdded(u, i, o, Some(p)), an: ActiveServer) =>
-        an.tradeAdded(ARBITRATOR, i, o, p)
+      case (TradeAdded(u, r, i, o, Some(p)), an: ActiveServer) =>
+        an.tradeAdded(r, i, o, p)
 
       case (TradeRemoved(u, i, Some(p)), an: ActiveServer) =>
         an.tradeRemoved(i, p)
 
-      case (PostedTradeEventReceived(u, Some(p)), an: ActiveServer) =>
+      case (PostedEventReceived(u, Some(p)), an: ActiveServer) =>
         an.postedEventReceived(p)
 
-      case _ => arbitratorData
+      case _ => data
     }
 
   // http flow
@@ -214,14 +182,14 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
 
   // http get events requester and handler
 
-  def reqArbitratorEvents(url: URL, since: Option[DateTime]): Unit = {
+  def reqPostedEvents(url: URL, since: Option[DateTime]): Unit = {
 
     val query = since match {
       case Some(dt) => s"?since=${dt.toString}"
       case None => ""
     }
 
-    val arbitratorUri = s"/arbitrator$query"
+    val arbitratorUri = s"/events$query"
 
     val req = Source.single(HttpRequest(uri = arbitratorUri, method = HttpMethods.GET))
       .via(connectionFlow(url))
@@ -252,10 +220,41 @@ trait ClientFSM extends PersistentFSM[ClientFSM.State, ClientFSM.Data, ClientFSM
     }
   }
 
-  def stopTrade(id: UUID) = {
-    tradeFSM(id).foreach(context.stop)
+  // create ArbitratorManager
+
+  def createArbitratorManager(url: URL): ActorRef = {
+    context.actorOf(ArbitratorManager.props(url, walletMgr), ArbitratorManager.name(url))
   }
 
-  // find trade FSM
-  def tradeFSM(id: UUID): Option[ActorRef] = context.child(TradeFSM.name(id))
+  // manage ArbitratorManager
+
+  // find ArbitratorManager
+  def arbitratorManager(url: URL): Option[ActorRef] = context.child(ArbitratorManager.name(url))
+
+  def stopArbitrator(url: URL) = {
+    arbitratorManager(url).foreach(context.stop)
+  }
+
+  // create trade Processes
+
+  def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
+    context.actorOf(TradeProcess.arbitrateProps(so, walletMgr), TradeProcess.name(id))
+  }
+
+  def createSellTrade(id: UUID, o: Offer): ActorRef = {
+    context.actorOf(TradeProcess.sellProps(o, walletMgr), TradeProcess.name(id))
+  }
+
+  def createBuyTrade(id: UUID, so: SellOffer): ActorRef = {
+    context.actorOf(TradeProcess.buyProps(so, walletMgr), TradeProcess.name(id))
+  }
+
+  // manage trade processes
+
+  // find trade process
+  def tradeProcess(id: UUID): Option[ActorRef] = context.child(TradeProcess.name(id))
+
+  def stopTrade(id: UUID) = {
+    tradeProcess(id).foreach(context.stop)
+  }
 }

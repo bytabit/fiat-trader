@@ -23,9 +23,10 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.client.ClientFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.server.ServerManager
-import org.bytabit.ft.server.ServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.arbitrator.ArbitratorManager._
+import org.bytabit.ft.client.ClientManager
+import org.bytabit.ft.client.ClientManager.Start
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
@@ -34,16 +35,16 @@ import org.joda.money.CurrencyUnit
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object ArbitratorServerFxService {
-  def apply(system: ActorSystem) = new ArbitratorServerFxService(system)
+object ArbitratorManagerFxService {
+  def apply(system: ActorSystem) = new ArbitratorManagerFxService(system)
 }
 
-class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService {
+class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val arbitratorServerMgrSel = system.actorSelection(s"/user/${ServerManager.name}")
-  lazy val arbitratorServerMgrRef = arbitratorServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val clientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
+  lazy val clientMgrRef = clientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // Private Data
   private var addCurrencyUnitSelected: Option[CurrencyUnit] = None
@@ -126,7 +127,9 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
     })
   }
 
-  def sendCmd(cmd: ServerManager.Command) = sendMsg(arbitratorServerMgrRef, cmd)
+  def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorServerMgrRef, cmd)
+  def sendCmd(cmd: ArbitratorManager.Command) = sendMsg(clientMgrRef, cmd)
+
+  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(clientMgrRef, cmd)
 }
