@@ -23,7 +23,7 @@ import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.ArbitrateProcess._
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, RemoveWatchEscrowAddress}
@@ -35,17 +35,20 @@ object ArbitrateProcess {
 
   // commands
 
-  sealed trait Command
+  sealed trait Command {
+    val url:URL
+    val id:UUID
+  }
 
-  case object Start extends Command
+  final case class Start(url:URL, id:UUID) extends Command
 
-  final case class CertifyFiatSent(arbitratorUrl: URL, id: UUID) extends Command
+  final case class CertifyFiatSent(url: URL, id: UUID) extends Command
 
-  final case class CertifyFiatNotSent(arbitratorUrl: URL, id: UUID) extends Command
+  final case class CertifyFiatNotSent(url: URL, id: UUID) extends Command
 
 }
 
-class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeFSM {
+class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeProcess {
 
   override val id = sellOffer.id
 
@@ -167,7 +170,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
       stay()
 
     case e =>
-      log.error(s"Received event after being traded: $e")
+      log.warning(s"Received event after being traded: $e")
       stay()
   }
 

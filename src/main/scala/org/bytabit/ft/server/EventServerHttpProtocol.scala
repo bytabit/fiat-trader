@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.server
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
@@ -22,13 +22,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import org.bytabit.ft.arbitrator.ArbitratorFSMJsonProtocol
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.trade.TradeProcess
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
 
-trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
+trait EventServerHttpProtocol extends EventServerJsonProtocol {
 
   implicit val system: ActorSystem
 
@@ -40,7 +40,9 @@ trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
 
   def getPostedEvents(since: Option[DateTime]): PostedEvents
 
-  def postTradeEvent(tradeEvent: TradeFSM.PostedEvent): Future[TradeFSM.PostedEvent]
+  def postTradeEvent(tradeEvent: TradeProcess.PostedEvent): Future[TradeProcess.PostedEvent]
+
+  def postArbitratorEvent(arbitratorEvent: ArbitratorManager.PostedEvent): Future[ArbitratorManager.PostedEvent]
 
   def binding(localAddress: String, localPort: Int) = Http().bindAndHandle(route, localAddress, localPort)
 
@@ -56,7 +58,7 @@ trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
   }
 
   val route = {
-    pathPrefix("arbitrator") {
+    pathPrefix("events") {
       pathEnd {
         get {
           parameter("since".?) { sinceParam =>
@@ -72,9 +74,18 @@ trait ArbitratorServerHttp extends ArbitratorFSMJsonProtocol {
     } ~
       path("trade") {
         post {
-          entity(as[TradeFSM.PostedEvent]) { te =>
+          entity(as[TradeProcess.PostedEvent]) { te =>
             complete {
               postTradeEvent(te)
+            }
+          }
+        }
+      } ~
+      path("arbitrator") {
+        post {
+          entity(as[ArbitratorManager.PostedEvent]) { ae =>
+            complete {
+              postArbitratorEvent(ae)
             }
           }
         }

@@ -21,12 +21,13 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator.ArbitratorClientManager.{Start, _}
-import org.bytabit.ft.arbitrator.ArbitratorFSM._
-import org.bytabit.ft.arbitrator._
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.client.ClientManager.{Start, _}
+import org.bytabit.ft.client.EventClient._
+import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
 import org.bytabit.ft.wallet.model.Arbitrator
@@ -43,7 +44,7 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
   override val system = actorSystem
 
-  val arbitratorClientMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  val arbitratorClientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
   lazy val arbitratorClientMgrRef = arbitratorClientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
@@ -62,39 +63,47 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
   }
 
   def addArbitrator(url: URL) =
-    sendCmd(AddArbitrator(url))
+    sendCmd(AddClient(url))
 
   def removeArbitrator(url: URL) =
-    sendCmd(RemoveArbitrator(url))
+    sendCmd(RemoveClient(url))
 
   @Override
   def handler = {
-    case ArbitratorAdded(u) =>
+    case ClientAdded(u) =>
       updateArbitratorUIModel(ADDED, u, None)
 
     case ArbitratorCreated(u, n, _) =>
       updateArbitratorUIModel(ONLINE, u, Some(n))
 
-    case ArbitratorRemoved(u) =>
+    // handle arbitrator events
+
+    case ContractAdded(u, c, _) =>
+      //log.info(s"ContractAdded at URL: ${u}")
+
+    case ContractRemoved(url, id, _) =>
+      //log.info(s"ContractRemoved at URL: ${u}")
+
+    case ClientRemoved(u) =>
       removeArbitratorUIModel(u)
 
-    case ArbitratorOnline(u) =>
+    case ServerOnline(u) =>
       updateArbitratorUIModel(ONLINE, u, None)
 
-    case ArbitratorOffline(u) =>
+    case ServerOffline(u) =>
       updateArbitratorUIModel(OFFLINE, u, None)
 
-    case e: ArbitratorFSM.Event =>
+    case e: EventClient.Event =>
       log.debug(s"unhandled ArbitratorFSM event: $e")
 
-    case e: TradeFSM.Event =>
+    case e: TradeProcess.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
   }
 
-  private def updateArbitratorUIModel(state: ArbitratorFSM.State, url: URL, arbitrator: Option[Arbitrator]) = {
+  private def updateArbitratorUIModel(state: EventClient.State, url: URL, arbitrator: Option[Arbitrator]) = {
     arbitrators.find(n => n.getUrl == url.toString) match {
       case Some(n) if arbitrator.isDefined =>
         val newArbitratorUI = ArbitratorUIModel(state, url, arbitrator)
@@ -181,7 +190,7 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     }
   }
 
-  private def sendCmd(cmd: ArbitratorClientManager.Command) = sendMsg(arbitratorClientMgrRef, cmd)
+  private def sendCmd(cmd: ClientManager.Command) = sendMsg(arbitratorClientMgrRef, cmd)
 
   private def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorClientMgrRef, cmd)
 }

@@ -19,25 +19,12 @@ package org.bytabit.ft.fxui.model
 import javafx.beans.property._
 
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.model.TradeUIModel.{ARBITRATOR, BUYER, Role, SELLER}
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.trade.TradeFSM._
-import org.bytabit.ft.trade.model.TradeData
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.TradeProcess._
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.Monies
 
-object TradeUIModel {
-
-  sealed trait Role
-
-  case object ARBITRATOR extends Role
-
-  case object SELLER extends Role
-
-  case object BUYER extends Role
-
-}
-
-case class TradeUIModel(role: Role, state: TradeFSM.State, trade: TradeData) {
+case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData) {
 
   val url = trade.contract.arbitrator.url
   val id = trade.id
@@ -71,7 +58,7 @@ case class TradeUIModel(role: Role, state: TradeFSM.State, trade: TradeData) {
 
   def getId = id
 
-  def stateToString(state: TradeFSM.State, role: Role): String = {
+  def stateToString(state: TradeProcess.State, role: Role): String = {
     (state, role) match {
       case (CREATED, _) => "OFFERED"
       case (CANCELED, _) => "CANCELED"

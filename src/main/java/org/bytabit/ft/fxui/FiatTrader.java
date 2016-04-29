@@ -23,8 +23,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.bytabit.ft.arbitrator.ArbitratorClientManager;
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager;
+import org.bytabit.ft.client.ClientManager;
+import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.wallet.WalletManager;
@@ -41,9 +41,9 @@ public class FiatTrader extends Application {
         // Create Actor System
         ActorSystem system = ActorSystem.create(Config.config());
         ActorRef walletMgrRef = WalletManager.actorOf(system);
-        ArbitratorClientManager.actorOf(walletMgrRef, system);
+        ClientManager.actorOf(walletMgrRef, system);
         if (Config.serverEnabled()) {
-            ArbitratorServerManager.actorOf(walletMgrRef, system);
+            EventServer.actorOf(system);
         }
 
         // Load  UI

@@ -23,27 +23,30 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager.{AddContractTemplate, RemoveContractTemplate, Start}
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.arbitrator.ArbitratorManager._
+import org.bytabit.ft.client.{ClientManager, EventClient}
+import org.bytabit.ft.client.EventClient.ServerOnline
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object ArbitratorServerFxService {
-  def apply(system: ActorSystem) = new ArbitratorServerFxService(system)
+object ArbitratorManagerFxService {
+  def apply(system: ActorSystem) = new ArbitratorManagerFxService(system)
 }
 
-class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService {
+class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val arbitratorServerMgrSel = system.actorSelection(s"/user/${ArbitratorServerManager.name}")
-  lazy val arbitratorServerMgrRef = arbitratorServerMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val clientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
+  lazy val clientMgrRef = clientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // Private Data
   private var addCurrencyUnitSelected: Option[CurrencyUnit] = None
@@ -69,16 +72,15 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
 
     addCurrencyUnits.setAll(CurrencyUnits.FIAT)
 
-    //sendCmd(AddListener(inbox.getRef()))
-    sendCmd(Start)
+    sendCmd(AddListener(inbox.getRef()))
   }
 
   def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) = {
-    sendCmd(AddContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod))
+    sendCmd(AddContractTemplate(new URL(arbitratorUrl.getValue), fiatCurrencyUnit, fiatDeliveryMethod))
   }
 
   def deleteContractTemplate(id: Sha256Hash) = {
-    sendCmd(RemoveContractTemplate(id))
+    sendCmd(RemoveContractTemplate(new URL(arbitratorUrl.getValue), id))
   }
 
   @Override
@@ -94,6 +96,12 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
 
     case ContractRemoved(_, id, _) =>
       removeUIContract(id)
+
+    case ec: EventClient.Event =>
+      //log.info(s"Event client event")
+
+    case te: TradeProcess.Event =>
+    //log.info(s"Trade process event")
 
     case e =>
       log.error(s"Unexpected event: $e")
@@ -126,7 +134,9 @@ class ArbitratorServerFxService(actorSystem: ActorSystem) extends ActorFxService
     })
   }
 
-  def sendCmd(cmd: ArbitratorServerManager.Command) = sendMsg(arbitratorServerMgrRef, cmd)
+  def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorServerMgrRef, cmd)
+  def sendCmd(cmd: ArbitratorManager.Command) = sendMsg(clientMgrRef, cmd)
+
+  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(clientMgrRef, cmd)
 }

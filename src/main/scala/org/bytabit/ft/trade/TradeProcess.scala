@@ -29,7 +29,7 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import org.bitcoinj.core.{Address, Sha256Hash, Transaction, TransactionOutput}
-import org.bytabit.ft.trade.TradeFSM.{SellerSignedOffer, _}
+import org.bytabit.ft.trade.TradeProcess.{SellerSignedOffer, _}
 import org.bytabit.ft.trade.model.{SellOffer, TakenOffer, TradeData, _}
 import org.bytabit.ft.util.Posted
 import org.bytabit.ft.wallet.model.{Buyer, Seller, Tx, TxSig}
@@ -39,7 +39,7 @@ import scala.collection.JavaConversions._
 import scala.reflect._
 import scala.util.{Failure, Success, Try}
 
-object TradeFSM {
+object TradeProcess {
 
   // actor setup
 
@@ -49,7 +49,7 @@ object TradeFSM {
 
   def arbitrateProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new ArbitrateProcess(sellOffer, walletMgrRef))
 
-  def name(id: UUID) = s"tradeFSM-${id.toString}"
+  def name(id: UUID) = s"tradeProcess-${id.toString}"
 
   // events
 
@@ -171,7 +171,7 @@ object TradeFSM {
 
 }
 
-trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] with TradeFSMJsonProtocol {
+trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradeProcess.Event] with TradeJsonProtocol {
 
   import spray.json._
 
@@ -187,13 +187,13 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   // persistence
 
-  override def persistenceId: String = TradeFSM.name(id)
+  override def persistenceId: String = TradeProcess.name(id)
 
-  override def domainEventClassTag: ClassTag[TradeFSM.Event] = classTag[TradeFSM.Event]
+  override def domainEventClassTag: ClassTag[TradeProcess.Event] = classTag[TradeProcess.Event]
 
   // apply events to trade data
 
-  def applyEvent(event: TradeFSM.Event, tradeData: TradeData): TradeData =
+  def applyEvent(event: TradeProcess.Event, tradeData: TradeData): TradeData =
 
     (event, tradeData) match {
 
@@ -328,7 +328,7 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
   // http request and handler
 
-  def postTradeEvent(url: URL, postedEvent: TradeFSM.PostedEvent, self: ActorRef): Unit = {
+  def postTradeEvent(url: URL, postedEvent: TradeProcess.PostedEvent, self: ActorRef): Unit = {
 
     val tradeUri = s"/trade"
 
@@ -344,8 +344,8 @@ trait TradeFSM extends PersistentFSM[TradeFSM.State, TradeData, TradeFSM.Event] 
 
           case Success(HttpResponse(StatusCodes.OK, headers, respEntity, protocol)) =>
             log.debug(s"Response from ${url.toString}$tradeUri OK, $respEntity")
-            Unmarshal(respEntity).to[TradeFSM.PostedEvent].onSuccess {
-              case pe: TradeFSM.PostedEvent if pe.posted.isDefined =>
+            Unmarshal(respEntity).to[TradeProcess.PostedEvent].onSuccess {
+              case pe: TradeProcess.PostedEvent if pe.posted.isDefined =>
                 self ! pe
               case _ =>
                 log.error("No posted event in response.")

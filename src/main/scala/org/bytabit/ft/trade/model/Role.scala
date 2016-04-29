@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.trade.model
 
-import org.bytabit.ft.arbitrator.ArbitratorFSM
-import org.bytabit.ft.trade.TradeFSM
-import org.bytabit.ft.util.DateTimeOrdering
+sealed trait Role {
+  val identifier:String
+}
 
-final case class PostedEvents(arbitratorEvents: Seq[ArbitratorFSM.PostedEvent],
-                              tradeEvents: Seq[TradeFSM.PostedEvent]) {
+case object ARBITRATOR extends Role {
+  override val identifier: String = "ARBITRATOR"
+}
 
-  val latestUpdate = (arbitratorEvents.flatMap(_.posted) ++ tradeEvents.flatMap(_.posted))
-    .reduceOption(DateTimeOrdering.max)
+case object SELLER extends Role {
+  override val identifier: String = "SELLER"
+}
+
+case object BUYER extends Role {
+  override val identifier: String = "BUYER"
 }

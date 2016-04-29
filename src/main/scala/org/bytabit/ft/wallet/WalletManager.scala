@@ -29,6 +29,8 @@ import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.client.EventClient
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._

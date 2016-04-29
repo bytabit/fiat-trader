@@ -82,6 +82,7 @@ public abstract class AbstractTradeUI implements ActorController {
         return sys;
     }
 
+    @SuppressWarnings("unchecked")
     @FXML
     protected void initialize() {
 

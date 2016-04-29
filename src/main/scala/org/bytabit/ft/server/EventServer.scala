@@ -14,42 +14,39 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.arbitrator.server
+package org.bytabit.ft.server
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.event.Logging
 import akka.pattern.ask
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.arbitrator.ArbitratorFSM
-import org.bytabit.ft.arbitrator.ArbitratorFSM.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.arbitrator.server.ArbitratorServerManager._
-import org.bytabit.ft.trade.TradeFSM
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.server.EventServer._
+import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
-import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.model.Arbitrator
-import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ArbitratorServerManager {
+object EventServer {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new ArbitratorServerManager(walletMgr))
+  def props() = Props(new EventServer())
 
-  val name = ArbitratorServerManager.getClass.getSimpleName
+  val name = EventServer.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) =
-    system.actorOf(props(walletMgr), name)
+  def actorOf()(implicit system: ActorSystem) =
+    system.actorOf(props(), name)
 
   // commands
 
@@ -57,31 +54,27 @@ object ArbitratorServerManager {
 
   case object Start extends Command
 
-  final case class AddContractTemplate(currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
-    assert(Monies.isFiat(currencyUnit))
-  }
+  final case class PostTradeEvent(evt: TradeProcess.PostedEvent) extends Command
 
-  final case class RemoveContractTemplate(id: Sha256Hash) extends Command
-
-  final case class PostTradeEvent(evt: TradeFSM.PostedEvent) extends Command
+  final case class PostArbitratorEvent(evt: ArbitratorManager.PostedEvent) extends Command
 
   // events
 
   sealed trait Event
 
-  case class ArbitratorEventPosted(event: ArbitratorFSM.PostedEvent) extends Event {
+  case class ArbitratorEventPosted(event: ArbitratorManager.PostedEvent) extends Event {
     assert(event.posted.isDefined)
   }
 
-  case class TradeEventPosted(event: TradeFSM.PostedEvent) extends Event {
+  case class TradeEventPosted(event: TradeProcess.PostedEvent) extends Event {
     assert(event.posted.isDefined)
   }
 
   // data
 
   case class Data(arbitrator: Option[Arbitrator] = None, contract: Seq[Contract] = Seq(),
-                  postedArbitratorEvents: Seq[ArbitratorFSM.PostedEvent] = Seq(),
-                  postedTradeEvents: Seq[TradeFSM.PostedEvent] = Seq()) {
+                  postedArbitratorEvents: Seq[ArbitratorManager.PostedEvent] = Seq(),
+                  postedTradeEvents: Seq[TradeProcess.PostedEvent] = Seq()) {
 
     def arbitratorCreated(a: Arbitrator) =
       this.copy(arbitrator = Some(a))
@@ -92,10 +85,10 @@ object ArbitratorServerManager {
     def contractTemplateRemoved(id: Sha256Hash) =
       this.copy(contract = contract.filterNot(_.id == id))
 
-    def arbitratorEventPosted(event: ArbitratorFSM.PostedEvent) =
+    def arbitratorEventPosted(event: ArbitratorManager.PostedEvent) =
       this.copy(postedArbitratorEvents = postedArbitratorEvents :+ event)
 
-    def tradeEventPosted(event: TradeFSM.PostedEvent) =
+    def tradeEventPosted(event: TradeProcess.PostedEvent) =
       this.copy(postedTradeEvents = postedTradeEvents :+ event)
 
     def postedEvents(since: Option[DateTime]) = since match {
@@ -109,7 +102,7 @@ object ArbitratorServerManager {
 
 }
 
-class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with ArbitratorServerHttp {
+class EventServer() extends PersistentActor with ListenerUpdater with EventServerHttpProtocol {
 
   // implicits
 
@@ -129,7 +122,7 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
 
   // persistence
 
-  override def persistenceId: String = ArbitratorServerManager.persistenceId
+  override def persistenceId: String = EventServer.persistenceId
 
   private var data = Data()
 
@@ -137,25 +130,31 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
 
   override def getPostedEvents(since: Option[DateTime]) = data.postedEvents(since)
 
-  override def postTradeEvent(te: TradeFSM.PostedEvent): Future[TradeFSM.PostedEvent] = {
+  override def postTradeEvent(te: TradeProcess.PostedEvent): Future[TradeProcess.PostedEvent] = {
     for {
       pte <- (self ask PostTradeEvent(te)).mapTo[TradeEventPosted]
     } yield pte.event
   }
 
+  override def postArbitratorEvent(ae: ArbitratorManager.PostedEvent): Future[ArbitratorManager.PostedEvent] = {
+    for {
+      pae <- (self ask PostArbitratorEvent(ae)).mapTo[ArbitratorEventPosted]
+    } yield pae.event
+  }
+
   // apply events to data
 
-  def applyEvent(event: ArbitratorServerManager.Event, data: Data): Data = event match {
-    case ArbitratorEventPosted(ac: ArbitratorFSM.ArbitratorCreated) =>
+  def applyEvent(event: EventServer.Event, data: Data): Data = event match {
+    case ArbitratorEventPosted(ac: ArbitratorManager.ArbitratorCreated) =>
       data.arbitratorEventPosted(ac).arbitratorCreated(ac.arbitrator)
 
-    case ArbitratorEventPosted(ca: ArbitratorFSM.ContractAdded) if data.arbitrator.isDefined =>
+    case ArbitratorEventPosted(ca: ArbitratorManager.ContractAdded) if data.arbitrator.isDefined =>
       data.arbitratorEventPosted(ca).contractTemplateAdded(ca.contract)
 
-    case ArbitratorEventPosted(ctr: ArbitratorFSM.ContractRemoved) =>
+    case ArbitratorEventPosted(ctr: ArbitratorManager.ContractRemoved) =>
       data.arbitratorEventPosted(ctr).contractTemplateRemoved(ctr.id)
 
-    case TradeEventPosted(te: TradeFSM.PostedEvent) =>
+    case TradeEventPosted(te: TradeProcess.PostedEvent) =>
       data.tradeEventPosted(te)
 
     case e =>
@@ -183,70 +182,63 @@ class ArbitratorServerManager(walletMgr: ActorRef) extends PersistentActor with 
     case c: ListenerUpdater.Command => handleListenerCommand(c)
 
     // handlers for manager commands
-    case Start if data.arbitrator.isDefined =>
+    case Start =>
       self ! AddListener(context.sender())
-      data.arbitrator.foreach(a => context.sender ! ArbitratorCreated(a.url, a))
-      data.contract.foreach(c => context.sender ! ContractAdded(c.arbitrator.url, c))
 
-    case Start if data.arbitrator.isEmpty =>
-      self ! AddListener(context.sender())
-      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+    case PostArbitratorEvent(evt: ArbitratorManager.ArbitratorCreated) =>
+      val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(aep)(updateData)
+      sender ! aep
 
-    case WalletManager.ArbitratorCreated(a) =>
-      val ac = ArbitratorFSM.ArbitratorCreated(a.url, a)
-      persist(ArbitratorEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
-      sendToListeners(ac)
-
-    case AddContractTemplate(cu, dm) =>
+    case PostArbitratorEvent(evt: ArbitratorManager.ContractAdded) =>
       // TODO FT-26: send back errors if arbitrator not initialized or contract already exists
       data.arbitrator.foreach { a =>
-        val c = Contract(a, cu, dm)
-        val ca = ContractAdded(a.url, c)
-        persist(ArbitratorEventPosted(ca.copy(posted = Some(DateTime.now))))(updateData)
-        sendToListeners(ca)
+        val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+        persist(aep)(updateData)
+        sender ! aep
       }
 
-    case RemoveContractTemplate(id) =>
-      // TODO FT-26: send back errors if arbitrator not initialized or contract doesn't exists
+    case PostArbitratorEvent(evt: ArbitratorManager.ContractRemoved) =>
+      // TODO FT-26: send back errors if arbitrator not initialized or contract already exists
       data.arbitrator.foreach { a =>
-        val ctr = ContractRemoved(a.url, id)
-        persist(ArbitratorEventPosted(ctr.copy(posted = Some(DateTime.now))))(updateData)
-        sendToListeners(ctr)
+        val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+        persist(aep)(updateData)
+        sender ! aep
       }
 
     // handle trade events
 
-    case PostTradeEvent(evt: TradeFSM.SellerCreatedOffer) =>
+    case PostTradeEvent(evt: TradeProcess.SellerCreatedOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.SellerCanceledOffer) =>
+    case PostTradeEvent(evt: TradeProcess.SellerCanceledOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.BuyerTookOffer) =>
+    case PostTradeEvent(evt: TradeProcess.BuyerTookOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.SellerSignedOffer) =>
+    case PostTradeEvent(evt: TradeProcess.SellerSignedOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.CertifyDeliveryRequested) =>
+    case PostTradeEvent(evt: TradeProcess.CertifyDeliveryRequested) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.FiatSentCertified) =>
+    case PostTradeEvent(evt: TradeProcess.FiatSentCertified) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeFSM.FiatNotSentCertified) =>
+    case PostTradeEvent(evt: TradeProcess.FiatNotSentCertified) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep

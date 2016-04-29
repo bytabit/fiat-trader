@@ -20,11 +20,13 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator._
-import org.bytabit.ft.fxui.model.TradeUIModel.ARBITRATOR
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.trade.TradeFSM._
+import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
+import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 
@@ -38,11 +40,11 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
   override val system = actorSystem
 
-  val arbitratorMgrSel = system.actorSelection(s"/user/${ArbitratorClientManager.name}")
+  val arbitratorMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
   lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
-    if (Config.serverEnabled) {
+    if (Config.arbitratorEnabled) {
       super.start()
       sendCmd(AddListener(inbox.getRef()))
     }
@@ -50,6 +52,25 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
   @Override
   def handler = {
+
+    // Handle client events
+
+    case e: EventClient.ServerOnline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
+    case e: EventClient.ServerOffline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
+    // handle arbitrator events
+
+    case ArbitratorCreated(u, a, _) =>
+      //log.info(s"ArbitratorCreated at URL: ${u}")
+
+    case ContractAdded(u, c, _) =>
+      //log.info(s"ContractAdded at URL: ${u}")
+
+    case ContractRemoved(url, id, _) =>
+      //log.info(s"ContractRemoved at URL: ${u}")
 
     // common path
 
@@ -103,11 +124,14 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
     // errors
 
-    case e: ArbitratorFSM.Event =>
-      log.debug(s"unhandled ArbitratorFSM event: $e")
+    case e: EventClient.Event =>
+      log.error(s"unhandled EventClient event: $e")
 
-    case e: TradeFSM.Event =>
-      log.error(s"unhandled TradeFSM event: $e")
+    case e: ArbitratorManager.Event =>
+      log.error(s"unhandled ArbitratorManager event: $e")
+
+    case e: TradeProcess.Event =>
+      log.error(s"unhandled TradeProcess event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
