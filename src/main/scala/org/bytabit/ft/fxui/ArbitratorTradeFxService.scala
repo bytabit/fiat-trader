@@ -20,6 +20,8 @@ import java.net.URL
 import java.util.UUID
 
 import akka.actor.ActorSystem
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.TradeProcess._
@@ -50,6 +52,25 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
   @Override
   def handler = {
+
+    // Handle client events
+
+    case e: EventClient.ServerOnline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
+    case e: EventClient.ServerOffline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
+    // handle arbitrator events
+
+    case ArbitratorCreated(u, a, _) =>
+      //log.info(s"ArbitratorCreated at URL: ${u}")
+
+    case ContractAdded(u, c, _) =>
+      //log.info(s"ContractAdded at URL: ${u}")
+
+    case ContractRemoved(url, id, _) =>
+      //log.info(s"ContractRemoved at URL: ${u}")
 
     // common path
 
@@ -104,10 +125,13 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
     // errors
 
     case e: EventClient.Event =>
-      log.debug(s"unhandled ArbitratorFSM event: $e")
+      log.error(s"unhandled EventClient event: $e")
+
+    case e: ArbitratorManager.Event =>
+      log.error(s"unhandled ArbitratorManager event: $e")
 
     case e: TradeProcess.Event =>
-      log.error(s"unhandled TradeFSM event: $e")
+      log.error(s"unhandled TradeProcess event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")

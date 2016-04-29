@@ -25,10 +25,12 @@ import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager._
-import org.bytabit.ft.client.ClientManager
-import org.bytabit.ft.client.ClientManager.Start
+import org.bytabit.ft.client.{ClientManager, EventClient}
+import org.bytabit.ft.client.EventClient.ServerOnline
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
+import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
 import org.joda.money.CurrencyUnit
 
@@ -70,16 +72,15 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
     addCurrencyUnits.setAll(CurrencyUnits.FIAT)
 
-    //sendCmd(AddListener(inbox.getRef()))
-    sendCmd(Start)
+    sendCmd(AddListener(inbox.getRef()))
   }
 
   def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) = {
-    sendCmd(AddContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod))
+    sendCmd(AddContractTemplate(new URL(arbitratorUrl.getValue), fiatCurrencyUnit, fiatDeliveryMethod))
   }
 
   def deleteContractTemplate(id: Sha256Hash) = {
-    sendCmd(RemoveContractTemplate(id))
+    sendCmd(RemoveContractTemplate(new URL(arbitratorUrl.getValue), id))
   }
 
   @Override
@@ -95,6 +96,12 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
     case ContractRemoved(_, id, _) =>
       removeUIContract(id)
+
+    case ec: EventClient.Event =>
+      //log.info(s"Event client event")
+
+    case te: TradeProcess.Event =>
+    //log.info(s"Trade process event")
 
     case e =>
       log.error(s"Unexpected event: $e")

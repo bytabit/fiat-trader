@@ -43,7 +43,7 @@ public class FiatTrader extends Application {
         ActorRef walletMgrRef = WalletManager.actorOf(system);
         ClientManager.actorOf(walletMgrRef, system);
         if (Config.serverEnabled()) {
-            EventServer.actorOf(walletMgrRef, system);
+            EventServer.actorOf(system);
         }
 
         // Load  UI

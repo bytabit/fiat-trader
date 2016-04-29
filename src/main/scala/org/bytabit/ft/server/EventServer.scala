@@ -16,7 +16,7 @@
 
 package org.bytabit.ft.server
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorSystem, Props}
 import akka.event.Logging
 import akka.pattern.ask
 import akka.persistence.{PersistentActor, SnapshotOffer}
@@ -24,13 +24,11 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager
-import org.bytabit.ft.arbitrator.ArbitratorManager.ContractAdded
 import org.bytabit.ft.server.EventServer._
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
-import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.time.DateTime
 
@@ -42,13 +40,13 @@ object EventServer {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new EventServer(walletMgr))
+  def props() = Props(new EventServer())
 
   val name = EventServer.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) =
-    system.actorOf(props(walletMgr), name)
+  def actorOf()(implicit system: ActorSystem) =
+    system.actorOf(props(), name)
 
   // commands
 
@@ -104,7 +102,7 @@ object EventServer {
 
 }
 
-class EventServer(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater with EventServerHttpProtocol {
+class EventServer() extends PersistentActor with ListenerUpdater with EventServerHttpProtocol {
 
   // implicits
 
@@ -184,35 +182,28 @@ class EventServer(walletMgr: ActorRef) extends PersistentActor with ListenerUpda
     case c: ListenerUpdater.Command => handleListenerCommand(c)
 
     // handlers for manager commands
-    case Start if data.arbitrator.isDefined =>
+    case Start =>
       self ! AddListener(context.sender())
-      data.arbitrator.foreach(a => context.sender ! ArbitratorManager.ArbitratorCreated(a.url, a))
-      data.contract.foreach(c => context.sender ! ContractAdded(c.arbitrator.url, c))
 
-    case Start if data.arbitrator.isEmpty =>
-      self ! AddListener(context.sender())
-      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+    case PostArbitratorEvent(evt: ArbitratorManager.ArbitratorCreated) =>
+      val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+      persist(aep)(updateData)
+      sender ! aep
 
-    case WalletManager.ArbitratorCreated(a) =>
-      val ac = ArbitratorManager.ArbitratorCreated(a.url, a)
-      persist(ArbitratorEventPosted(ac.copy(posted = Some(DateTime.now))))(updateData)
-      sendToListeners(ac)
-
-    case ArbitratorManager.AddContractTemplate(cu, dm) =>
+    case PostArbitratorEvent(evt: ArbitratorManager.ContractAdded) =>
       // TODO FT-26: send back errors if arbitrator not initialized or contract already exists
       data.arbitrator.foreach { a =>
-        val c = Contract(a, cu, dm)
-        val ca = ContractAdded(a.url, c)
-        persist(ArbitratorEventPosted(ca.copy(posted = Some(DateTime.now))))(updateData)
-        sendToListeners(ca)
+        val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+        persist(aep)(updateData)
+        sender ! aep
       }
 
-    case ArbitratorManager.RemoveContractTemplate(id) =>
-      // TODO FT-26: send back errors if arbitrator not initialized or contract doesn't exists
+    case PostArbitratorEvent(evt: ArbitratorManager.ContractRemoved) =>
+      // TODO FT-26: send back errors if arbitrator not initialized or contract already exists
       data.arbitrator.foreach { a =>
-        val ctr = ArbitratorManager.ContractRemoved(a.url, id)
-        persist(ArbitratorEventPosted(ctr.copy(posted = Some(DateTime.now))))(updateData)
-        sendToListeners(ctr)
+        val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))
+        persist(aep)(updateData)
+        sender ! aep
       }
 
     // handle trade events

@@ -26,7 +26,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def contractJsonFormat = jsonFormat(Contract.apply, "text", "arbitrator", "fiatCurrencyUnit", "fiatDeliveryMethod")
 
-  implicit def offerJsonFormat = jsonFormat(Offer.apply, "contract", "fiatAmount", "btcAmount", "btcBond")
+  implicit def offerJsonFormat = jsonFormat(Offer.apply, "id", "contract", "fiatAmount", "btcAmount")
 
   implicit def sellOfferJsonFormat = jsonFormat(SellOffer.apply, "offer", "seller")
 

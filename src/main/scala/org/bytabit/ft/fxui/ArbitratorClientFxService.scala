@@ -21,7 +21,7 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator.ArbitratorManager.ArbitratorCreated
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client.ClientManager.{Start, _}
 import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.client._
@@ -75,6 +75,14 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
     case ArbitratorCreated(u, n, _) =>
       updateArbitratorUIModel(ONLINE, u, Some(n))
+
+    // handle arbitrator events
+
+    case ContractAdded(u, c, _) =>
+      //log.info(s"ContractAdded at URL: ${u}")
+
+    case ContractRemoved(url, id, _) =>
+      //log.info(s"ContractRemoved at URL: ${u}")
 
     case ClientRemoved(u) =>
       removeArbitratorUIModel(u)

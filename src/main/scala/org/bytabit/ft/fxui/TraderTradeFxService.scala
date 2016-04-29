@@ -22,7 +22,8 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
 
 import akka.actor.ActorSystem
-import org.bytabit.ft.arbitrator.ArbitratorManager.{ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator.ArbitratorManager
+import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
@@ -45,8 +46,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   override val system = actorSystem
 
-  val arbitratorMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
-  lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val clientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
+  lazy val clientMgrRef = clientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // TODO FT-99: disable buy buttons if current trade is uncommitted
   val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
@@ -66,7 +67,18 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   @Override
   def handler = {
 
+    // Handle client events
+
+    case e: EventClient.ServerOnline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
+    case e: EventClient.ServerOffline =>
+      //log.info(s"ServerOnline at URL: ${u}")
+
     // Handle Arbitrator Events
+
+    case ArbitratorCreated(u, a, _) =>
+      //log.info(s"ArbitratorCreated at URL: ${u}")
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
@@ -78,9 +90,6 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
-
-    case e: EventClient.Event =>
-      log.debug(s"Unhandled ArbitratorFSM event: $e")
 
     // Handle Trade Events
 
@@ -158,8 +167,14 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     // errors
 
+    case e: EventClient.Event =>
+      log.error(s"unhandled EventClient event: $e")
+
+    case e: ArbitratorManager.Event =>
+      log.error(s"unhandled ArbitratorManager event: $e")
+
     case e: TradeProcess.Event =>
-      log.error(s"Unhandled TradeFSM event: $e")
+      log.error(s"unhandled TradeProcess event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
@@ -281,11 +296,11 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     tradeUncommitted.set(trades.exists(_.uncommitted))
   }
 
-  def sendCmd(cmd: SellProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
+  def sendCmd(cmd: SellProcess.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: BuyProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
+  def sendCmd(cmd: BuyProcess.Command) = sendMsg(clientMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(arbitratorMgrRef, cmd)
+    sendMsg(clientMgrRef, cmd)
   }
 }

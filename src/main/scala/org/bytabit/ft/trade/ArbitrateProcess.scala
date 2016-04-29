@@ -170,7 +170,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
       stay()
 
     case e =>
-      log.error(s"Received event after being traded: $e")
+      log.warning(s"Received event after being traded: $e")
       stay()
   }
 

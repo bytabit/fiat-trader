@@ -146,7 +146,7 @@ class WalletManager extends Actor with ListenerUpdater {
       sender ! CurrentAddressFound(a)
 
     case CreateArbitrator(u, bp, nf) =>
-      sender ! ArbitratorManager.ArbitratorCreated(u, Arbitrator(u, bp, nf))
+      sender ! ArbitratorCreated(Arbitrator(u, bp, nf))
 
     case CreateSellOffer(offer: Offer) =>
       sender ! SellOfferCreated(offer.withSeller)

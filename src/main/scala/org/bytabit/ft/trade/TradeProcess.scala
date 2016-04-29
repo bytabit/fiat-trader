@@ -49,7 +49,7 @@ object TradeProcess {
 
   def arbitrateProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new ArbitrateProcess(sellOffer, walletMgrRef))
 
-  def name(id: UUID) = s"tradeFSM-${id.toString}"
+  def name(id: UUID) = s"tradeProcess-${id.toString}"
 
   // events
 

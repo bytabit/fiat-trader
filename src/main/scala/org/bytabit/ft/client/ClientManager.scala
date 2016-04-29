@@ -21,8 +21,9 @@ import java.net.URL
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
+import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager._
-import org.bytabit.ft.trade.TradeProcess
+import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeProcess}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{Config, ListenerUpdater}
 
@@ -133,10 +134,22 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
         stopClient(u)
       }
 
-//    case cc: clientCommand =>
-//      client(cc.serverUrl).foreach(_ ! cc)
+    case ac: ArbitratorManager.Command =>
+      client(ac.url).foreach(_ ! ac)
+
+    case apc: ArbitrateProcess.Command =>
+      client(apc.url).foreach(_ ! apc)
+
+    case spc: SellProcess.Command =>
+      client(spc.url).foreach(_ ! spc)
+
+    case bpc: BuyProcess.Command =>
+      client(bpc.url).foreach(_ ! bpc)
 
     case evt: EventClient.Event =>
+      sendToListeners(evt)
+
+    case evt: ArbitratorManager.Event =>
       sendToListeners(evt)
 
     case evt: TradeProcess.Event =>
@@ -151,19 +164,19 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
   // start/stop clients
 
   def name(url: URL): String = {
-//    if (Config.arbitratorEnabled) {
+    if (Config.arbitratorEnabled) {
       ArbitratorClient.name(url)
-//    } else {
-//      TraderClient.name(url)
-//    }
+    } else {
+      TraderClient.name(url)
+    }
   }
 
   def props(url: URL, walletMgr: ActorRef): Props = {
-//    if (Config.arbitratorEnabled && Config.publicUrl == url) {
+    if (Config.arbitratorEnabled && Config.publicUrl == url) {
       ArbitratorClient.props(url, walletMgr)
-//    } else {
-//      TraderClient.props(url, walletMgr)
-//    }
+    } else {
+      TraderClient.props(url, walletMgr)
+    }
   }
 
   def startClient(url: URL): Unit = {

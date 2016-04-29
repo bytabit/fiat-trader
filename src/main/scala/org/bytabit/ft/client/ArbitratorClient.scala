@@ -19,20 +19,16 @@ package org.bytabit.ft.client
 import java.net.URL
 
 import akka.actor.{ActorRef, Props}
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.{StatusCodes, _}
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.scaladsl.{Sink, Source}
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
 import org.bytabit.ft.trade.model.ARBITRATOR
-import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeProcess}
-import org.bytabit.ft.util.Config
+import org.bytabit.ft.trade.{ArbitrateProcess, TradeProcess}
+import org.bytabit.ft.util.{BTCMoney, Config}
+import org.bytabit.ft.wallet.WalletManager
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
 
 object ArbitratorClient {
 
@@ -45,7 +41,7 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
   // persistence
 
-  override def persistenceId = ArbitratorClient.name(url)
+  override def persistenceId = s"${ArbitratorClient.name(url)}-persister"
 
   startWith(ADDED, AddedServer(url))
 
@@ -57,29 +53,32 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
       reqPostedEvents(url, None)
       stay()
 
-    // create and start arbitrator
+    // create arbitrator
 
-    case Event(son: ServerOnline, d) =>
-      createArbitratorManager(url) ! ArbitratorManager.Start
+    case Event(npe: NoPostedEventsReceived, d) =>
+      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
       stay()
 
-    // arbitrator created
+    // new arbitrator created
+
+    case Event(ac: WalletManager.ArbitratorCreated, d) =>
+      createArbitratorManager(ac.arbitrator) ! ArbitratorManager.Start
+      stay()
 
     case Event(ac: ArbitratorManager.ArbitratorCreated, d) =>
       goto(ONLINE) applying ArbitratorAdded(url, ac.arbitrator, ac.posted) andThen { ud =>
+        context.parent ! ServerOnline(ac.url)
         context.parent ! ac
       }
 
-    case Event(ReceivePostedArbitratorEvent(ac: ArbitratorManager.ArbitratorCreated), d) =>
-      createArbitratorManager(url) ! ac
-      goto(ONLINE) applying ArbitratorAdded(url, ac.arbitrator, ac.posted) andThen { ud =>
-        context.parent ! ac
-      }
+    // server online, do nothing until arbitrator created
+
+    case Event(ServerOnline(_), d) =>
+      stay()
 
     // server offline
 
     case Event(soff: ServerOffline, d) =>
-      context.parent ! soff
       stay()
   }
 
@@ -90,13 +89,15 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
     case Event(Start, ActiveServer(lp, a, at)) =>
 
       // create and start arbitrator
-      createArbitratorManager(a.url) ! ArbitratorManager.Start
+      createArbitratorManager(a) ! ArbitratorManager.Start
 
       // create and start active trades
       at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
       // request new events from event server
       reqPostedEvents(url, Some(lp))
+
+      context.parent ! ServerOnline(a.url)
       stay()
 
     case Event(StateTimeout, ActiveServer(lp, a, at)) =>
@@ -106,16 +107,21 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
     case Event(son: ServerOnline, d) =>
       stay()
 
+    case Event(npe: NoPostedEventsReceived, d) =>
+      stay()
+
     case Event(soff: ServerOffline, ActiveServer(lp, a, at)) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! soff
-        stopArbitrator(a.url)
+
+        // stop arbitrator
+        stopArbitratorManager(a)
       }
 
     // send arbitrator commands to ArbitratorManager
 
-    case Event(ac: ArbitratorManager.Command, ActiveServer(lp, a, at)) if isArbitrator(a.url) =>
-      arbitratorManager(a.url) match {
+    case Event(ac: ArbitratorManager.Command, ActiveServer(lp, a, at)) =>
+      arbitratorManager(a) match {
         case Some(ref) => ref ! ac
         case None => log.error(s"Could not send command to arbitrator ${a.url}")
       }
@@ -124,7 +130,7 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
     // send received posted arbitrator events to ArbitratorManager
 
     case Event(ReceivePostedArbitratorEvent(ae), ActiveServer(lp, a, at)) =>
-      arbitratorManager(a.url) match {
+      arbitratorManager(a) match {
         case Some(ref) => ref ! ae
         case None => log.error(s"Could not send event to arbitrator ${a.url}")
       }
@@ -139,30 +145,16 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
     // send trade commands to trades
 
-    case Event(ac: ArbitrateProcess.Command, d) if isArbitrator(ac.url) =>
+    case Event(ac: ArbitrateProcess.Command, d) =>
       tradeProcess(ac.id) match {
         case Some(ref) => ref ! ac
         case None => log.error(s"Could not send arbitrate process command to trade ${ac.id}")
       }
       stay()
 
-    case Event(sc: SellProcess.Command, d) if !isArbitrator(sc.url) =>
-      tradeProcess(sc.id) match {
-        case Some(ref) => ref ! sc
-        case None => log.error(s"Could not send sell process command to trade ${sc.id}")
-      }
-      stay()
-
-    case Event(bc: BuyProcess.Command, d) if !isArbitrator(bc.url) =>
-      tradeProcess(bc.id) match {
-        case Some(ref) => ref ! bc
-        case None => log.error(s"Could not buy sell process command to trade ${bc.id}")
-      }
-      stay()
-
     // handle posted trade events
 
-    // add trade and update latestUpdate
+    // create trade
     case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), ActiveServer(lp, a, at)) =>
       tradeProcess(sco.id) match {
         case Some(ref) =>
@@ -171,6 +163,12 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
           createArbitrateTrade(sco.id, sco.offer) ! sco
       }
       stay()
+
+    // add trade and update latestUpdate
+    case Event(sco: TradeProcess.SellerCreatedOffer, ActiveServer(lp, a, at)) =>
+      stay() applying TradeAdded(a.url, ARBITRATOR, sco.id, sco.offer, sco.posted) andThen { ud =>
+        context.parent ! sco
+      }
 
     // remove trade and update latestUpdate
     case Event(sco: TradeProcess.SellerCanceledOffer, ActiveServer(lp, a, at)) =>
@@ -194,6 +192,11 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
       stay() applying PostedEventReceived(a.url, te.posted) andThen { ud =>
         context.parent ! te
       }
+
+    // send other non-posted events to parent
+    case Event(te: TradeProcess.Event, ActiveServer(lp, a, at)) =>
+      context.parent ! te
+      stay()
   }
 
   when(OFFLINE, stateTimeout = 30 second) {
@@ -216,80 +219,17 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
     case Event(ServerOnline(_), ActiveServer(lp, a, at)) =>
       goto(ONLINE) andThen { ud =>
-        context.parent ! ServerOnline(a.url)
-        // create and start arbitrator
-        createArbitratorManager(a.url) ! ArbitratorManager.Start
-      }
 
-    case Event(ServerOnline(_), AddedServer(u)) =>
-      goto(ONLINE) andThen { ud =>
-        context.parent ! ServerOnline(u)
+        // create and start arbitrator
+        createArbitratorManager(a) ! ArbitratorManager.Start
+
+        context.parent ! ServerOnline(a.url)
       }
 
     case Event(ServerOffline(_), _) =>
       stay()
-
-    // send trade commands to trades
-
-    case Event(ac: ArbitrateProcess.Command, d) if isArbitrator(ac.url) =>
-      tradeProcess(ac.id) match {
-        case Some(ref) => ref ! ac
-        case None => log.error(s"Could not send arbitrate process command to trade ${ac.id}")
-      }
-      stay()
-
-    case Event(sc: SellProcess.Command, d) if !isArbitrator(sc.url) =>
-      tradeProcess(sc.id) match {
-        case Some(ref) => ref ! sc
-        case None => log.error(s"Could not send sell process command to trade ${sc.id}")
-      }
-      stay()
-
-    case Event(bc: BuyProcess.Command, d) if !isArbitrator(bc.url) =>
-      tradeProcess(bc.id) match {
-        case Some(ref) => ref ! bc
-        case None => log.error(s"Could not buy sell process command to trade ${bc.id}")
-      }
-      stay()
-
   }
 
   initialize()
-
-  def isArbitrator(url: URL) = Config.arbitratorEnabled && Config.publicUrl == url
-
-  import spray.json._
-
-  def postTradeEvent(url: URL, postedEvent: TradeProcess.PostedEvent, self: ActorRef): Unit = {
-
-    val tradeUri = s"/trade"
-
-    Marshal(postedEvent.toJson).to[RequestEntity].onSuccess {
-
-      case reqEntity =>
-
-        val req = Source.single(HttpRequest(uri = tradeUri, method = HttpMethods.POST,
-          entity = reqEntity.withContentType(ContentTypes.`application/json`)))
-          .via(connectionFlow(url))
-
-        req.runWith(Sink.head).onComplete {
-
-          case Success(HttpResponse(StatusCodes.OK, headers, respEntity, protocol)) =>
-            log.debug(s"Response from ${url.toString}$tradeUri OK, $respEntity")
-            Unmarshal(respEntity).to[TradeProcess.PostedEvent].onSuccess {
-              case pe: TradeProcess.PostedEvent if pe.posted.isDefined =>
-                self ! pe
-              case _ =>
-                log.error("No posted event in response.")
-            }
-
-          case Success(HttpResponse(sc, h, e, p)) =>
-            log.error(s"Response from ${url.toString}$tradeUri ${sc.toString()}")
-
-          case Failure(failure) =>
-            log.debug(s"No Response from ${url.toString}: $failure")
-        }
-    }
-  }
 
 }

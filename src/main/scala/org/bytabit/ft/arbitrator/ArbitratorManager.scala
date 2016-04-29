@@ -31,7 +31,6 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
-import org.bytabit.ft.wallet.WalletManager
 import org.bytabit.ft.wallet.model._
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
@@ -45,21 +44,23 @@ object ArbitratorManager {
 
   // actor setup
 
-  def props(url: URL, walletMgrRef: ActorRef) = Props(new ArbitratorManager(url, walletMgrRef))
+  def props(arbitrator: Arbitrator) = Props(new ArbitratorManager(arbitrator))
 
-  def name(url: URL) = s"${ArbitratorManager.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
+  def name(arbitrator: Arbitrator) = s"${ArbitratorManager.getClass.getSimpleName}-${arbitrator.escrowPubKey.toString}"
 
   // commands
 
-  sealed trait Command
+  sealed trait Command {
+    val url: URL
+  }
 
-  case object Start extends Command
+  case class Start(url: URL) extends Command
 
-  final case class AddContractTemplate(currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
+  final case class AddContractTemplate(url: URL, currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
     assert(Monies.isFiat(currencyUnit))
   }
 
-  final case class RemoveContractTemplate(id: Sha256Hash) extends Command
+  final case class RemoveContractTemplate(url: URL, id: Sha256Hash) extends Command
 
   // events
 
@@ -92,11 +93,7 @@ object ArbitratorManager {
 
   // data
 
-  sealed trait Data
-
-  case class URLData(url: URL) extends Data
-
-  case class ArbitratorData(arbitrator: Arbitrator, contracts: Map[Sha256Hash, Contract] = Map()) extends Data {
+  case class Data(arbitrator: Arbitrator, contracts: Map[Sha256Hash, Contract] = Map()) {
 
     def withContract(contract: Contract) =
       this.copy(contracts = contracts + (contract.id -> contract))
@@ -107,7 +104,7 @@ object ArbitratorManager {
 
 }
 
-class ArbitratorManager(url: URL, walletMgr: ActorRef) extends PersistentFSM[ArbitratorManager.State, ArbitratorManager.Data, ArbitratorManager.Event] with ArbitratorJsonProtocol {
+class ArbitratorManager(arbitrator: Arbitrator) extends PersistentFSM[ArbitratorManager.State, ArbitratorManager.Data, ArbitratorManager.Event] with ArbitratorJsonProtocol {
 
   import spray.json._
 
@@ -121,7 +118,7 @@ class ArbitratorManager(url: URL, walletMgr: ActorRef) extends PersistentFSM[Arb
 
   // persistence
 
-  override def persistenceId: String = ArbitratorManager.name(url)
+  override def persistenceId: String = s"${ArbitratorManager.name(arbitrator)}-persister"
 
   override def domainEventClassTag: ClassTag[ArbitratorManager.Event] = classTag[ArbitratorManager.Event]
 
@@ -131,13 +128,10 @@ class ArbitratorManager(url: URL, walletMgr: ActorRef) extends PersistentFSM[Arb
 
     (event, data) match {
 
-      case (ArbitratorCreated(_, a, Some(_)), URLData(_)) =>
-        ArbitratorData(a)
-
-      case (ContractAdded(_, c, Some(_)), data: ArbitratorData) =>
+      case (ContractAdded(_, c, Some(_)), data: Data) =>
         data.withContract(c)
 
-      case (ContractRemoved(_, i, Some(_)), data: ArbitratorData) =>
+      case (ContractRemoved(_, i, Some(_)), data: Data) =>
         data.withoutContract(i)
 
       // error
@@ -147,56 +141,50 @@ class ArbitratorManager(url: URL, walletMgr: ActorRef) extends PersistentFSM[Arb
         data
     }
 
-  startWith(ADDED, URLData(url))
+  startWith(ADDED, Data(arbitrator))
 
   when(ADDED, stateTimeout = 30 second) {
 
-    case Event(Start | StateTimeout, URLData(u)) =>
-      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+    case Event(Start | StateTimeout, Data(a, cm)) =>
+      postArbitratorEvent(a.url, ArbitratorManager.ArbitratorCreated(a.url, a), self)
       stay()
 
-    case Event(ac: ArbitratorManager.ArbitratorCreated, URLData(u)) if ac.posted.isEmpty =>
-      postArbitratorEvent(u, ac, self)
-      stay()
-
-    case Event(ac: ArbitratorManager.ArbitratorCreated, URLData(u)) if ac.posted.isDefined =>
-      goto(CREATED) applying ac andThen { ud =>
-          context.parent ! ac
+    case Event(ac: ArbitratorManager.ArbitratorCreated, Data(a, cm)) if ac.posted.isDefined =>
+      goto(CREATED) andThen { ud =>
+        context.parent ! ac
       }
   }
 
   when(CREATED) {
 
-    case Event(Start, ArbitratorData(a, cm)) =>
+    case Event(Start, Data(a, cm)) =>
+
       // notify parent of created arbitrator
       context.parent ! ArbitratorManager.ArbitratorCreated(a.url, a)
+
       // notify parent of arbitrator contracts
       cm.values.foreach(c => context.parent ! ContractAdded(a.url, c))
       stay()
 
-    case Event(AddContractTemplate(cu, dm), ArbitratorData(a, cm)) =>
-      postArbitratorEvent(a.url, ContractAdded(a.url, Contract(a, cu, dm)), self)
+    case Event(AddContractTemplate(_, cu, dm), Data(a, cm)) =>
+      val c = Contract(a, cu, dm)
+      if (!cm.contains(c.id)) postArbitratorEvent(a.url, ContractAdded(a.url, c), self)
+      else log.error(s"Can't add duplicate contract: ${c.id}")
       stay()
 
-    case Event(ca: ContractAdded, ArbitratorData(a, cm)) if ca.posted.isDefined =>
+    case Event(ca: ContractAdded, Data(a, cm)) if ca.posted.isDefined =>
       stay() applying ca andThen { ud =>
-          context.parent ! ca
+        context.parent ! ca
       }
 
-    case Event(RemoveContractTemplate(id), ArbitratorData(a, cm)) =>
+    case Event(RemoveContractTemplate(_, id), Data(a, cm)) =>
       postArbitratorEvent(a.url, ContractRemoved(a.url, id), self)
       stay()
 
-    case Event(cr: ContractRemoved, ArbitratorData(a, cm)) if cr.posted.isDefined =>
+    case Event(cr: ContractRemoved, Data(a, cm)) if cr.posted.isDefined =>
       stay() applying cr andThen { ud =>
-          context.parent ! cr
+        context.parent ! cr
       }
-  }
-
-  onTermination {
-    case StopEvent(reason, CREATED, ArbitratorData(a, cm)) =>
-      // notify parent to remove all contracts
-      cm.values.foreach(c => context.parent ! ContractRemoved(a.url, c.id))
   }
 
   // http flow

@@ -27,13 +27,12 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.server.PostedEvents
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.{DateTimeOrdering, Posted}
+import org.bytabit.ft.util.DateTimeOrdering
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.time.DateTime
 
@@ -70,6 +69,8 @@ object EventClient {
 
   final case class ServerOffline(url: URL) extends Event
 
+  final case class NoPostedEventsReceived(url: URL) extends Event
+
   final case class PostedEventReceived(url: URL, posted: Option[DateTime]) extends Event
 
   // arbitrator events
@@ -81,7 +82,7 @@ object EventClient {
 
   // trade events
 
-  final case class TradeAdded(url: URL, role:Role, tradeId: UUID, offer: SellOffer, posted: Option[DateTime] = None) extends Event
+  final case class TradeAdded(url: URL, role: Role, tradeId: UUID, offer: SellOffer, posted: Option[DateTime] = None) extends Event
 
   final case class TradeRemoved(url: URL, tradeId: UUID, posted: Option[DateTime]) extends Event
 
@@ -163,14 +164,14 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
       case (ArbitratorAdded(u, a, Some(p)), as: AddedServer) =>
         as.added(a, p)
 
-      case (TradeAdded(u, r, i, o, Some(p)), an: ActiveServer) =>
-        an.tradeAdded(r, i, o, p)
+      case (TradeAdded(u, r, i, o, Some(p)), as: ActiveServer) =>
+        as.tradeAdded(r, i, o, p)
 
-      case (TradeRemoved(u, i, Some(p)), an: ActiveServer) =>
-        an.tradeRemoved(i, p)
+      case (TradeRemoved(u, i, Some(p)), as: ActiveServer) =>
+        as.tradeRemoved(i, p)
 
-      case (PostedEventReceived(u, Some(p)), an: ActiveServer) =>
-        an.postedEventReceived(p)
+      case (PostedEventReceived(u, Some(p)), as: ActiveServer) =>
+        as.postedEventReceived(p)
 
       case _ => data
     }
@@ -210,6 +211,7 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
       case Success(HttpResponse(StatusCodes.NoContent, headers, entity, protocol)) =>
         log.debug(s"No new events from ${url.toString}$arbitratorUri")
         self ! ServerOnline(url)
+        self ! NoPostedEventsReceived(url)
 
       case Success(HttpResponse(sc, headers, entity, protocol)) =>
         log.error(s"Response from ${url.toString}$arbitratorUri ${sc.toString()}")
@@ -221,22 +223,19 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
   }
 
   // create ArbitratorManager
-
-  def createArbitratorManager(url: URL): ActorRef = {
-    context.actorOf(ArbitratorManager.props(url, walletMgr), ArbitratorManager.name(url))
+  def createArbitratorManager(arbitrator: Arbitrator): ActorRef = {
+    context.actorOf(ArbitratorManager.props(arbitrator), ArbitratorManager.name(arbitrator))
   }
 
-  // manage ArbitratorManager
-
   // find ArbitratorManager
-  def arbitratorManager(url: URL): Option[ActorRef] = context.child(ArbitratorManager.name(url))
+  def arbitratorManager(a: Arbitrator): Option[ActorRef] = context.child(ArbitratorManager.name(a))
 
-  def stopArbitrator(url: URL) = {
-    arbitratorManager(url).foreach(context.stop)
+  // stop ArbitratorManager
+  def stopArbitratorManager(a: Arbitrator) = {
+    arbitratorManager(a).foreach(context.stop)
   }
 
   // create trade Processes
-
   def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
     context.actorOf(TradeProcess.arbitrateProps(so, walletMgr), TradeProcess.name(id))
   }
@@ -249,11 +248,10 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
     context.actorOf(TradeProcess.buyProps(so, walletMgr), TradeProcess.name(id))
   }
 
-  // manage trade processes
-
   // find trade process
   def tradeProcess(id: UUID): Option[ActorRef] = context.child(TradeProcess.name(id))
 
+  // stop trade processes
   def stopTrade(id: UUID) = {
     tradeProcess(id).foreach(context.stop)
   }
