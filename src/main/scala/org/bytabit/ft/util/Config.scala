@@ -16,9 +16,12 @@
 
 package org.bytabit.ft.util
 
+import java.io.File
 import java.net.URL
 
 import com.typesafe.config.ConfigFactory
+
+import scala.util.Try
 
 object Config {
 
@@ -28,51 +31,75 @@ object Config {
 
   // app configs
 
-  val home = getString("user.home").getOrElse("./")
-  val config = getString(s"$configRoot.config").getOrElse("default")
-  val version = getString(s"$configRoot.version").getOrElse("0.0.0")
+  val home = getString("user.home", "./")
+  val config = getString(s"$configRoot.config", "default")
+  val version = getString(s"$configRoot.version", "0.0.0")
+
+  // persistence configs
+
+  val akkaPersistence = "akka.persistence"
+
+  val snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$home/.bytabit/fiat-trader/$config/snapshots")
+
+  val journalDir = getFile(s"$akkaPersistence.journal.leveldb.dir", s"$home/.bytabit/fiat-trader/$config/journal")
 
   // wallet configs
 
-  val walletNet = getString(s"$configRoot.wallet.net").getOrElse("org.bitcoin.test")
-  val walletDir = getString(s"$configRoot.wallet.dir").getOrElse(s"$home/.bytabit/$config/wallet")
+  val walletNet = getString(s"$configRoot.wallet.net", "org.bitcoin.test")
+  val walletDir = getString(s"$configRoot.wallet.dir", "$home/.bytabit/$config/wallet")
 
   // arbitrator configs
 
-  val arbitratorEnabled = getBoolean(s"$configRoot.arbitrator.enabled").getOrElse(false)
+  val arbitratorEnabled = getBoolean(s"$configRoot.arbitrator.enabled", default = false)
 
-  val bondPercent = getDouble(s"$configRoot.arbitrator.bond-percent").getOrElse(0.0)
-  val btcArbitratorFee = getDouble(s"$configRoot.arbitrator.btc-arbitrator-fee").getOrElse(0.0)
+  val bondPercent = getDouble(s"$configRoot.arbitrator.bond-percent", 0.0)
+  val btcArbitratorFee = getDouble(s"$configRoot.arbitrator.btc-arbitrator-fee", 0.0)
 
   // server configs
 
-  val serverEnabled = getBoolean(s"$configRoot.server.enabled").getOrElse(false)
+  val serverEnabled = getBoolean(s"$configRoot.server.enabled", default = false)
 
-  val localAddress = getString(s"$configRoot.server.local-address").getOrElse("0.0.0.0")
-  val localPort = getInt(s"$configRoot.server.local-port").getOrElse(9000)
-  val localProtocol = getString(s"$configRoot.server.local-protocol").getOrElse("http")
+  val localAddress = getString(s"$configRoot.server.local-address", "0.0.0.0")
+  val localPort = getInt(s"$configRoot.server.local-port", 9000)
+  val localProtocol = getString(s"$configRoot.server.local-protocol", "http")
 
-  val publicAddress = getString(s"$configRoot.server.public-address").getOrElse("127.0.0.1")
-  val publicPort = getInt(s"$configRoot.server.public-port").getOrElse(9000)
-  val publicProtocol = getString(s"$configRoot.server.public-protocol").getOrElse("http")
+  val publicAddress = getString(s"$configRoot.server.public-address", "127.0.0.1")
+  val publicPort = getInt(s"$configRoot.server.public-port", 9000)
+  val publicProtocol = getString(s"$configRoot.server.public-protocol", "http")
 
   val publicUrl = new URL(s"$publicProtocol://$publicAddress:$publicPort")
 
   // helper functions
 
-  def getString(key: String): Option[String] = {
-    if (appConfig.hasPath(key)) Some(appConfig.getString(key)) else None
+  def getString(key: String, default: String): String = {
+    if (appConfig.hasPath(key)) appConfig.getString(key) else default
   }
 
-  def getBoolean(key: String): Option[Boolean] = {
-    if (appConfig.hasPath(key)) Some(appConfig.getBoolean(key)) else None
+  def getBoolean(key: String, default: Boolean): Boolean = {
+    if (appConfig.hasPath(key)) appConfig.getBoolean(key) else default
   }
 
-  def getInt(key: String): Option[Int] = {
-    if (appConfig.hasPath(key)) Some(appConfig.getInt(key)) else None
+  def getInt(key: String, default: Int): Int = {
+    if (appConfig.hasPath(key)) appConfig.getInt(key) else default
   }
 
-  def getDouble(key: String): Option[Double] = {
-    if (appConfig.hasPath(key)) Some(appConfig.getDouble(key)) else None
+  def getDouble(key: String, default: Double): Double = {
+    if (appConfig.hasPath(key)) appConfig.getDouble(key) else default
+  }
+
+  def getFile(key: String, default: String): File = {
+    if (appConfig.hasPath(key)) new File(appConfig.getString(key)) else new File(default)
+  }
+
+  // Create data directories if not existing
+  def createDir(dir: File): Try[File] = Try {
+
+    if (dir.exists && dir.isDirectory) {
+      dir
+    } else if (dir.mkdirs) {
+      dir
+    } else {
+      throw new SecurityException(s"Unable to create directory: ${dir.toString}")
+    }
   }
 }

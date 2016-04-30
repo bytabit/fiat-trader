@@ -27,7 +27,6 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.server.EventServer._
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
-import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.time.DateTime
@@ -35,6 +34,29 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
+
+// to start as stand-alone app (no UI)
+
+object Main extends App {
+
+  // Create Actor System
+  val system: ActorSystem = ActorSystem.create(Config.config)
+
+  if (Config.serverEnabled) {
+    system.log.info("Starting EventServer...")
+    // create data directories if they don't exist
+    if (Config.createDir(Config.snapshotStoreDir).isFailure) {
+      system.log.error("Unable to create snapshot directory.")
+    }
+    if (Config.createDir(Config.journalDir).isFailure) {
+      system.log.error("Unable to create journal directory.")
+    }
+    EventServer.actorOf()(system)
+  } else {
+    system.log.error("EventServer not enabled in config file.")
+    system.terminate()
+  }
+}
 
 object EventServer {
 
@@ -51,8 +73,6 @@ object EventServer {
   // commands
 
   sealed trait Command
-
-  case object Start extends Command
 
   final case class PostTradeEvent(evt: TradeProcess.PostedEvent) extends Command
 
@@ -182,8 +202,6 @@ class EventServer() extends PersistentActor with ListenerUpdater with EventServe
     case c: ListenerUpdater.Command => handleListenerCommand(c)
 
     // handlers for manager commands
-    case Start =>
-      self ! AddListener(context.sender())
 
     case PostArbitratorEvent(evt: ArbitratorManager.ArbitratorCreated) =>
       val aep = ArbitratorEventPosted(evt.copy(posted = Some(DateTime.now())))

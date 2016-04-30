@@ -95,7 +95,7 @@ public class ArbitratorServerUI implements ActorController {
     @FXML
     void initialize() {
 
-        if (Config.serverEnabled()) {
+        if (Config.arbitratorEnabled()) {
 
             // setup arbitrator id listener
             arbitratorServerFxService.arbitratorId().addListener((observable, oldValue, newValue) -> {
