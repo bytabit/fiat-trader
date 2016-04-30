@@ -90,6 +90,13 @@ task run(type: JavaExec, dependsOn: classes) {
     systemProperties System.properties
 }
 
+task server(type: JavaExec, dependsOn: classes) {
+    main = 'org.bytabit.ft.server.Main'
+    classpath sourceSets.main.runtimeClasspath
+    classpath configurations.runtime
+    systemProperties System.properties
+}
+
 task spec(dependsOn: ['testClasses'], type: JavaExec) {
     main = 'org.scalatest.tools.Runner'
     args = ['-R', 'build/classes/test', '-o']

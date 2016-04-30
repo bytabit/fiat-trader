@@ -18,6 +18,7 @@ package org.bytabit.ft.fxui;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.event.LoggingAdapter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -38,8 +39,19 @@ public class FiatTrader extends Application {
     @Override
     public final void start(Stage stage) throws IOException {
 
-        // Create Actor System
+        // Create actor system
         ActorSystem system = ActorSystem.create(Config.config());
+        LoggingAdapter log = system.log();
+
+        // create data directories if they don't exist
+        if (Config.createDir(Config.snapshotStoreDir()).isFailure()) {
+            log.error("Unable to create snapshot directory.");
+        }
+        if (Config.createDir(Config.journalDir()).isFailure()) {
+            log.error("Unable to create journal directory.");
+        }
+
+        // Create actors
         ActorRef walletMgrRef = WalletManager.actorOf(system);
         ClientManager.actorOf(walletMgrRef, system);
         if (Config.serverEnabled()) {
