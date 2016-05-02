@@ -44,6 +44,9 @@ object Main extends App {
 
   if (Config.serverEnabled) {
     system.log.info("Starting EventServer...")
+    system.registerOnTermination {
+      system.log.info("Stopping EventServer...")
+    }
     // create data directories if they don't exist
     if (Config.createDir(Config.snapshotStoreDir).isFailure) {
       system.log.error("Unable to create snapshot directory.")

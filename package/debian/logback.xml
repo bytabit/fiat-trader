@@ -27,7 +27,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${user.home}/.bytabit/fiat-trader/${config}/${config}.log</file>
+        <file>/opt/bytabit/fiat-trader/server/${config}/log/${config}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <fileNamePattern>%d{yyyy-MM-dd}_${config}.log</fileNamePattern>

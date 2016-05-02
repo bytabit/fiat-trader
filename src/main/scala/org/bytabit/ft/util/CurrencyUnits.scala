@@ -22,14 +22,14 @@ final object CurrencyUnits {
 
   val XBT = CurrencyUnit.getInstance("XBT")
 
-  val AUD = CurrencyUnit.AUD
-  val CAD = CurrencyUnit.CAD
-  val CHF = CurrencyUnit.CHF
+//  val AUD = CurrencyUnit.AUD
+//  val CAD = CurrencyUnit.CAD
+//  val CHF = CurrencyUnit.CHF
   val EUR = CurrencyUnit.EUR
-  val GBP = CurrencyUnit.GBP
-  val JPY = CurrencyUnit.JPY
+//  val GBP = CurrencyUnit.GBP
+//  val JPY = CurrencyUnit.JPY
   val SEK = CurrencyUnit.getInstance("SEK")
   val USD = CurrencyUnit.USD
 
-  val FIAT = Seq(AUD, CAD, CHF, EUR, GBP, JPY, SEK, USD)
+  val FIAT = Seq(EUR, SEK, USD)
 }
