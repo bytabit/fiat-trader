@@ -23,3 +23,7 @@ project/plugins/project/
 .idea_modules/
 /journal
 /bin/
+out/
+*.iml
+*.ipr
+*.iws
