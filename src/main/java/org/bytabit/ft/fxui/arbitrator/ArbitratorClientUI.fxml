@@ -51,7 +51,7 @@
             </rowConstraints>
             <children>
                 <Button fx:id="addArbitratorButton" mnemonicParsing="false" onAction="#handleAddArbitrator" text="ADD"/>
-                <TextField fx:id="urlTextField" promptText="Arbitrator URL" text="http://localhost:9001"
+                <TextField fx:id="urlTextField" promptText="Arbitrator URL" text="http://arbitrator.bytabit.org:9000"
                            GridPane.columnIndex="2"/>
             </children>
             <VBox.margin>

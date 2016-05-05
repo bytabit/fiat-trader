@@ -182,8 +182,8 @@ jfx {
             // dont bundle JRE (not recommended, but increases build-size/-speed)
             runtime: null
     ]
-    appName = "FiatTrader" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
-    additionalAppResources = "./**/*.icns"// path to some additional resources when creating application-bundle
+    appName = "Fiat Trader" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
+    additionalAppResources = // path to some additional resources when creating application-bundle
     secondaryLaunchers = //[[appName:"somethingDifferent"], [appName:"somethingDifferent2"]]
     fileAssociations = null // List<Map<String, Object>>
     noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
