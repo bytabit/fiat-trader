@@ -51,7 +51,6 @@ object WalletManager {
   // bitcoinj context
 
   val netParams = NetworkParameters.fromID(Config.walletNet)
-  val btcContext = new Context(netParams)
 
   // wallet commands
 
@@ -138,20 +137,14 @@ class WalletManager extends Actor with ListenerUpdater {
       startWallet(downloadProgressTracker, walletEventListener, escrowWalletEventListener)
 
     case FindBalance =>
-      Context.propagate(btcContext)
-
       val c = wallet.getBalance
       sendToListeners(BalanceFound(c))
 
     case FindTransactions =>
-      Context.propagate(btcContext)
-
       val txs = wallet.getTransactions(false)
       txs.foreach(tx => sender ! TransactionUpdated(tx, tx.getValue(wallet)))
 
     case FindCurrentAddress(p) =>
-      Context.propagate(btcContext)
-
       val a = wallet.currentAddress(p)
       log.debug(s"current wallet address: $a")
       sender ! CurrentAddressFound(a)
@@ -176,16 +169,12 @@ class WalletManager extends Actor with ListenerUpdater {
       sender ! FiatNotSentCertified(fiatEvidence.certifyFiatNotSent)
 
     case AddWatchEscrowAddress(escrowAddress: Address) =>
-      Context.propagate(btcContext)
-
       assert(escrowAddress.isP2SHAddress)
       addressListeners = addressListeners + (escrowAddress -> context.sender())
       escrowWallet.addWatchedAddress(escrowAddress)
     //log.info(s"ADDED event listener for address: $escrowAddress listener: ${context.sender()}")
 
     case RemoveWatchEscrowAddress(escrowAddress: Address) =>
-      Context.propagate(btcContext)
-
       assert(escrowAddress.isP2SHAddress)
       addressListeners.get(escrowAddress).foreach { ar =>
         escrowWallet.removeWatchedAddress(escrowAddress)
@@ -194,8 +183,6 @@ class WalletManager extends Actor with ListenerUpdater {
       }
 
     case BroadcastTx(ot: OpenTx, None) =>
-      Context.propagate(btcContext)
-
       val signed = ot.sign
       assert(signed.fullySigned)
       wallet.commitTx(signed.tx)
@@ -205,8 +192,6 @@ class WalletManager extends Actor with ListenerUpdater {
         s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(ft: FundTx, None) =>
-      Context.propagate(btcContext)
-
       val signed = ft.sign
       assert(signed.fullySigned)
       wallet.commitTx(signed.tx)
@@ -216,8 +201,6 @@ class WalletManager extends Actor with ListenerUpdater {
         s"size ${signed.tx.getMessageSize} bytes")
 
     case BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)) =>
-      Context.propagate(btcContext)
-
       val signed = pt.sign(pk)
       assert(signed.fullySigned)
       wallet.commitTx(signed.tx)
@@ -227,8 +210,6 @@ class WalletManager extends Actor with ListenerUpdater {
         s"size ${signed.tx.getMessageSize} bytes")
 
     case WithdrawXBT(withdrawAddress, withdrawAmount) =>
-      Context.propagate(btcContext)
-
       assert(Monies.isBTC(withdrawAmount))
       val coinAmt = BTCMoney.toCoin(withdrawAmount)
       val btcAddr: Option[Address] = Try(new Address(netParams, withdrawAddress)).toOption
@@ -260,9 +241,6 @@ class WalletManager extends Actor with ListenerUpdater {
     override def onCoinsReceived(wallet: Wallet, tx: Transaction, prevBalance: Coin, newBalance: Coin): Unit = {}
 
     override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
-
-      Context.propagate(btcContext)
-
       // find P2SH addresses in inputs and outputs
       val foundAddrs: List[Address] = (tx.getInputs.toList.map(i => p2shAddress(i.getConnectedOutput))
         ++ tx.getOutputs.toList.map(o => p2shAddress(o))).flatten
@@ -299,8 +277,6 @@ class WalletManager extends Actor with ListenerUpdater {
     }
 
     override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
-      Context.propagate(btcContext)
-
       self ! TransactionUpdated(tx, tx.getValue(wallet))
     }
 
@@ -328,44 +304,34 @@ class WalletManager extends Actor with ListenerUpdater {
   val downloadProgressTracker = new DownloadProgressTracker {
 
     override def onBlocksDownloaded(peer: Peer, block: Block, filteredBlock: FilteredBlock, blocksLeft: Int): Unit = {
-      Context.propagate(btcContext)
-
       super.onBlocksDownloaded(peer, block, filteredBlock, blocksLeft)
       self ! FindTransactions
     }
 
     override def progress(pct: Double, blocksSoFar: Int, date: Date): Unit = {
-      Context.propagate(btcContext)
-
       super.progress(pct, blocksSoFar, date)
       self ! DownloadProgress(pct, blocksSoFar, LocalDateTime.fromDateFields(date))
     }
 
     override def doneDownload(): Unit = {
-      Context.propagate(btcContext)
-
       super.doneDownload()
       self ! DownloadDone
     }
   }
 
   override def postStop(): Unit = {
-    Context.propagate(btcContext)
-
     super.postStop()
     stopWallet()
   }
 
-  private val kit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
+  private val kit = new WalletAppKit(netParams, new File(Config.walletDir), Config.config)
   protected[this] implicit lazy val wallet = kit.wallet()
 
   // setup ephemeral wallet to listen for trade transactions to escrow addresses
-  private val escrowKit = new WalletAppKit(btcContext, new File(Config.walletDir), s"${Config.config}-escrow")
+  private val escrowKit = new WalletAppKit(netParams, new File(Config.walletDir), s"${Config.config}-escrow")
   protected[this] lazy val escrowWallet = escrowKit.wallet()
 
   def startWallet(dpt: DownloadProgressTracker, wel: WalletEventListener, ewel: WalletEventListener) = {
-
-    Context.propagate(btcContext)
 
     // setup wallet app kit
     kit.setAutoSave(true)
@@ -395,8 +361,6 @@ class WalletManager extends Actor with ListenerUpdater {
   }
 
   def stopWallet(): Unit = {
-    Context.propagate(btcContext)
-
     kit.stopAsync()
     escrowKit.stopAsync()
   }

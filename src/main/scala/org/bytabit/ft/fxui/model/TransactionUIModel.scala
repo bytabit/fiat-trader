@@ -25,7 +25,6 @@ import org.joda.time.LocalDateTime
 
 object TransactionUIModel {
   def apply(tx: Transaction, btcAmt: Money) = {
-    Context.propagate(WalletManager.btcContext)
     new TransactionUIModel(tx.getHash.toString, tx.getConfidence.getConfidenceType.toString, tx.getConfidence.getDepthInBlocks, LocalDateTime.fromDateFields(tx.getUpdateTime), tx.getMemo, btcAmt)
   }
 }
