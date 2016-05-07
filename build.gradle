@@ -176,13 +176,13 @@ jfx {
     jvmArgs = null // List<String>
     userJvmArgs = null // Map<String, String>
     launcherArguments = null // List<String>
-    nativeReleaseVersion = semverVersion().toString()
+    nativeReleaseVersion = semverVersion().tagName
     needShortcut = false
     needMenu = false
-    bundleArguments = [
-            // dont bundle JRE (not recommended, but increases build-size/-speed)
-            runtime: null
-    ]
+//    bundleArguments = [
+//            // dont bundle JRE (not recommended, but increases build-size/-speed)
+//            runtime: null
+//    ]
     appName = "Fiat Trader" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
     additionalAppResources = // path to some additional resources when creating application-bundle
     secondaryLaunchers = //[[appName:"somethingDifferent"], [appName:"somethingDifferent2"]]
