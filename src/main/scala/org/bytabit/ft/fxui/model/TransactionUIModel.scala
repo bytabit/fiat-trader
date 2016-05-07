@@ -18,13 +18,14 @@ package org.bytabit.ft.fxui.model
 
 import javafx.beans.property.{SimpleIntegerProperty, SimpleStringProperty}
 
-import org.bitcoinj.core.Transaction
+import org.bitcoinj.core.{Context, Transaction}
+import org.bytabit.ft.wallet.WalletManager
 import org.joda.money.Money
 import org.joda.time.LocalDateTime
 
 object TransactionUIModel {
   def apply(tx: Transaction, btcAmt: Money) = {
-
+    Context.propagate(WalletManager.btcContext)
     new TransactionUIModel(tx.getHash.toString, tx.getConfidence.getConfidenceType.toString, tx.getConfidence.getDepthInBlocks, LocalDateTime.fromDateFields(tx.getUpdateTime), tx.getMemo, btcAmt)
   }
 }
