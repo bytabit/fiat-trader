@@ -175,7 +175,7 @@ jfx {
     jvmArgs = null // List<String>
     userJvmArgs = null // Map<String, String>
     launcherArguments = null // List<String>
-    nativeReleaseVersion = semverVersion().tagName
+    nativeReleaseVersion = semverVersion().toString()
     needShortcut = false
     needMenu = false
 //    bundleArguments = [
