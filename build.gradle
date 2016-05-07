@@ -68,7 +68,6 @@ dependencies {
     compile "com.typesafe.akka:akka-persistence_$scalaVersion:$akkaVersion"
     compile "org.iq80.leveldb:leveldb:0.7"
     compile "org.fusesource.leveldbjni:leveldbjni-all:1.8"
-    compile "org.fusesource.leveldbjni:leveldbjni-win32:1.8"
     compile "com.typesafe.akka:akka-http-experimental_$scalaVersion:$akkaStreamVersion"
     compile "com.typesafe.akka:akka-http-spray-json-experimental_$scalaVersion:$akkaStreamVersion"
     compile "ch.qos.logback:logback-classic:1.1.3"
