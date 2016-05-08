@@ -17,14 +17,19 @@
 buildscript {
     repositories {
         mavenCentral()
+
+        // for gitsemver plugin
         maven {
             url "http://dl.bintray.com/palantir/releases"
         }
+
+        // for ospackage plugin
         jcenter()
     }
     dependencies {
         classpath 'com.palantir:gradle-gitsemver:0.6.0'
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.5.0'
+        classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.4.1'
     }
 }
 
@@ -32,6 +37,7 @@ apply plugin: 'scala'
 apply plugin: 'gitsemver'
 apply plugin: 'idea'
 apply plugin: 'nebula.ospackage'
+apply plugin: 'javafx-gradle-plugin'
 
 version semverVersion()
 
@@ -142,4 +148,63 @@ buildDeb {
         fileType CONFIG | NOREPLACE
         into 'server'
     }
+}
+
+// configure javafx-gradle-plugin
+jfx {
+    verbose = true
+    mainClass = "org.bytabit.ft.fxui.FiatTrader"
+    jfxAppOutputDir = "build/jfx/app"
+    jfxMainAppJarName = "fiat-trader-jfx.jar"
+    deployDir = "src/main/deploy"
+
+    // gradle jfxJar
+    css2bin = false
+    preLoader = null
+    updateExistingJar = false
+    allPermissions = false
+    manifestAttributes = null // Map<String, String>
+    addPackagerJar = true
+
+    // gradle jfxNative
+    identifier = null // setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
+    vendor = "Bytabit AB"
+    nativeOutputDir = "build/jfx/native"
+    bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
+    jvmProperties = null // Map<String, String>
+    jvmArgs = null // List<String>
+    userJvmArgs = null // Map<String, String>
+    launcherArguments = null // List<String>
+    nativeReleaseVersion = semverVersion().toString()
+    needShortcut = false
+    needMenu = false
+//    bundleArguments = [
+//            // dont bundle JRE (not recommended, but increases build-size/-speed)
+//            runtime: null
+//    ]
+    appName = "Fiat Trader" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
+    additionalAppResources = // path to some additional resources when creating application-bundle
+    secondaryLaunchers = //[[appName:"somethingDifferent"], [appName:"somethingDifferent2"]]
+    fileAssociations = null // List<Map<String, Object>>
+    noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
+
+    skipNativeLauncherWorkaround124 = false
+    skipNativeLauncherWorkaround167 = false
+    skipJNLPRessourcePathWorkaround182 = false
+    skipSigningJarFilesJNLP185 = false
+    skipSizeRecalculationForJNLP185 = false
+
+    // gradle jfxGenerateKeyStore
+    keyStore = "src/main/deploy/keystore.jks"
+    keyStoreAlias = "myalias"
+    keyStorePassword = "password"
+    keyPassword = null // will default to keyStorePassword
+    keyStoreType = "jks"
+    overwriteKeyStore = false
+
+    certDomain = null // required
+    certOrgUnit = null // defaults to "none"
+    certOrg = null // required
+    certState = null // required
+    certCountry = null // required
 }

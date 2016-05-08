@@ -29,8 +29,6 @@ import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.params.RegTestParams
 import org.bitcoinj.script.Script
 import org.bitcoinj.wallet.KeyChain
-import org.bytabit.ft.arbitrator.ArbitratorManager
-import org.bytabit.ft.client.EventClient
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._
@@ -47,6 +45,10 @@ object WalletManager {
   val name = s"walletManager"
 
   def actorOf(implicit system: ActorSystem) = system.actorOf(props, name)
+
+  // bitcoinj context
+
+  val netParams = NetworkParameters.fromID(Config.walletNet)
 
   // wallet commands
 
@@ -237,7 +239,6 @@ class WalletManager extends Actor with ListenerUpdater {
     override def onCoinsReceived(wallet: Wallet, tx: Transaction, prevBalance: Coin, newBalance: Coin): Unit = {}
 
     override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
-
       // find P2SH addresses in inputs and outputs
       val foundAddrs: List[Address] = (tx.getInputs.toList.map(i => p2shAddress(i.getConnectedOutput))
         ++ tx.getOutputs.toList.map(o => p2shAddress(o))).flatten
@@ -320,8 +321,6 @@ class WalletManager extends Actor with ListenerUpdater {
     super.postStop()
     stopWallet()
   }
-
-  val netParams = NetworkParameters.fromID(Config.walletNet)
 
   private val kit = new WalletAppKit(netParams, new File(Config.walletDir), Config.config)
   protected[this] implicit lazy val wallet = kit.wallet()
