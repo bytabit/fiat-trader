@@ -30,7 +30,7 @@ Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```
 
-### Run Event Servers with Gradle From Command Line using Custom Config
+### Run Event Server with Gradle From Command Line using Custom Config
 
 1. From the project directory run command:
 
@@ -38,7 +38,7 @@ Use classpath of module: fiat-trader
 gradle run gradle run -Dconfig.file=./src/test/resources/server1-regtest.conf
 ```
 
-### Run Event Servers with IntelliJ using Custom Configs 
+### Run Event Server with IntelliJ using Custom Configs 
 
 ```
 Main class: org.bytabit.fxui.FiatTrader
