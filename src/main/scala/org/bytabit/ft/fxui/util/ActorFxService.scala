@@ -60,7 +60,7 @@ trait ActorFxService extends Service[Unit] {
 
     protected def call: Unit = {
       while (!isCancelled) {
-        val result = Try(inbox.receive(FiniteDuration(1, "minute")))
+        val result = Try(inbox.receive(FiniteDuration(1, "second")))
         if (result.isSuccess) {
           //log.debug(result.get.toString)
           Application.invokeLater(new Runnable {
