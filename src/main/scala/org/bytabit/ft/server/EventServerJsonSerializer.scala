@@ -26,14 +26,14 @@ class EventServerJsonSerializer(override val system: ExtendedActorSystem)
 
   override val identifier = hashId(this.getClass.getSimpleName)
 
-  def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
-    case Some(clazz: Class[_]) ⇒
+  override def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
+    case Some(clazz: Class[_]) =>
       bytesToString(bytes).parseJson.convertTo[EventServer.Event]
     case _ ⇒
       throw new IllegalArgumentException("No manifest found")
   }
 
-  def toBinary(obj: AnyRef) = obj match {
+  override def toBinary(obj: AnyRef) = obj match {
     case o: EventServer.Event =>
       stringToBytes(o.toJson.toString())
     case _ =>

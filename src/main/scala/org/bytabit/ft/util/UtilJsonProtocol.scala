@@ -21,7 +21,8 @@ import java.util.UUID
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import org.joda.money.{CurrencyUnit, Money}
-import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
 import spray.json._
 
 trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
@@ -50,14 +51,16 @@ trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
     def write(u: URL) = JsString(u.toString)
   }
 
+  val dateTimeFormatter = ISODateTimeFormat.dateTime.withZoneUTC
+
   implicit object DateTimeJsonFormat extends JsonFormat[DateTime] {
 
     def read(value: JsValue) = value match {
-      case JsString(dateTime) => new DateTime(dateTime)
+      case JsString(dateTime) => dateTimeFormatter.parseDateTime(dateTime)
       case _ => deserializationError("DateTime expected")
     }
 
-    def write(dateTime: DateTime) = JsString(dateTime.toString)
+    def write(dateTime: DateTime) = JsString(dateTimeFormatter.print(dateTime))
   }
 
   // CurrencyUnit json protocol
