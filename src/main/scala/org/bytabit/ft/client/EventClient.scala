@@ -186,7 +186,7 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
   def reqPostedEvents(url: URL, since: Option[DateTime]): Unit = {
 
     val query = since match {
-      case Some(dt) => s"?since=${dt.toString}"
+      case Some(dt) => s"?since=${dateTimeFormatter.print(dt)}"
       case None => ""
     }
 

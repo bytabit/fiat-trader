@@ -25,6 +25,7 @@ import akka.stream.ActorMaterializer
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.trade.TradeProcess
 import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 
 import scala.concurrent.Future
 
@@ -48,7 +49,7 @@ trait EventServerHttpProtocol extends EventServerJsonProtocol {
 
   def dateParam(dateParam: Option[String]): Option[DateTime] = dateParam match {
     case Some(dateTimeStr) => try {
-      Some(DateTime.parse(dateTimeStr))
+      Some(dateTimeFormatter.parseDateTime(dateTimeStr))
     } catch {
       case e: IllegalArgumentException =>
         None

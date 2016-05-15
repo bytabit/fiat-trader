@@ -2,7 +2,7 @@
 # Docker Hub https://registry.hub.docker.com/_/debian/
 # Read more about containers on our dev center
 # http://devcenter.wercker.com/docs/containers/index.html
-box: isuper/java-oracle:jdk_8
+box: bytabit/java-oracle-dev:latest
 # You can also use services such as databases. Read more on our dev center:
 # http://devcenter.wercker.com/docs/services/index.html
 # services:
@@ -24,8 +24,15 @@ build:
         name: gradle build
         code: |
           ./gradlew -q --project-cache-dir=$WERCKER_CACHE_DIR build
-#    - script:
-#        name: gradle buildDeb
-#        code: |
-#          ./gradlew -q --project-cache-dir=$WERCKER_CACHE_DIR buildDeb
-#          cp ./build/distributions/* $WERCKER_OUTPUT_DIR
+
+deploy:
+  steps:
+    - script:
+        name: gradle jfxNative
+        code: |
+          ./gradlew -q --project-cache-dir=$WERCKER_CACHE_DIR jfxNative
+    - script:
+        name: upload to bintray
+        code: |
+          ./gradlew -q --project-cache-dir=$WERCKER_CACHE_DIR bintrayUpload
+

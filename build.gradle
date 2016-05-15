@@ -23,13 +23,14 @@ buildscript {
             url "http://dl.bintray.com/palantir/releases"
         }
 
-        // for ospackage plugin
+        // for ospackage and bintray plugin
         jcenter()
     }
     dependencies {
         classpath 'com.palantir:gradle-gitsemver:0.6.0'
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.5.0'
         classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.4.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
     }
 }
 
@@ -38,6 +39,7 @@ apply plugin: 'gitsemver'
 apply plugin: 'idea'
 apply plugin: 'nebula.ospackage'
 apply plugin: 'javafx-gradle-plugin'
+apply plugin: 'com.jfrog.bintray'
 
 version semverVersion()
 
@@ -207,4 +209,35 @@ jfx {
     certOrg = null // required
     certState = null // required
     certCountry = null // required
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    filesSpec {
+        from ('build/jfx/native') {
+            include '**/*.dmg'
+            include '**/*.exe'
+            include '**/*.deb'
+        }
+        into '.'
+    }
+
+    pkg {
+        repo = 'generic'
+        name = 'fiat-trader'
+        desc = 'Bytabit Fiat Trader native installers.'
+        userOrg = 'bytabit'
+        licenses = ['Apache-2.0']
+        websiteUrl = 'https://bytabit.org'
+        issueTrackerUrl = 'https://bytabit.atlassian.net/projects/FT/summary'
+        vcsUrl = 'https://bitbucket.org/bytabit/fiat-trader'
+        publish = false
+        version {
+            name = semverVersion().toString()
+            released = new Date()
+            vcsTag = semverVersion().tagName
+        }
+    }
 }

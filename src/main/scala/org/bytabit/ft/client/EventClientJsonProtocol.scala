@@ -41,5 +41,5 @@ trait EventClientJsonProtocol extends ArbitratorJsonProtocol {
 
   implicit def eventClientJsonFormat = new EventJsonFormat[EventClient.Event](eventClientJsonFormatMap)
 
-  implicit val postedEventsJsonFormat = jsonFormat(PostedEvents.apply, "arbitratorEvents", "tradeEvents")
+  implicit def postedEventsJsonFormat = jsonFormat(PostedEvents.apply, "arbitratorEvents", "tradeEvents")
 }
