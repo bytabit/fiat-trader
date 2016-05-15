@@ -227,8 +227,11 @@ bintray {
     pkg {
         repo = 'generic'
         name = 'fiat-trader'
+        desc = 'Bytabit Fiat Trader native installers.'
         userOrg = 'bytabit'
         licenses = ['Apache-2.0']
+        websiteUrl = 'https://bytabit.org'
+        issueTrackerUrl = 'https://bytabit.atlassian.net/projects/FT/summary'
         vcsUrl = 'https://bitbucket.org/bytabit/fiat-trader'
         publish = true
         version {
