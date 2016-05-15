@@ -233,7 +233,7 @@ bintray {
         websiteUrl = 'https://bytabit.org'
         issueTrackerUrl = 'https://bytabit.atlassian.net/projects/FT/summary'
         vcsUrl = 'https://bitbucket.org/bytabit/fiat-trader'
-        publish = true
+        publish = false
         version {
             name = semverVersion().toString()
             released = new Date()
