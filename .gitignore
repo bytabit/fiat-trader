@@ -27,3 +27,9 @@ out/
 *.iml
 *.ipr
 *.iws
+
+# Werker
+_builds/
+_cache/
+_projects/
+_steps/
