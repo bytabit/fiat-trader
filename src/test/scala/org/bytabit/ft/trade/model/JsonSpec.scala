@@ -20,8 +20,9 @@ import java.net.URL
 import java.util.UUID
 
 import org.bitcoinj.core._
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
-import org.bytabit.ft.trade.{TradeProcess, TradeJsonProtocol}
+import org.bytabit.ft.trade.{TradeJsonProtocol, TradeProcess}
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod, FiatMoney}
 import org.bytabit.ft.wallet.model.{Arbitrator, Seller}
 import org.scalatest._

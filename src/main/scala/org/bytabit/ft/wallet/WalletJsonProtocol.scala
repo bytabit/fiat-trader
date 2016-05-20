@@ -46,7 +46,7 @@ trait WalletJsonProtocol extends UtilJsonProtocol {
   implicit object AddressJsonFormat extends JsonFormat[Address] {
 
     def read(value: JsValue) = value match {
-      case JsArray(Vector(JsString(netId), JsString(addr))) => new Address(NetworkParameters.fromID(netId), addr)
+      case JsArray(Vector(JsString(netId), JsString(addr))) => Address.fromBase58(NetworkParameters.fromID(netId), addr)
       case _ => deserializationError("Address expected")
     }
 
@@ -99,7 +99,7 @@ trait WalletJsonProtocol extends UtilJsonProtocol {
       case JsArray(Vector(JsNumber(n), pek, JsString(txs))) =>
         val inputIdx = n.toInt
         val pubECKey = PubECKeyJsonFormat.read(pek)
-        val inputSig = TransactionSignature.decodeFromBitcoin(Utils.HEX.decode(txs), false)
+        val inputSig = TransactionSignature.decodeFromBitcoin(Utils.HEX.decode(txs), false, false)
         TxSig(inputIdx, pubECKey, inputSig)
       case _ => deserializationError("TxSig expected")
     }

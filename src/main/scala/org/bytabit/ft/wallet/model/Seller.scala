@@ -17,6 +17,7 @@
 package org.bytabit.ft.wallet.model
 
 import org.bitcoinj.core._
+import org.bitcoinj.wallet.Wallet
 
 object Seller extends WalletTools {
 

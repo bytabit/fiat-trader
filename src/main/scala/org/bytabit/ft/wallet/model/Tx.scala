@@ -20,6 +20,7 @@ import org.bitcoinj.core.Transaction.SigHash
 import org.bitcoinj.core._
 import org.bitcoinj.crypto.TransactionSignature
 import org.bitcoinj.script.{Script, ScriptBuilder}
+import org.bitcoinj.wallet.Wallet
 
 import scala.collection.JavaConversions._
 

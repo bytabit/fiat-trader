@@ -36,11 +36,11 @@ object ArbitrateProcess {
   // commands
 
   sealed trait Command {
-    val url:URL
-    val id:UUID
+    val url: URL
+    val id: UUID
   }
 
-  final case class Start(url:URL, id:UUID) extends Command
+  final case class Start(url: URL, id: UUID) extends Command
 
   final case class CertifyFiatSent(url: URL, id: UUID) extends Command
 
@@ -102,7 +102,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedOpenTx, etu.tx) &&
-        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        etu.confidenceType == ConfidenceType.BUILDING) {
         val boe = BuyerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(OPENED) applying boe andThen {
           case ot: OpenedTrade =>
@@ -121,7 +121,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, ot: OpenedTrade) =>
       if (outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
-        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        etu.confidenceType == ConfidenceType.BUILDING) {
         val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime),
           fiatDeliveryDetailsKey(etu.tx))
         goto(FUNDED) applying bfe andThen {
@@ -147,7 +147,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, ft: FundedTrade) =>
       if (outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
-        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        etu.confidenceType == ConfidenceType.BUILDING) {
         val brp = BuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
@@ -222,7 +222,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
       if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
-        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        etu.confidenceType == ConfidenceType.BUILDING) {
         val sf = SellerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(SELLER_FUNDED) applying sf andThen {
           case cst: CertifiedSettledTrade =>
@@ -245,7 +245,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
       if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
-        etu.tx.getConfidence.getConfidenceType == ConfidenceType.BUILDING) {
+        etu.confidenceType == ConfidenceType.BUILDING) {
         val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(BUYER_REFUNDED) applying br andThen {
           case cst: CertifiedSettledTrade =>

@@ -20,6 +20,7 @@ import java.net.URL
 import java.util.UUID
 
 import org.bitcoinj.core._
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.trade.model.{Contract, Offer}
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletJsonProtocol

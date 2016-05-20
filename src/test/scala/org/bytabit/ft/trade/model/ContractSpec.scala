@@ -18,7 +18,8 @@ package org.bytabit.ft.trade.model
 
 import java.net.URL
 
-import org.bitcoinj.core.{Context, NetworkParameters, Wallet}
+import org.bitcoinj.core.{Context, NetworkParameters}
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.scalatest._

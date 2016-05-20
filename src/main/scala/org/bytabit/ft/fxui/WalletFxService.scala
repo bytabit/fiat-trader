@@ -94,7 +94,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     case BalanceFound(coinAmt) =>
       walletBalance.set(BTCMoney(coinAmt).toString)
 
-    case TransactionUpdated(tx, coinAmt) =>
+    case TransactionUpdated(tx, coinAmt, ct) =>
       val newTxUI = TransactionUIModel(tx, BTCMoney(coinAmt))
       transactions.find(t => t.getHash == newTxUI.getHash) match {
         case Some(t) => transactions.set(transactions.indexOf(t), newTxUI)

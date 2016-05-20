@@ -18,8 +18,7 @@ package org.bytabit.ft.fxui.model
 
 import javafx.beans.property.{SimpleIntegerProperty, SimpleStringProperty}
 
-import org.bitcoinj.core.{Context, Transaction}
-import org.bytabit.ft.wallet.WalletManager
+import org.bitcoinj.core.Transaction
 import org.joda.money.Money
 import org.joda.time.LocalDateTime
 
