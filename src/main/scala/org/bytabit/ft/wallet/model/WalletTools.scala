@@ -16,8 +16,9 @@
 
 package org.bytabit.ft.wallet.model
 
-import org.bitcoinj.core.{Coin, TransactionOutput, Wallet}
-import org.bitcoinj.wallet.KeyChain
+import org.bitcoinj.core.{Coin, Context, TransactionOutput}
+import org.bitcoinj.wallet.{KeyChain, Wallet}
+import org.bytabit.ft.wallet.WalletManager
 
 import scala.collection.JavaConversions._
 
@@ -31,8 +32,10 @@ trait WalletTools {
 
   def unspent(implicit w: Wallet): List[TransactionOutput] = w.calculateAllSpendCandidates(true, true).toList
 
-  def selected(coinAmt: Coin, from: List[TransactionOutput])(implicit w: Wallet) =
+  def selected(coinAmt: Coin, from: List[TransactionOutput])(implicit w: Wallet) = {
+    Context.propagate(WalletManager.context)
     w.getCoinSelector.select(coinAmt, from).gathered.toList
+  }
 
   def unselected(all: List[TransactionOutput], selected: List[TransactionOutput]) =
     all.filterNot(selected.toSet)

@@ -19,6 +19,7 @@ package org.bytabit.ft.wallet.model
 import java.net.URL
 
 import org.bitcoinj.core._
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.scalatest._

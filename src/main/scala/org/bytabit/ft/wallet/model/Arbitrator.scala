@@ -18,7 +18,8 @@ package org.bytabit.ft.wallet.model
 
 import java.net.URL
 
-import org.bitcoinj.core.{Address, NetworkParameters, Wallet}
+import org.bitcoinj.core.{Address, NetworkParameters}
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.Monies
 import org.joda.money.Money
 

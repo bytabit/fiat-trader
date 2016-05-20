@@ -18,7 +18,8 @@ package org.bytabit.ft.trade.model
 
 import java.util.UUID
 
-import org.bitcoinj.core.{TransactionOutput, Wallet}
+import org.bitcoinj.core.TransactionOutput
+import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money

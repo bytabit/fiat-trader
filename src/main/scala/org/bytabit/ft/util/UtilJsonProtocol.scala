@@ -21,8 +21,8 @@ import java.util.UUID
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import org.joda.money.{CurrencyUnit, Money}
+import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
 import spray.json._
 
 trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {

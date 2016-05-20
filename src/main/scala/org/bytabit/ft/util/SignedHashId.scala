@@ -17,7 +17,8 @@
 package org.bytabit.ft.util
 
 import org.bitcoinj.core.ECKey.ECDSASignature
-import org.bitcoinj.core.{ECKey, Sha256Hash, Wallet}
+import org.bitcoinj.core.{ECKey, Sha256Hash}
+import org.bitcoinj.wallet.Wallet
 
 trait SignedHashId {
 
