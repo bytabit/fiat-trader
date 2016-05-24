@@ -43,11 +43,11 @@ object TradeProcess {
 
   // actor setup
 
-  def sellProps(offer: Offer, walletMgrRef: ActorRef) = Props(new SellProcess(offer, walletMgrRef))
+  def sellProps(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new SellProcess(offer, tradeWalletMgrRef, escrowWalletMgrRef))
 
-  def buyProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new BuyProcess(sellOffer, walletMgrRef))
+  def buyProps(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new BuyProcess(sellOffer, tradeWalletMgrRef, escrowWalletMgrRef))
 
-  def arbitrateProps(sellOffer: SellOffer, walletMgrRef: ActorRef) = Props(new ArbitrateProcess(sellOffer, walletMgrRef))
+  def arbitrateProps(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new ArbitrateProcess(sellOffer, tradeWalletMgrRef, escrowWalletMgrRef))
 
   def name(id: UUID) = s"tradeProcess-${id.toString}"
 
@@ -177,6 +177,10 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   val id: UUID
 
+  val tradeWalletMgrRef: ActorRef
+
+  val escrowWalletMgrRef: ActorRef
+
   // implicits
 
   implicit val system = context.system
@@ -290,9 +294,14 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   // happy path
 
-  def startTraded(st: SettledTrade): Unit = {
+  def startSellerTraded(st: SettledTrade): Unit = {
     startFunded(st.fundedTrade)
     context.parent ! SellerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
+  }
+
+  def startBuyerTraded(st: SettledTrade): Unit = {
+    startFunded(st.fundedTrade)
+    context.parent ! BuyerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
   }
 
   // unhappy path

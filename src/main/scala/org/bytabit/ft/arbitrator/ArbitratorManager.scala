@@ -112,7 +112,7 @@ class ArbitratorManager(arbitrator: Arbitrator) extends PersistentFSM[Arbitrator
 
   implicit val system = context.system
 
-  implicit def executor = system.dispatcher
+  implicit val executor = system.dispatcher
 
   implicit val materializer = ActorMaterializer()
 

@@ -125,7 +125,7 @@ object EventServer {
 
 }
 
-class EventServer() extends PersistentActor with ListenerUpdater with EventServerHttpProtocol {
+class EventServer() extends PersistentActor with EventServerHttpProtocol {
 
   // implicits
 
@@ -199,10 +199,6 @@ class EventServer() extends PersistentActor with ListenerUpdater with EventServe
   }
 
   override val receiveCommand: Receive = {
-
-    // handlers for listener registration
-
-    case c: ListenerUpdater.Command => handleListenerCommand(c)
 
     // handlers for manager commands
 

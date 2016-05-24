@@ -40,8 +40,9 @@ import org.bytabit.ft.fxui.model.TransactionUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater}
-import org.bytabit.ft.wallet.WalletManager
+import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.money.Money
 
 import scala.collection.JavaConversions._
@@ -57,8 +58,11 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val walletMgrSel = system.actorSelection(s"/user/${WalletManager.name}")
-  lazy val walletMgrRef = walletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val tradeWalletMgrSel = system.actorSelection(s"/user/${TradeWalletManager.name}")
+  lazy val tradeWalletMgrRef = tradeWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+
+  val escrowWalletMgrSel = system.actorSelection(s"/user/${EscrowWalletManager.name}")
+  lazy val escrowWalletMgrRef = escrowWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
 
@@ -70,8 +74,9 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override def start() {
     super.start()
-    sendCmd(AddListener(inbox.getRef()))
-    sendCmd(Start)
+    //sendCmd(AddListener(inbox.getRef()))
+    sendCmd(TradeWalletManager.Start)
+    sendCmd(EscrowWalletManager.Start)
   }
 
   def findNewReceiveAddress(): Unit = {
@@ -81,7 +86,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
   @Override
   def handler = {
 
-    case Started =>
+    case TradeWalletRunning =>
       sendCmd(FindTransactions)
 
     case DownloadProgress(pct, blocksSoFar, date) =>
@@ -94,8 +99,8 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     case BalanceFound(coinAmt) =>
       walletBalance.set(BTCMoney(coinAmt).toString)
 
-    case TransactionUpdated(tx, coinAmt, ct) =>
-      val newTxUI = TransactionUIModel(tx, BTCMoney(coinAmt))
+    case TransactionUpdated(tx, coinAmt, ct, cd) =>
+      val newTxUI = TransactionUIModel(tx, BTCMoney(coinAmt), ct, cd)
       transactions.find(t => t.getHash == newTxUI.getHash) match {
         case Some(t) => transactions.set(transactions.indexOf(t), newTxUI)
         case None => transactions.add(newTxUI)
@@ -104,6 +109,9 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
     case CurrentAddressFound(a) =>
       alertInfoNewReceiveAddress(a)
+
+    case TxBroadcast(_) =>
+      // do nothing
 
     case _ => log.error("Unexpected message")
   }
@@ -195,7 +203,8 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     new Image(new ByteArrayInputStream(imageBytes))
   }
 
-  def sendCmd(cmd: WalletManager.Command) = sendMsg(walletMgrRef, cmd)
+  def sendCmd(cmd: TradeWalletManager.Command) = sendMsg(tradeWalletMgrRef, cmd)
+  def sendCmd(cmd: EscrowWalletManager.Command) = sendMsg(escrowWalletMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(walletMgrRef, cmd)
+  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(tradeWalletMgrRef, cmd)
 }

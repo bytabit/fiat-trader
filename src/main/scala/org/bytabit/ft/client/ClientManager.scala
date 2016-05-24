@@ -31,12 +31,14 @@ object ClientManager {
 
   // actor setup
 
-  def props(walletMgr: ActorRef) = Props(new ClientManager(walletMgr))
+  def props(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) =
+    Props(new ClientManager(tradeWalletMgrRef, escrowWalletMgrRef))
 
   val name = ClientManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(walletMgr: ActorRef)(implicit system: ActorSystem) = system.actorOf(props(walletMgr), name)
+  def actorOf(system: ActorSystem, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) =
+    system.actorOf(props(tradeWalletMgrRef, escrowWalletMgrRef), name)
 
   // client manager commands
 
@@ -70,7 +72,7 @@ object ClientManager {
 
 }
 
-class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUpdater {
+class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) extends PersistentActor with ListenerUpdater {
 
   // implicits
 
@@ -114,6 +116,7 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
 
     case Start =>
       self ! AddListener(context.sender())
+
       data.clients.foreach { u =>
         startClient(u)
         context.sender ! ClientAdded(u)
@@ -171,16 +174,16 @@ class ClientManager(walletMgr: ActorRef) extends PersistentActor with ListenerUp
     }
   }
 
-  def props(url: URL, walletMgr: ActorRef): Props = {
+  def props(url: URL): Props = {
     if (Config.arbitratorEnabled && Config.publicUrl == url) {
-      ArbitratorClient.props(url, walletMgr)
+      ArbitratorClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
     } else {
-      TraderClient.props(url, walletMgr)
+      TraderClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
     }
   }
 
   def startClient(url: URL): Unit = {
-    val clientRef = context.actorOf(props(url, walletMgr), name(url))
+    val clientRef = context.actorOf(props(url), name(url))
     clientRef ! EventClient.Start
   }
 

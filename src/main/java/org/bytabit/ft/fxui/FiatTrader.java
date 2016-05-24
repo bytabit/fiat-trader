@@ -25,10 +25,11 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.bytabit.ft.client.ClientManager;
-import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
+import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
-import org.bytabit.ft.wallet.WalletManager;
+import org.bytabit.ft.wallet.EscrowWalletManager;
+import org.bytabit.ft.wallet.TradeWalletManager;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
@@ -52,8 +53,11 @@ public class FiatTrader extends Application {
         }
 
         // Create actors
-        ActorRef walletMgrRef = WalletManager.actorOf(system);
-        ClientManager.actorOf(walletMgrRef, system);
+        ActorRef tradeWalletMgrRef = TradeWalletManager.actorOf(system);
+        ActorRef escrowWalletMgrRef = EscrowWalletManager.actorOf(system);
+
+        ClientManager.actorOf(system, tradeWalletMgrRef, escrowWalletMgrRef);
+
         if (Config.serverEnabled()) {
             EventServer.actorOf(system);
         }

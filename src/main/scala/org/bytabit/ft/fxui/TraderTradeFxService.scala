@@ -70,15 +70,15 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     // Handle client events
 
     case e: EventClient.ServerOnline =>
-      //log.info(s"ServerOnline at URL: ${u}")
+    //log.info(s"ServerOnline at URL: ${u}")
 
     case e: EventClient.ServerOffline =>
-      //log.info(s"ServerOnline at URL: ${u}")
+    //log.info(s"ServerOnline at URL: ${u}")
 
     // Handle Arbitrator Events
 
     case ArbitratorCreated(u, a, _) =>
-      //log.info(s"ArbitratorCreated at URL: ${u}")
+    //log.info(s"ArbitratorCreated at URL: ${u}")
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
@@ -162,19 +162,19 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     // cancel path
 
     case SellerCanceledOffer(id, p) =>
-      cancelTradeUIModel(id)
+      removeTradeUIModel(id)
       updateUncommitted()
 
     // errors
 
     case e: EventClient.Event =>
-      log.error(s"unhandled EventClient event: $e")
+      log.error(s"Unhandled EventClient event: $e")
 
     case e: ArbitratorManager.Event =>
-      log.error(s"unhandled ArbitratorManager event: $e")
+      log.error(s"Unhandled ArbitratorManager event: $e")
 
     case e: TradeProcess.Event =>
-      log.error(s"unhandled TradeProcess event: $e")
+      log.error(s"Unhandled TradeProcess event: $e")
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")

@@ -56,21 +56,21 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
     // Handle client events
 
     case e: EventClient.ServerOnline =>
-      //log.info(s"ServerOnline at URL: ${u}")
+    //log.info(s"ServerOnline at URL: ${u}")
 
     case e: EventClient.ServerOffline =>
-      //log.info(s"ServerOnline at URL: ${u}")
+    //log.info(s"ServerOnline at URL: ${u}")
 
     // handle arbitrator events
 
     case ArbitratorCreated(u, a, _) =>
-      //log.info(s"ArbitratorCreated at URL: ${u}")
+    //log.info(s"ArbitratorCreated at URL: ${u}")
 
     case ContractAdded(u, c, _) =>
-      //log.info(s"ContractAdded at URL: ${u}")
+    //log.info(s"ContractAdded at URL: ${u}")
 
     case ContractRemoved(url, id, _) =>
-      //log.info(s"ContractRemoved at URL: ${u}")
+    //log.info(s"ContractRemoved at URL: ${u}")
 
     // common path
 
@@ -120,7 +120,7 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
     // cancel path
 
     case SellerCanceledOffer(id, p) =>
-      cancelTradeUIModel(id)
+      removeTradeUIModel(id)
 
     // errors
 

@@ -10,11 +10,11 @@ Bytabit Fiat Trader
 git clone git@bitbucket.org:bytabit/fiat-trader.git 
 ```
 
-### Run Client with Gradle From Command Line using Default (testnet) Config
+### Run Trader Client with Gradle From Command Line using Default (testnet) Config
 
-1. Install [JDK 8u73](https://jdk8.java.net/download.html)
-2. Install [Scala version  2.11.5](http://www.scala-lang.org/download/)
-3. Install [Gradle version 2.12](https://gradle.org/gradle-download/)
+1. Install [JDK 8u92](https://jdk8.java.net/download.html)
+2. Install [Scala version  2.11.8](http://www.scala-lang.org/download/)
+3. Install [Gradle version 2.13](https://gradle.org/gradle-download/)
 4. Verify your JAVA_HOME environment variable is set to your JDK home
 5. From the project directory run command:
 
@@ -22,11 +22,11 @@ git clone git@bitbucket.org:bytabit/fiat-trader.git
 gradle run
 ```
 
-### Run Client with IntelliJ using Custom Config 
+### Run Trader Client with IntelliJ using Custom Config 
 
 ```
 Main class: org.bytabit.ft.fxui.FiatTrader
-VM options: -Dconfig.file=./src/test/resources/arbitrator1-regtest.conf
+VM options: -Dconfig.file=./src/test/resources/trader1-regtest.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader
 ```

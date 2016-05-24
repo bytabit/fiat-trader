@@ -33,7 +33,6 @@ trait WalletTools {
   def unspent(implicit w: Wallet): List[TransactionOutput] = w.calculateAllSpendCandidates(true, true).toList
 
   def selected(coinAmt: Coin, from: List[TransactionOutput])(implicit w: Wallet) = {
-    Context.propagate(WalletManager.context)
     w.getCoinSelector.select(coinAmt, from).gathered.toList
   }
 

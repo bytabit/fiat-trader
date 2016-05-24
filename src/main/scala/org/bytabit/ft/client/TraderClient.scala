@@ -31,12 +31,12 @@ import scala.language.postfixOps
 
 object TraderClient {
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new TraderClient(url, walletMgr))
+  def props(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new TraderClient(url, tradeWalletMgr, escrowWalletMgr))
 
   def name(url: URL) = s"${TraderClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class TraderClient(url: URL, walletMgr: ActorRef) extends EventClient {
+case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
 
   // persistence
 
@@ -101,9 +101,6 @@ case class TraderClient(url: URL, walletMgr: ActorRef) extends EventClient {
     case Event(soff: ServerOffline, ActiveServer(lp, a, at)) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! soff
-
-        // stop arbitrator
-        stopArbitratorManager(a)
       }
 
     // send received posted arbitrator events to ArbitratorManager
@@ -202,11 +199,6 @@ case class TraderClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
     case Event(Start, ActiveServer(lp, a, at)) =>
 
-      // create and start active trades
-      // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
-      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
-      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
-
       // request new events from event server
       reqPostedEvents(url, Some(lp))
 
@@ -219,6 +211,11 @@ case class TraderClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
     case Event(ServerOnline(_), ActiveServer(lp, a, at)) =>
       goto(ONLINE) andThen { ud =>
+
+        // create and start active trades
+        // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
+        at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+        at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
 
         // create and start arbitrator
         createArbitratorManager(a) ! ArbitratorManager.Start

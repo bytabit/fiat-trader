@@ -25,8 +25,8 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.ArbitrateProcess._
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.wallet.WalletManager
-import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, RemoveWatchEscrowAddress}
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
+import org.bytabit.ft.wallet.WalletManager.EscrowTransactionUpdated
 import org.joda.time.DateTime
 
 import scala.language.postfixOps
@@ -48,7 +48,7 @@ object ArbitrateProcess {
 
 }
 
-class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends TradeProcess {
+case class ArbitrateProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) extends TradeProcess {
 
   override val id = sellOffer.id
 
@@ -89,7 +89,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
     case Event(sso: SellerSignedOffer, to: TakenOffer) if sso.posted.isDefined =>
       goto(SIGNED) applying sso andThen {
         case sto: SignedTakenOffer =>
-          walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+          escrowWalletMgrRef ! EscrowWalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
           context.parent ! sso
       }
   }
@@ -97,7 +97,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
   when(SIGNED) {
     case Event(Start, sto: SignedTakenOffer) =>
       startSigned(sto)
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
+      escrowWalletMgrRef ! EscrowWalletManager.AddWatchEscrowAddress(sto.fullySignedOpenTx.escrowAddr)
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
@@ -116,7 +116,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
   when(OPENED) {
     case Event(Start, ot: OpenedTrade) =>
       startOpened(ot)
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(ot.escrowAddress)
+      escrowWalletMgrRef ! EscrowWalletManager.AddWatchEscrowAddress(ot.escrowAddress)
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, ot: OpenedTrade) =>
@@ -136,7 +136,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
   when(FUNDED) {
     case Event(Start, ft: FundedTrade) =>
       startFunded(ft)
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(ft.escrowAddress)
+      escrowWalletMgrRef ! EscrowWalletManager.AddWatchEscrowAddress(ft.escrowAddress)
       stay()
 
     case Event(cfr: CertifyDeliveryRequested, ft: FundedTrade) if cfr.posted.isDefined =>
@@ -152,7 +152,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
         goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
             context.parent ! brp
-            walletMgrRef ! WalletManager.RemoveWatchEscrowAddress(ft.escrowAddress)
+            escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(ft.escrowAddress)
         }
       }
       else
@@ -163,14 +163,14 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
 
   when(TRADED) {
     case Event(Start, st: SettledTrade) =>
-      startTraded(st)
+      startSellerTraded(st)
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       stay()
 
     case e =>
-      log.warning(s"Received event after being traded: $e")
+      log.warning(s"Received event after being traded: ${e.getClass}")
       stay()
   }
 
@@ -179,13 +179,13 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
   when(CERT_DELIVERY_REQD) {
     case Event(Start, cfe: CertifyFiatEvidence) =>
       startCertDeliveryReqd(cfe)
-      walletMgrRef ! WalletManager.AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
+      escrowWalletMgrRef ! EscrowWalletManager.AddWatchEscrowAddress(cfe.fullySignedOpenTx.escrowAddr)
       stay()
 
     // certify fiat sent
 
     case Event(cfs: CertifyFiatSent, cfe: CertifyFiatEvidence) =>
-      walletMgrRef ! WalletManager.CertifyFiatSent(cfe)
+      tradeWalletMgrRef ! TradeWalletManager.CertifyFiatSent(cfe)
       stay()
 
     case Event(WalletManager.FiatSentCertified(cfs), cfe: CertifyFiatEvidence) =>
@@ -201,7 +201,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
     // certify fiat not sent
 
     case Event(cfns: CertifyFiatNotSent, cfe: CertifyFiatEvidence) =>
-      walletMgrRef ! WalletManager.CertifyFiatNotSent(cfe)
+      tradeWalletMgrRef ! TradeWalletManager.CertifyFiatNotSent(cfe)
       stay()
 
     case Event(WalletManager.FiatNotSentCertified(cfd), cfe: CertifyFiatEvidence) =>
@@ -227,7 +227,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
         goto(SELLER_FUNDED) applying sf andThen {
           case cst: CertifiedSettledTrade =>
             context.parent ! sf
-            walletMgrRef ! RemoveWatchEscrowAddress(cst.escrowAddress)
+            escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(cst.escrowAddress)
         }
       }
       else
@@ -250,7 +250,7 @@ class ArbitrateProcess(sellOffer: SellOffer, walletMgrRef: ActorRef) extends Tra
         goto(BUYER_REFUNDED) applying br andThen {
           case cst: CertifiedSettledTrade =>
             context.parent ! br
-            walletMgrRef ! RemoveWatchEscrowAddress(cfd.escrowAddress)
+            escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(cfd.escrowAddress)
         }
       }
       else
