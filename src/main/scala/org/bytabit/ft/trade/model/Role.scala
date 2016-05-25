@@ -17,7 +17,7 @@
 package org.bytabit.ft.trade.model
 
 sealed trait Role {
-  val identifier:String
+  val identifier: String
 }
 
 case object ARBITRATOR extends Role {

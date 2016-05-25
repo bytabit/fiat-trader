@@ -304,7 +304,7 @@ case class SellProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMg
       else
         stay()
 
-    case Event(TxBroadcast(tx), cfd:CertifiedFiatDelivery) =>
+    case Event(TxBroadcast(tx), cfd: CertifiedFiatDelivery) =>
       escrowWalletMgrRef ! EscrowWalletManager.BroadcastSignedTx(tx)
       stay()
 

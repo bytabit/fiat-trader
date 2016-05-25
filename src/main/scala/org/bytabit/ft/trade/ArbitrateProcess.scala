@@ -25,8 +25,8 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.ArbitrateProcess._
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.bytabit.ft.wallet.WalletManager.EscrowTransactionUpdated
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
 import scala.language.postfixOps

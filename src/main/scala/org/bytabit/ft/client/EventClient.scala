@@ -31,7 +31,6 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.server.PostedEvents
 import org.bytabit.ft.trade.TradeProcess
-import org.bytabit.ft.trade.TradeProcess.TradeOffline
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.DateTimeOrdering
 import org.bytabit.ft.wallet.model.Arbitrator

@@ -23,7 +23,6 @@ import org.bitcoinj.script.{Script, ScriptBuilder}
 import org.bitcoinj.wallet.Wallet
 
 import scala.collection.JavaConversions._
-import scala.reflect.ClassTag
 
 object Tx {
   def fullySigned(tx: Transaction): Boolean = {

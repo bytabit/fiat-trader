@@ -25,7 +25,6 @@ import akka.stream.ActorMaterializer
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.trade.TradeProcess
 import org.joda.time.DateTime
-import org.joda.time.format.ISODateTimeFormat
 
 import scala.concurrent.Future
 

@@ -16,9 +16,8 @@
 
 package org.bytabit.ft.wallet.model
 
-import org.bitcoinj.core.{Coin, Context, TransactionOutput}
+import org.bitcoinj.core.{Coin, TransactionOutput}
 import org.bitcoinj.wallet.{KeyChain, Wallet}
-import org.bytabit.ft.wallet.WalletManager
 
 import scala.collection.JavaConversions._
 
