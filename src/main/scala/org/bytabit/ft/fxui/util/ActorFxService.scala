@@ -62,7 +62,11 @@ trait ActorFxService extends Service[Unit] {
       while (!isCancelled) {
         Try(inbox.receive(FiniteDuration(1, "second"))) match {
           case Success(e) =>
-            handler(e)
+            Application.invokeLater(new Runnable {
+              def run() {
+                handler(e)
+              }
+            })
           case Failure(f) if f.isInstanceOf[TimeoutException] =>
             //log.info(s"TimeoutException:$f")
           case Failure(f) =>
