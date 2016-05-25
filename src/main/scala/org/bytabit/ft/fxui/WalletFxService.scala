@@ -82,6 +82,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     sendCmd(FindCurrentAddress(KeyChain.KeyPurpose.RECEIVE_FUNDS))
   }
 
+  def generateBackupCode(): Unit = {
+    sendCmd(GenerateBackupCode())
+  }
+
   @Override
   def handler = {
 
@@ -108,6 +112,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
     case CurrentAddressFound(a) =>
       alertInfoNewReceiveAddress(a)
+
+    case BackupCodeGenerated(c, dt) =>
+      // TODO replace this with UI popup
+      log.info(s"Backup code: $c\nOldest Key Date Time: $dt")
 
     case TxBroadcast(_) =>
     // do nothing

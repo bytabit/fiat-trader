@@ -23,13 +23,14 @@ import akka.actor.{ActorSystem, Props}
 import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
-import org.bitcoinj.wallet.{KeyChain, SendRequest}
+import org.bitcoinj.wallet.{DeterministicSeed, KeyChain, SendRequest}
 import org.bytabit.ft.trade.model.{CertifyFiatEvidence, Offer, SellOffer, TakenOffer}
 import org.bytabit.ft.util.{AESCipher, BTCMoney, Config, Monies}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
+import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.util.Try
@@ -68,6 +69,10 @@ object TradeWalletManager {
   case class BroadcastTx(tx: Tx, escrowPubKey: Option[PubECKey] = None) extends Command
 
   case class WithdrawXBT(toAddress: String, amount: Money) extends Command
+
+  case class GenerateBackupCode() extends Command
+
+  case class RestoreWallet(code: List[String], seedCreationTime: DateTime) extends Command
 
 }
 
@@ -202,6 +207,17 @@ class TradeWalletManager extends WalletManager {
         sr.memo = s"Withdraw to $a"
         sr
       }.foreach(w.sendCoins)
+      stay()
+
+    case Event(GenerateBackupCode(), Data(k, wl, al)) =>
+      val w = k.wallet
+      val code = w.getKeyChainSeed.getMnemonicCode
+      sender ! BackupCodeGenerated(code.toList, new DateTime(w.getEarliestKeyCreationTime * 1000))
+      stay()
+
+    case Event(RestoreWallet(c, dt), Data(k, wl, al)) =>
+      k.restoreWalletFromSeed(new DeterministicSeed(c, null, "", dt.getMillis / 1000))
+      sender ! WalletRestored
       stay()
 
     // handle block chain events

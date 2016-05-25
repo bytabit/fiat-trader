@@ -31,7 +31,7 @@ import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
-import org.joda.time.LocalDateTime
+import org.joda.time.{DateTime, LocalDateTime}
 
 object WalletManager {
 
@@ -85,6 +85,10 @@ object WalletManager {
   case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedFiatDelivery) extends Event
 
   case class TxBroadcast(tx: Tx) extends Event
+
+  case class BackupCodeGenerated(code:List[String], seedCreationTime:DateTime) extends Event
+
+  case class WalletRestored() extends Event
 
   // block chain events
 

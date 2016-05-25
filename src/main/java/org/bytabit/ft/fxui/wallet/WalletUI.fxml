@@ -68,8 +68,8 @@
                             <children>
                                 <Button fx:id="requestFundsButton" mnemonicParsing="false" onAction="#handleRequestFunds" prefHeight="26.0" prefWidth="90.0" text="DEPOSIT" />
                                 <Button fx:id="withdrawFundsButton" mnemonicParsing="false" onAction="#handleWithdrawFunds" text="WITHDRAW" />
-                        <Button fx:id="withdrawFundsButton1" layoutX="162.0" layoutY="12.0" mnemonicParsing="false" onAction="#handleWithdrawFunds" text="BACKUP" />
-                        <Button fx:id="withdrawFundsButton11" layoutX="210.0" layoutY="12.0" mnemonicParsing="false" onAction="#handleWithdrawFunds" text="RESTORE" />
+                        <Button fx:id="backupButton" layoutX="162.0" layoutY="12.0" mnemonicParsing="false" onAction="#handleBackupWallet" text="BACKUP" />
+                        <Button fx:id="restoreButton" layoutX="210.0" layoutY="12.0" mnemonicParsing="false" text="RESTORE" />
                             </children>
                         </HBox>
                     </children>
