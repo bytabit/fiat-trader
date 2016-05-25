@@ -18,20 +18,27 @@ package org.bytabit.ft.fxui;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import akka.actor.Terminated;
+import akka.dispatch.OnComplete;
 import akka.event.LoggingAdapter;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.bytabit.ft.client.ClientManager;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
+import org.bytabit.ft.fxui.util.JavaFXExecutionContext;
 import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.wallet.EscrowWalletManager;
 import org.bytabit.ft.wallet.TradeWalletManager;
+import scala.Function1;
 import scala.concurrent.Await;
+import scala.concurrent.ExecutionContext;
 import scala.concurrent.duration.Duration;
+import scala.util.Try;
 
 import java.io.IOException;
 
@@ -74,8 +81,6 @@ public class FiatTrader extends Application {
 
         stage.setTitle(title);
         stage.setScene(scene);
-        // TODO FT-20: add custom icon and with hover text
-        // stage.getIcons().add(new Image(this.getClass().getResourceAsStream("bytabit-icon.png")));
 
         // Set UI Close Handler
         stage.setOnCloseRequest(e -> {
@@ -86,6 +91,7 @@ public class FiatTrader extends Application {
             } catch (Exception e1) {
                 e1.printStackTrace();
             }
+            System.exit(0);
         });
 
         // Show UI
