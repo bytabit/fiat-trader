@@ -199,6 +199,10 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
 
     case Event(Start, ActiveServer(lp, a, at)) =>
 
+//      // start active trades
+//      at.get(SELLER).foreach(_.foreach(t => createSellTrade(t._1, t._2.offer) ! SellProcess.Start))
+//      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+
       // request new events from event server
       reqPostedEvents(url, Some(lp))
 

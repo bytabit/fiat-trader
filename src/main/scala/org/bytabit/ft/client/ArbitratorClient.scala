@@ -199,9 +199,11 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
 
     case Event(Start, ActiveServer(lp, a, at)) =>
 
-      // create and start active trades
-      // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
-      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
+//      // create and start arbitrator
+//      createArbitratorManager(a) ! ArbitratorManager.Start
+//
+//      // create and start active trades
+//      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
       // request new events from event server
       reqPostedEvents(url, Some(lp))
