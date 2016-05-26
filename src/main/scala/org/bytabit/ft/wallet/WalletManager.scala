@@ -86,7 +86,7 @@ object WalletManager {
 
   case class TxBroadcast(tx: Tx) extends Event
 
-  case class BackupCodeGenerated(code:List[String], seedCreationTime:DateTime) extends Event
+  case class BackupCodeGenerated(code: List[String], seedCreationTime: DateTime) extends Event
 
   case class WalletRestored() extends Event
 
@@ -108,10 +108,10 @@ trait WalletManager extends FSM[State, Data] {
 
   val netParams = NetworkParameters.fromID(Config.walletNet)
   val btcContext = Context.getOrCreate(netParams)
-  val kit: WalletAppKit
-  val kitListener: Listener
+  def kit: WalletAppKit
+  def kitListener: Listener
 
-  val txConfidenceEventListener = new TransactionConfidenceEventListener {
+  def txConfidenceEventListener = new TransactionConfidenceEventListener {
 
     override def onTransactionConfidenceChanged(wallet: Wallet, tx: Transaction): Unit = {
       Context.propagate(btcContext)
@@ -121,7 +121,7 @@ trait WalletManager extends FSM[State, Data] {
     }
   }
 
-  val downloadProgressTracker = new DownloadProgressTracker {
+  def downloadProgressTracker = new DownloadProgressTracker {
 
     override def onBlocksDownloaded(peer: Peer, block: Block, filteredBlock: FilteredBlock, blocksLeft: Int): Unit = {
       super.onBlocksDownloaded(peer, block, filteredBlock, blocksLeft)
@@ -139,29 +139,24 @@ trait WalletManager extends FSM[State, Data] {
     }
   }
 
-  override def postStop(): Unit = {
-    super.postStop()
-    stopWallet()
-  }
-
-  def startWallet(dpt: DownloadProgressTracker, autoSave: Boolean = true) = {
+  def startWallet(k: WalletAppKit, dpt: DownloadProgressTracker, autoSave: Boolean = true) = {
     Context.propagate(btcContext)
     // setup wallet app kit
-    kit.setAutoSave(true)
-    kit.setBlockingStartup(false)
-    kit.setUserAgent(Config.config, Config.version)
-    kit.setDownloadListener(dpt)
-    kit.addListener(kitListener, dispatcher)
-    kit.setAutoSave(autoSave)
-    if (netParams == RegTestParams.get) kit.connectToLocalHost()
+    k.setAutoSave(true)
+    k.setBlockingStartup(false)
+    k.setUserAgent(Config.config, Config.version)
+    k.setDownloadListener(dpt)
+    k.addListener(kitListener, dispatcher)
+    k.setAutoSave(autoSave)
+    if (netParams == RegTestParams.get) k.connectToLocalHost()
 
     // start wallet app kit
-    kit.startAsync()
+    k.startAsync()
   }
 
-  def stopWallet(): Unit = {
+  def stopWallet(k: WalletAppKit): Unit = {
     Context.propagate(btcContext)
-    kit.stopAsync()
+    k.stopAsync()
   }
 
   def sendToListeners(event: Any, listeners: Seq[ActorRef]) =
@@ -170,39 +165,37 @@ trait WalletManager extends FSM[State, Data] {
       l ! event
     }
 
-  def broadcastOpenTx(w: Wallet, ot: OpenTx): OpenTx = {
+  def broadcastOpenTx(k: WalletAppKit, ot: OpenTx): OpenTx = {
     Context.propagate(btcContext)
-    val signed = ot.sign(w)
-    broadcastSignedTx(w, signed)
+    val signed = ot.sign(k.wallet)
+    broadcastSignedTx(k, signed)
     log.info(s"OpenTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
       s"size ${signed.tx.getMessageSize} bytes")
     signed
   }
 
-  def broadcastFundTx(w: Wallet, ft: FundTx): FundTx = {
+  def broadcastFundTx(k: WalletAppKit, ft: FundTx): FundTx = {
     Context.propagate(btcContext)
-    val signed = ft.sign(w)
-    broadcastSignedTx(w, signed)
+    val signed = ft.sign(k.wallet)
+    broadcastSignedTx(k, signed)
     log.info(s"FundTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
       s"size ${signed.tx.getMessageSize} bytes")
     signed
   }
 
-  def broadcastPayoutTx(w: Wallet, pt: PayoutTx, pk: PubECKey): PayoutTx = {
+  def broadcastPayoutTx(k: WalletAppKit, pt: PayoutTx, pk: PubECKey): PayoutTx = {
     Context.propagate(btcContext)
-    val signed = pt.sign(pk)(w)
-    broadcastSignedTx(w, signed)
+    val signed = pt.sign(pk)(k.wallet)
+    broadcastSignedTx(k, signed)
     log.info(s"PayoutTx broadcast, ${signed.inputs.length} inputs, ${signed.outputs.length} outputs, " +
       s"size ${signed.tx.getMessageSize} bytes")
     signed
   }
 
-  def broadcastSignedTx(w: Wallet, signed: Tx): Unit = {
+  def broadcastSignedTx(k: WalletAppKit, signed: Tx): Unit = {
     assert(signed.fullySigned)
-    w.commitTx(signed.tx)
-    kit.peerGroup.broadcastTransaction(signed.tx)
-    // TODO do this from the TradeProcess level
-    // escrowKit.peerGroup.broadcastTransaction(signed.copy().tx)
+    k.wallet.commitTx(signed.tx)
+    k.peerGroup.broadcastTransaction(signed.tx)
   }
 }
 

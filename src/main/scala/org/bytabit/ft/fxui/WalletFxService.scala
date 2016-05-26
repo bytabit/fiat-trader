@@ -19,6 +19,7 @@ package org.bytabit.ft.fxui
 import java.awt.Desktop
 import java.io.ByteArrayInputStream
 import java.net.URI
+import java.time.ZoneId
 import javafx.beans.property.{SimpleDoubleProperty, SimpleStringProperty}
 import javafx.collections.{FXCollections, ObservableList}
 import javafx.event.EventHandler
@@ -43,6 +44,7 @@ import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager}
 import org.joda.money.Money
+import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
@@ -115,10 +117,13 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
     case BackupCodeGenerated(c, dt) =>
       // TODO replace this with UI popup
-      log.info(s"Backup code: $c\nOldest Key Date Time: $dt")
+      log.info(s"Backup code: ${c.mkString(" ")}\nOldest Key Date Time: $dt")
 
     case TxBroadcast(_) =>
     // do nothing
+
+    case WalletRestored =>
+      log.info(s"Wallet restored.")
 
     case _ => log.error("Unexpected message")
   }
@@ -186,6 +191,51 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     if (result.isPresent) {
       log.info(s"Requested withdraw info: ${result.get}")
       sendCmd(WithdrawXBT(result.get._1, result.get._2))
+    }
+  }
+
+  def dialogRestoreWallet(): Unit = {
+
+    val dialog = new Dialog[(List[String], DateTime)]()
+    dialog.setTitle("Restore Wallet")
+    dialog.setHeaderText("Enter wallet seed backup code and seed creation time.")
+
+    val backupCodeLabel = new Label("Backup Code: ")
+    val backupCodeTextField = new TextField()
+
+    val creationDateLabel = new Label("Creation Date: ")
+    val creationDatePicker = new DatePicker()
+
+    val grid = new GridPane()
+    grid.add(backupCodeLabel, 1, 1)
+    grid.add(backupCodeTextField, 2, 1)
+    grid.add(creationDateLabel, 1, 2)
+    grid.add(creationDatePicker, 2, 2)
+    dialog.getDialogPane.setContent(grid)
+
+    val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
+    val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+
+    dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+
+    dialog.setResultConverter(new Callback[ButtonType, (List[String], DateTime)]() {
+      override def call(bt: ButtonType): (List[String], DateTime) = {
+        if (bt == okButtonType) {
+          val code = backupCodeTextField.getText.split(' ').toList
+          // TODO FT-127: validate wallet restore seed backup code format
+          val dateTime = new DateTime(creationDatePicker.getValue.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant.toEpochMilli)
+          // TODO FT-128: require password or PIN to restore wallet
+          (code, dateTime)
+        } else {
+          null
+        }
+      }
+    })
+
+    val result = dialog.showAndWait()
+    if (result.isPresent) {
+      log.info(s"Requested wallet restore info: ${result.get}")
+      sendCmd(RestoreWallet(result.get._1, result.get._2))
     }
   }
 

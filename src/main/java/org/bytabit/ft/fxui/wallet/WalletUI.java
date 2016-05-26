@@ -116,6 +116,9 @@ public class WalletUI implements ActorController {
     @FXML
     private void handleBackupWallet() { walletFxService.generateBackupCode(); }
 
+    @FXML
+    private void handleRestoreWallet() { walletFxService.dialogRestoreWallet(); }
+
     @Override
     public ActorSystem system() {
         return sys;

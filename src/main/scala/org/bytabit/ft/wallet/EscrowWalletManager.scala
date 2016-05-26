@@ -67,7 +67,7 @@ class EscrowWalletManager extends WalletManager {
   when(STARTING) {
 
     case Event(Start, Data(k, _, _)) =>
-      startWallet(downloadProgressTracker, autoSave = false)
+      startWallet(k, downloadProgressTracker, autoSave = false)
       stay()
 
     case Event(EscrowWalletRunning, Data(k, wl, al)) =>
@@ -121,8 +121,7 @@ class EscrowWalletManager extends WalletManager {
       }
 
     case Event(BroadcastSignedTx(tx: Tx), Data(k, wl, al)) =>
-      val w = k.wallet
-      broadcastSignedTx(w, tx)
+      broadcastSignedTx(k, tx)
       stay()
 
     case Event(TransactionUpdated(tx, amt, ct, bd), Data(w, wl, al)) =>

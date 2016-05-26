@@ -78,9 +78,9 @@ object TradeWalletManager {
 
 class TradeWalletManager extends WalletManager {
 
-  val kit: WalletAppKit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
+  def kit: WalletAppKit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
 
-  val kitListener = new Listener {
+  def kitListener = new Listener {
 
     override def running(): Unit = {
       self ! TradeWalletRunning
@@ -92,7 +92,7 @@ class TradeWalletManager extends WalletManager {
   when(STARTING) {
 
     case Event(Start, Data(k, wl, _)) =>
-      startWallet(downloadProgressTracker)
+      startWallet(k, downloadProgressTracker)
       goto(STARTING) using Data(k, wl + sender)
 
     case Event(TradeWalletRunning, Data(k, wl, _)) =>
@@ -178,20 +178,17 @@ class TradeWalletManager extends WalletManager {
       stay()
 
     case Event(BroadcastTx(ot: OpenTx, None), Data(k, wl, al)) =>
-      val w = k.wallet
-      val bcTx = broadcastOpenTx(w, ot)
+      val bcTx = broadcastOpenTx(k, ot)
       sendToListeners(TxBroadcast(bcTx), wl.toSeq)
       stay()
 
     case Event(BroadcastTx(ft: FundTx, None), Data(k, wl, al)) =>
-      val w = k.wallet
-      val bcTx = broadcastFundTx(w, ft)
+      val bcTx = broadcastFundTx(k, ft)
       sendToListeners(TxBroadcast(bcTx), wl.toSeq)
       stay()
 
     case Event(BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)), Data(k, wl, al)) =>
-      val w = k.wallet
-      val bcTx = broadcastPayoutTx(w, pt, pk)
+      val bcTx = broadcastPayoutTx(k, pt, pk)
       sendToListeners(TxBroadcast(bcTx), wl.toSeq)
       stay()
 
@@ -216,9 +213,12 @@ class TradeWalletManager extends WalletManager {
       stay()
 
     case Event(RestoreWallet(c, dt), Data(k, wl, al)) =>
-      k.restoreWalletFromSeed(new DeterministicSeed(c, null, "", dt.getMillis / 1000))
+      k.stopAsync().awaitTerminated()
+      val seed = new DeterministicSeed(c, null, "", dt.getMillis / 1000)
+      val newKit = kit.restoreWalletFromSeed(seed)
+      startWallet(newKit, downloadProgressTracker)
       sender ! WalletRestored
-      stay()
+      goto(STARTING) using Data(newKit, wl, al)
 
     // handle block chain events
     case Event(e: WalletManager.BlockChainEvent, d: WalletManager.Data) =>
