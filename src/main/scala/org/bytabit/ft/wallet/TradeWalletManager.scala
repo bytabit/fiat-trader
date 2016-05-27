@@ -74,6 +74,8 @@ object TradeWalletManager {
 
   case class RestoreWallet(code: List[String], seedCreationTime: DateTime) extends Command
 
+  case class SetTransactionMemo(hash: Sha256Hash, memo: String) extends Command
+
 }
 
 class TradeWalletManager extends WalletManager {
@@ -219,6 +221,10 @@ class TradeWalletManager extends WalletManager {
       startWallet(newKit, downloadProgressTracker)
       sender ! WalletRestored
       goto(STARTING) using Data(newKit, wl, al)
+
+    case Event(SetTransactionMemo(h, m), Data(k, wl, al)) =>
+      k.wallet().getTransaction(h).setMemo(m)
+      stay()
 
     // handle block chain events
     case Event(e: WalletManager.BlockChainEvent, d: WalletManager.Data) =>
