@@ -16,7 +16,7 @@
 
 package org.bytabit.ft.fxui.util
 
-import java.util.concurrent.Executor
+import java.util.concurrent.{Executor, TimeoutException}
 import javafx.application.Platform
 import javafx.concurrent.{Service, Task}
 
@@ -26,7 +26,7 @@ import com.sun.glass.ui.Application
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object JavaFXExecutionContext {
   implicit val javaFxExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(new Executor {
@@ -60,14 +60,18 @@ trait ActorFxService extends Service[Unit] {
 
     protected def call: Unit = {
       while (!isCancelled) {
-        val result = Try(inbox.receive(FiniteDuration(1, "second")))
-        if (result.isSuccess) {
-          //log.debug(result.get.toString)
-          Application.invokeLater(new Runnable {
-            def run() {
-              handler(result.get)
-            }
-          })
+        Try(inbox.receive(FiniteDuration(1, "second"))) match {
+          case Success(e) =>
+            Application.invokeLater(new Runnable {
+              def run() {
+                handler(e)
+              }
+            })
+          case Failure(f) if f.isInstanceOf[TimeoutException] =>
+            //log.info(s"TimeoutException:$f")
+          case Failure(f) =>
+            log.info(s"Unexpected inbox receive exception: $f")
+            cancel()
         }
       }
       log.info("ActorFXService Cancelled")

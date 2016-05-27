@@ -142,7 +142,9 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
 
   val url: URL
 
-  val walletMgr: ActorRef
+  val tradeWalletMgr: ActorRef
+
+  val escrowWalletMgr: ActorRef
 
   // implicits
 
@@ -237,15 +239,15 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
 
   // create trade Processes
   def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
-    context.actorOf(TradeProcess.arbitrateProps(so, walletMgr), TradeProcess.name(id))
+    context.actorOf(TradeProcess.arbitrateProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
   def createSellTrade(id: UUID, o: Offer): ActorRef = {
-    context.actorOf(TradeProcess.sellProps(o, walletMgr), TradeProcess.name(id))
+    context.actorOf(TradeProcess.sellProps(o, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
   def createBuyTrade(id: UUID, so: SellOffer): ActorRef = {
-    context.actorOf(TradeProcess.buyProps(so, walletMgr), TradeProcess.name(id))
+    context.actorOf(TradeProcess.buyProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
   // find trade process

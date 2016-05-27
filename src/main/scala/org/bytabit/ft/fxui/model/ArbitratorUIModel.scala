@@ -19,7 +19,7 @@ package org.bytabit.ft.fxui.model
 import java.net.URL
 import javafx.beans.property.SimpleStringProperty
 
-import org.bytabit.ft.client.{EventClient}
+import org.bytabit.ft.client.EventClient
 import org.bytabit.ft.wallet.model.Arbitrator
 
 case class ArbitratorUIModel(status: EventClient.State, url: URL, arbitrator: Option[Arbitrator]) {

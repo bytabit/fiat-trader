@@ -29,7 +29,7 @@ import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
-import org.bytabit.ft.util.{BTCMoney, FiatMoney, ListenerUpdater, Monies}
+import org.bytabit.ft.util.{BTCMoney, FiatMoney, Monies}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 
@@ -79,10 +79,10 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     // handle arbitrator events
 
     case ContractAdded(u, c, _) =>
-      //log.info(s"ContractAdded at URL: ${u}")
+    //log.info(s"ContractAdded at URL: ${u}")
 
     case ContractRemoved(url, id, _) =>
-      //log.info(s"ContractRemoved at URL: ${u}")
+    //log.info(s"ContractRemoved at URL: ${u}")
 
     case ClientRemoved(u) =>
       removeArbitratorUIModel(u)
@@ -191,6 +191,4 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
   }
 
   private def sendCmd(cmd: ClientManager.Command) = sendMsg(arbitratorClientMgrRef, cmd)
-
-  private def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(arbitratorClientMgrRef, cmd)
 }

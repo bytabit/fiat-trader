@@ -26,7 +26,6 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager._
 import org.bytabit.ft.client.{ClientManager, EventClient}
-import org.bytabit.ft.client.EventClient.ServerOnline
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
@@ -69,10 +68,8 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   override def start() {
     super.start()
-
-    addCurrencyUnits.setAll(CurrencyUnits.FIAT)
-
     sendCmd(AddListener(inbox.getRef()))
+    addCurrencyUnits.setAll(CurrencyUnits.FIAT)
   }
 
   def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) = {
@@ -98,7 +95,7 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
       removeUIContract(id)
 
     case ec: EventClient.Event =>
-      //log.info(s"Event client event")
+    //log.info(s"Event client event")
 
     case te: TradeProcess.Event =>
     //log.info(s"Trade process event")
@@ -138,5 +135,7 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   def sendCmd(cmd: ArbitratorManager.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(clientMgrRef, cmd)
+  def sendCmd(cmd: ListenerUpdater.Command) = {
+    sendMsg(clientMgrRef, cmd)
+  }
 }

@@ -169,10 +169,12 @@ jfx {
     addPackagerJar = true
 
     // gradle jfxNative
-    identifier = null // setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
+    identifier = null
+    // setting this for windows-bundlers makes it possible to generate upgradeable installers (using same GUID)
     vendor = "Bytabit AB"
     nativeOutputDir = "build/jfx/native"
-    bundler = "ALL" // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
+    bundler = "ALL"
+    // set this to some specific, if your don't want all bundlers running, examples "windows.app", "jnlp", ...
     jvmProperties = null // Map<String, String>
     jvmArgs = null // List<String>
     userJvmArgs = null // Map<String, String>
@@ -184,10 +186,11 @@ jfx {
 //            // dont bundle JRE (not recommended, but increases build-size/-speed)
 //            runtime: null
 //    ]
-    appName = "Fiat Trader" // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
+    appName = "Fiat Trader"
+    // this is used for files below "src/main/deploy", e.g. "src/main/deploy/windows/project.ico"
     additionalAppResources = // path to some additional resources when creating application-bundle
-    secondaryLaunchers = //[[appName:"somethingDifferent"], [appName:"somethingDifferent2"]]
-    fileAssociations = null // List<Map<String, Object>>
+            secondaryLaunchers = //[[appName:"somethingDifferent"], [appName:"somethingDifferent2"]]
+                    fileAssociations = null // List<Map<String, Object>>
     noBlobSigning = false // when using bundler "jnlp", you can choose to NOT use blob signing
 
     skipNativeLauncherWorkaround124 = false
@@ -216,7 +219,7 @@ bintray {
     key = System.getenv('BINTRAY_KEY')
 
     filesSpec {
-        from ('build/jfx/native') {
+        from('build/jfx/native') {
             include '**/*.dmg'
             include '**/*.exe'
             include '**/*.deb'

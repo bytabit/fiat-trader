@@ -33,7 +33,7 @@ object FiatDeliveryMethod {
 
   def forCurrencyUnit(cu: CurrencyUnit) = all.filter(_.currencyUnits.contains(cu))
 
-  def getInstance(name:String):Option[FiatDeliveryMethod] = all.find(fdm => fdm.name == name)
+  def getInstance(name: String): Option[FiatDeliveryMethod] = all.find(fdm => fdm.name == name)
 }
 
 case class FiatDeliveryMethod(name: String, currencyUnits: Seq[CurrencyUnit],

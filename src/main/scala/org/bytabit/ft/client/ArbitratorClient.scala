@@ -24,20 +24,19 @@ import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
 import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.trade.{ArbitrateProcess, TradeProcess}
-import org.bytabit.ft.util.{BTCMoney, Config}
-import org.bytabit.ft.wallet.WalletManager
+import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 object ArbitratorClient {
 
-  def props(url: URL, walletMgr: ActorRef) = Props(new ArbitratorClient(url, walletMgr))
+  def props(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new ArbitratorClient(url, tradeWalletMgr, escrowWalletMgr))
 
   def name(url: URL) = s"${ArbitratorClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
+case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
 
   // persistence
 
@@ -56,7 +55,7 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
     // create arbitrator
 
     case Event(npe: NoPostedEventsReceived, d) =>
-      walletMgr ! WalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+      tradeWalletMgr ! TradeWalletManager //.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
       stay()
 
     // new arbitrator created
@@ -113,9 +112,6 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
     case Event(soff: ServerOffline, ActiveServer(lp, a, at)) =>
       goto(OFFLINE) andThen { ud =>
         context.parent ! soff
-
-        // stop arbitrator
-        stopArbitratorManager(a)
       }
 
     // send arbitrator commands to ArbitratorManager
@@ -203,9 +199,11 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
     case Event(Start, ActiveServer(lp, a, at)) =>
 
-      // create and start active trades
-      // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
-      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
+//      // create and start arbitrator
+//      createArbitratorManager(a) ! ArbitratorManager.Start
+//
+//      // create and start active trades
+//      at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
       // request new events from event server
       reqPostedEvents(url, Some(lp))
@@ -222,6 +220,9 @@ case class ArbitratorClient(url: URL, walletMgr: ActorRef) extends EventClient {
 
         // create and start arbitrator
         createArbitratorManager(a) ! ArbitratorManager.Start
+
+        // create and start active trades
+        at.get(ARBITRATOR).foreach(_.foreach(t => createArbitrateTrade(t._1, t._2) ! ArbitrateProcess.Start))
 
         context.parent ! ServerOnline(a.url)
       }

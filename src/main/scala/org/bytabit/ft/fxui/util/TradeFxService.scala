@@ -186,7 +186,7 @@ trait TradeFxService extends ActorFxService {
 
   // cancel path
 
-  def cancelTradeUIModel(id: UUID) = {
+  def removeTradeUIModel(id: UUID) = {
     trades.removeIf(new Predicate[TradeUIModel] {
       override def test(a: TradeUIModel): Boolean = {
         a.getId == id
