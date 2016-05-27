@@ -26,7 +26,9 @@ import org.bytabit.ft.trade.SellProcess.{CancelSellOffer, RequestCertifyDelivery
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model.{SellOffer, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchEscrowAddress, RemoveWatchEscrowAddress}
+import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
 import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, TxBroadcast}
+import org.bytabit.ft.wallet.model.OpenTx
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
@@ -143,6 +145,7 @@ case class SellProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMg
         val boe = BuyerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(OPENED) applying boe andThen {
           case ot: OpenedTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Open Trade $id")
             context.parent ! boe
         }
       }
@@ -196,6 +199,7 @@ case class SellProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMg
         goto(TRADED) applying srp andThen {
           case st: SettledTrade =>
             context.parent ! srp
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
             escrowWalletMgrRef ! RemoveWatchEscrowAddress(ft.escrowAddress)
         }
       }
@@ -231,6 +235,7 @@ case class SellProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMg
         val srp = SellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(TRADED) applying srp andThen {
           case st: SettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
             context.parent ! srp
             escrowWalletMgrRef ! RemoveWatchEscrowAddress(ft.escrowAddress)
         }
@@ -297,6 +302,7 @@ case class SellProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMg
         val sf = SellerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(SELLER_FUNDED) applying sf andThen {
           case cst: CertifiedSettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Arbitrated Payout Trade $id")
             context.parent ! sf
             escrowWalletMgrRef ! RemoveWatchEscrowAddress(cfd.escrowAddress)
         }

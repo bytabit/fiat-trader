@@ -25,6 +25,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.ArbitrateProcess._
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
+import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
 import org.bytabit.ft.wallet.WalletManager.EscrowTransactionUpdated
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
@@ -226,6 +227,7 @@ case class ArbitrateProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, e
         val sf = SellerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(SELLER_FUNDED) applying sf andThen {
           case cst: CertifiedSettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Arbitrate Fee Trade $id")
             context.parent ! sf
             escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(cst.escrowAddress)
         }
@@ -249,6 +251,7 @@ case class ArbitrateProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, e
         val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(BUYER_REFUNDED) applying br andThen {
           case cst: CertifiedSettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Arbitrate Fee Trade $id")
             context.parent ! br
             escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(cfd.escrowAddress)
         }

@@ -25,6 +25,7 @@ import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
+import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
 import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, TxBroadcast}
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
@@ -158,6 +159,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
         val boe = BuyerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(OPENED) applying boe andThen {
           case ot: OpenedTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Open Trade $id")
             context.parent ! boe
             tradeWalletMgrRef ! TradeWalletManager.BroadcastTx(sto.unsignedFundTx)
         }
@@ -182,6 +184,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
         val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime), ot.fiatDeliveryDetailsKey)
         goto(FUNDED) applying bfe andThen {
           case usto: FundedTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Funded Trade $id")
             context.parent ! bfe
         }
       }
@@ -237,6 +240,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
         val brp = BuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
             context.parent ! brp
             escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(st.escrowAddress)
         }
@@ -330,6 +334,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
         val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(BUYER_REFUNDED) applying br andThen {
           case cst: CertifiedSettledTrade =>
+            tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Arbitrated Refund Trade $id")
             context.parent ! br
             escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchEscrowAddress(cfd.escrowAddress)
         }
