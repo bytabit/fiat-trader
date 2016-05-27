@@ -45,6 +45,7 @@ import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager}
 import org.joda.money.Money
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
@@ -118,6 +119,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     case BackupCodeGenerated(c, dt) =>
       // TODO replace this with UI popup
       log.info(s"Backup code: ${c.mkString(" ")}\nOldest Key Date Time: $dt")
+      alertInfoBackupCode(c, dt)
 
     case TxBroadcast(_) =>
     // do nothing
@@ -152,7 +154,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
     val dialog = new Dialog[(String, Money)]()
     dialog.setTitle("Withdraw")
-    dialog.setHeaderText("Enter destination bitcoin address and amount to withdraw.")
+    dialog.setHeaderText("Enter Destination Bitcoin Address and Amount to Withdraw")
 
     val addrLabel = new Label("Address: ")
     val addrTextField = new TextField()
@@ -194,16 +196,56 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     }
   }
 
+  def alertInfoBackupCode(c: List[String], dt:DateTime): Unit = {
+
+    // popup info
+    val alert = new Alert(AlertType.INFORMATION)
+    alert.setTitle(null)
+    alert.setHeaderText("Wallet Seed Backup Code and Oldest Key Date")
+    //alert.setContentText(s"${c.mkString(" ")}\n\n${dateFormat.print(dt)}")
+
+    val backupCodeLabel = new Label("Seed Backup Code: ")
+    val backupCodeTextField = new TextField()
+    backupCodeTextField.setEditable(false)
+    backupCodeTextField.setText(s"${c.mkString(" ")}")
+    backupCodeTextField.setPrefWidth(500)
+    backupCodeTextField.setMaxWidth(500)
+
+    val dateFormat = DateTimeFormat.forPattern("MMM dd YYYY")
+    val creationDateLabel = new Label("Oldest Key Date: ")
+    val creationDateTextField = new TextField()
+    creationDateTextField.setMaxWidth(100)
+    creationDateTextField.setEditable(false)
+    creationDateTextField.setText(s"${dateFormat.print(dt)}")
+
+    val grid = new GridPane()
+    grid.add(backupCodeLabel, 1, 1)
+    grid.add(backupCodeTextField, 2, 1)
+    grid.add(creationDateLabel, 1, 2)
+    grid.add(creationDateTextField, 2, 2)
+    alert.getDialogPane.setContent(grid)
+
+    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
+      override def handle(event: MouseEvent): Unit = {
+        copySeedCode(c)
+      }
+    })
+
+    alert.showAndWait
+  }
+
   def dialogRestoreWallet(): Unit = {
 
     val dialog = new Dialog[(List[String], DateTime)]()
     dialog.setTitle("Restore Wallet")
-    dialog.setHeaderText("Enter wallet seed backup code and seed creation time.")
+    dialog.setHeaderText("Wallet Seed Backup Code and Oldest Key Date")
 
-    val backupCodeLabel = new Label("Backup Code: ")
+    val backupCodeLabel = new Label("Seed Backup Code: ")
     val backupCodeTextField = new TextField()
+    backupCodeTextField.setPrefWidth(500)
+    backupCodeTextField.setMaxWidth(500)
 
-    val creationDateLabel = new Label("Creation Date: ")
+    val creationDateLabel = new Label("Oldest Key Date: ")
     val creationDatePicker = new DatePicker()
 
     val grid = new GridPane()
@@ -235,6 +277,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     val result = dialog.showAndWait()
     if (result.isPresent) {
       log.info(s"Requested wallet restore info: ${result.get}")
+      transactions.clear()
       sendCmd(RestoreWallet(result.get._1, result.get._2))
     }
   }
@@ -248,6 +291,15 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
     content.putString(addressStr)
     content.putHtml(s"<a href=${depositAddressUri(address)}>$addressStr</a>")
+    clipboard.setContent(content)
+  }
+
+  def copySeedCode(code: List[String]): Unit = {
+    val clipboard = Clipboard.getSystemClipboard
+    val content = new ClipboardContent()
+    val codeStr = code.mkString(" ")
+
+    content.putString(codeStr)
     clipboard.setContent(content)
   }
 
