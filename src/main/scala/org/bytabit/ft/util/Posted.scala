@@ -16,6 +16,7 @@
 
 package org.bytabit.ft.util
 
+import org.bitcoinj.core.NetworkParameters
 import org.joda.time.DateTime
 
 trait Posted {

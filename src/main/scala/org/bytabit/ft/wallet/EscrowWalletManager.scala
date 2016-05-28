@@ -72,9 +72,10 @@ class EscrowWalletManager extends WalletManager {
 
     case Event(EscrowWalletRunning, Data(k, wl, al)) =>
       Context.propagate(btcContext)
-      val w = k.wallet
-      w.addTransactionConfidenceEventListener(txConfidenceEventListener)
-      al.keys.foreach(ea => w.addWatchedAddress(ea))
+      k.wallet.addTransactionConfidenceEventListener(txConfidenceEventListener)
+      al.keys.foreach(ea => k.wallet.addWatchedAddress(ea))
+      // TODO replay tx arbitrator may have missed
+      // k.wallet.clearTransactions(0)
       sendToListeners(EscrowWalletRunning, wl.toSeq)
       goto(RUNNING) using Data(k, wl, al)
 
@@ -101,19 +102,17 @@ class EscrowWalletManager extends WalletManager {
 
     case Event(AddWatchEscrowAddress(escrowAddress: Address), Data(k, wl, al)) =>
       Context.propagate(btcContext)
-      val w = k.wallet
       assert(escrowAddress.isP2SHAddress)
       //addressListeners = addressListeners + (escrowAddress -> context.sender())
-      w.addWatchedAddress(escrowAddress)
+      k.wallet.addWatchedAddress(escrowAddress)
       //log.info(s"ADDED event listener for address: $escrowAddress listener: ${context.sender()}")
       goto(RUNNING) using Data(k, wl, al + (escrowAddress -> context.sender()))
 
     case Event(RemoveWatchEscrowAddress(escrowAddress: Address), Data(k, wl, al)) =>
       Context.propagate(btcContext)
-      val w = k.wallet
       assert(escrowAddress.isP2SHAddress)
       if (al.contains(escrowAddress)) {
-        w.removeWatchedAddress(escrowAddress)
+        k.wallet.removeWatchedAddress(escrowAddress)
         goto(RUNNING) using Data(k, wl, al - escrowAddress)
         //log.info(s"REMOVED event listener for address: $escrowAddress listener: $ar")
       } else {
