@@ -23,7 +23,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
 import org.bytabit.ft.trade.{TradeJsonProtocol, TradeProcess}
-import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod, FiatMoney}
+import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.model.{Arbitrator, Seller}
 import org.scalatest._
 import spray.json._
@@ -42,12 +42,12 @@ class JsonSpec extends FlatSpec with Matchers with TradeJsonProtocol {
   val bondPercent = 0.20
   val btcArbitratorFee = BTCMoney(1, 0)
   val arbitratorURL = new URL("http://bytabit.org")
-  val fiatDeliveryMethod = FiatDeliveryMethod.swish
+  val paymentMethod = PaymentMethod.swish
   val fiatCurrencyUnit = CurrencyUnits.USD
 
   val arbitrator = Arbitrator(arbitratorURL, bondPercent, btcArbitratorFee)(arbitratorWallet)
 
-  val contract = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
+  val contract = Contract(arbitrator, fiatCurrencyUnit, paymentMethod)
 
   val offer = Offer(UUID.randomUUID(), contract, fiatAmt, btcAmt)
 

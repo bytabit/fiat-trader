@@ -28,7 +28,7 @@ import org.bytabit.ft.fxui.ArbitratorManagerFxService;
 import org.bytabit.ft.fxui.model.ContractUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 import org.bytabit.ft.util.Config;
-import org.bytabit.ft.util.FiatDeliveryMethod;
+import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
 
 import java.util.ResourceBundle;
@@ -61,7 +61,7 @@ public class ArbitratorServerUI implements ActorController {
     private ChoiceBox<CurrencyUnit> addFiatCurrencyChoiceBox;
 
     @FXML
-    private ChoiceBox<FiatDeliveryMethod> addFiatDeliveryMethodChoiceBox;
+    private ChoiceBox<PaymentMethod> addPaymentMethodChoiceBox;
 
     @FXML
     private TextField btcArbitratorFeeTextField;
@@ -81,7 +81,7 @@ public class ArbitratorServerUI implements ActorController {
     private TableColumn<ContractUIModel, String> currencyUnitColumn;
 
     @FXML
-    private TableColumn<ContractUIModel, String> deliveryMethodColumn;
+    private TableColumn<ContractUIModel, String> paymentMethodColumn;
 
     final private ActorSystem sys;
 
@@ -124,7 +124,7 @@ public class ArbitratorServerUI implements ActorController {
 
             idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
             currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
-            deliveryMethodColumn.setCellValueFactory(ct -> ct.getValue().deliveryMethodProperty());
+            paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
             //feeColumn.setCellValueFactory(ct -> ct.getValue().arbitratorFeeProperty());
 
             contractTemplateTable.setItems(arbitratorServerFxService.contractTemplates());
@@ -143,26 +143,26 @@ public class ArbitratorServerUI implements ActorController {
 
             addFiatCurrencyChoiceBox.setItems(arbitratorServerFxService.addCurrencyUnits());
 
-            addFiatDeliveryMethodChoiceBox.setConverter(new StringConverter<FiatDeliveryMethod>() {
+            addPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
                 @Override
-                public String toString(FiatDeliveryMethod dm) {
+                public String toString(PaymentMethod dm) {
                     return dm.name();
                 }
 
                 @Override
-                public FiatDeliveryMethod fromString(String name) {
+                public PaymentMethod fromString(String name) {
                     // TODO need a better way to handle this
-                    return FiatDeliveryMethod.getInstance(name).getOrElse(null);
+                    return PaymentMethod.getInstance(name).getOrElse(null);
                 }
             });
 
-            addFiatDeliveryMethodChoiceBox.setItems(arbitratorServerFxService.addFiatDeliveryMethods());
+            addPaymentMethodChoiceBox.setItems(arbitratorServerFxService.addPaymentMethods());
 
             addFiatCurrencyChoiceBox.setOnAction((event) -> {
                 CurrencyUnit selectedCurrencyUnit = addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
                 arbitratorServerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
-                if (arbitratorServerFxService.addFiatDeliveryMethods().size() == 1)
-                    addFiatDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
+                if (arbitratorServerFxService.addPaymentMethods().size() == 1)
+                    addPaymentMethodChoiceBox.getSelectionModel().selectFirst();
             });
 
             arbitratorServerFxService.start();
@@ -173,9 +173,9 @@ public class ArbitratorServerUI implements ActorController {
     void handleAddContractTemplate() {
 
         CurrencyUnit fiatCurrencyUnit = addFiatCurrencyChoiceBox.getValue();
-        FiatDeliveryMethod fiatDeliveryMethod = addFiatDeliveryMethodChoiceBox.getValue();
+        PaymentMethod paymentMethod = addPaymentMethodChoiceBox.getValue();
 
-        arbitratorServerFxService.addContractTemplate(fiatCurrencyUnit, fiatDeliveryMethod);
+        arbitratorServerFxService.addContractTemplate(fiatCurrencyUnit, paymentMethod);
     }
 
     private TableCell<ContractUIModel, String> newTableCell() {

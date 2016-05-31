@@ -102,8 +102,8 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
 
     // unhappy path
 
-    case cdr: CertifyDeliveryRequested =>
-      reqCertDelivery(cdr)
+    case cpr: CertifyPaymentRequested =>
+      reqCertPayment(cpr)
 
     case fsc: FiatSentCertified =>
       certifyFiatSent(fsc)

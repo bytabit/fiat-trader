@@ -25,7 +25,7 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.FiatDeliveryMethod
+import org.bytabit.ft.util.PaymentMethod
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
@@ -37,7 +37,7 @@ trait TradeFxService extends ActorFxService {
 
   val trades: ObservableList[TradeUIModel] = FXCollections.observableArrayList[TradeUIModel]
   val sellCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
-  val sellDeliveryMethods: ObservableList[FiatDeliveryMethod] = FXCollections.observableArrayList[FiatDeliveryMethod]
+  val sellPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
   val sellBondPercent = new SimpleStringProperty()
   val sellArbitratorFee = new SimpleStringProperty()
 
@@ -69,7 +69,7 @@ trait TradeFxService extends ActorFxService {
     findTrade(bto.id) match {
       case Some(TradeUIModel(r, s, so: SellOffer)) =>
         updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs,
-          bto.buyerFundPayoutTxo, bto.cipherBuyerDeliveryDetails)))
+          bto.buyerFundPayoutTxo, bto.cipherBuyerPaymentDetails)))
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
         log.warning("Can't take offer that was already taken.")
       case _ =>
@@ -99,7 +99,7 @@ trait TradeFxService extends ActorFxService {
     findTrade(bfe.id) match {
       case Some(TradeUIModel(r, s, ot: OpenedTrade)) =>
         updateTrade(TradeUIModel(r, s, ot), TradeUIModel(r, FUNDED, ot.withFundTx(bfe.txHash, bfe.updateTime,
-          bfe.fiatDeliveryDetailsKey)))
+          bfe.paymentDetailsKey)))
       case _ =>
         log.error("No opened trade found to fund.")
     }
@@ -136,21 +136,21 @@ trait TradeFxService extends ActorFxService {
 
   // unhappy path
 
-  def reqCertDelivery(cdr: CertifyDeliveryRequested): Unit = {
-    findTrade(cdr.id) match {
+  def reqCertPayment(cpr: CertifyPaymentRequested): Unit = {
+    findTrade(cpr.id) match {
       case Some(TradeUIModel(r, s, ft: FundedTrade)) =>
-        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, CERT_DELIVERY_REQD, ft.certifyFiatRequested(cdr.evidence)))
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, CERT_PAYMENT_REQD, ft.certifyFiatRequested(cpr.evidence)))
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         // add to existing evidence
-        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, CERT_DELIVERY_REQD, cfe.addCertifyDeliveryRequest(cdr.evidence)))
+        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, CERT_PAYMENT_REQD, cfe.addCertifyPaymentRequest(cpr.evidence)))
       case _ =>
-        log.error("No funded trade found to request fiat delivery certification.")
+        log.error("No funded trade found to request payment certification.")
     }
   }
 
   def certifyFiatSent(fsc: FiatSentCertified): Unit = {
     findTrade(fsc.id) match {
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fsc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat sent.")
@@ -159,7 +159,7 @@ trait TradeFxService extends ActorFxService {
 
   def certifyFiatNotSent(fnc: FiatNotSentCertified): Unit = {
     findTrade(fnc.id) match {
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_NOT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fnc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat not sent.")
@@ -168,19 +168,19 @@ trait TradeFxService extends ActorFxService {
 
   def fundSeller(sf: SellerFunded): Unit = {
     findTrade(sf.id) match {
-      case Some(TradeUIModel(r, s, cfd: CertifiedFiatDelivery)) =>
+      case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
         updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, SELLER_FUNDED, cfd.withPayoutTx(sf.txHash, sf.updateTime)))
       case _ =>
-        log.error("No certified fiat delivery found to fund seller.")
+        log.error("No certified payment found to fund seller.")
     }
   }
 
   def refundBuyer(br: BuyerRefunded): Unit = {
     findTrade(br.id) match {
-      case Some(TradeUIModel(r, s, cfd: CertifiedFiatDelivery)) =>
+      case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
         updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BUYER_REFUNDED, cfd.withPayoutTx(br.txHash, br.updateTime)))
       case _ =>
-        log.error("No certified fiat non-delivery found to refund buyer.")
+        log.error("No certified non-payment found to refund buyer.")
     }
   }
 

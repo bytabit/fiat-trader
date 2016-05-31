@@ -70,11 +70,11 @@ object TradeProcess {
   final case class SellerCanceledOffer(id: UUID,
                                        posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BuyerSetFiatDeliveryDetailsKey(id: UUID, fiatDeliveryDetailsKey: Array[Byte]) extends Event
+  final case class BuyerSetPaymentDetailsKey(id: UUID, paymentDetailsKey: Array[Byte]) extends Event
 
   final case class BuyerTookOffer(id: UUID, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
                                   buyerFundPayoutTxo: Seq[TransactionOutput],
-                                  cipherBuyerDeliveryDetails: Array[Byte],
+                                  cipherBuyerPaymentDetails: Array[Byte],
                                   posted: Option[DateTime] = None) extends PostedEvent
 
   final case class SellerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
@@ -82,7 +82,7 @@ object TradeProcess {
 
   final case class BuyerOpenedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class BuyerFundedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime, fiatDeliveryDetailsKey: Option[Array[Byte]]) extends Event
+  final case class BuyerFundedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime, paymentDetailsKey: Option[Array[Byte]]) extends Event
 
   final case class FiatReceived(id: UUID) extends Event
 
@@ -92,8 +92,8 @@ object TradeProcess {
 
   final case class SellerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class CertifyDeliveryRequested(id: UUID, evidence: Option[Array[Byte]] = None,
-                                            posted: Option[DateTime] = None) extends PostedEvent
+  final case class CertifyPaymentRequested(id: UUID, evidence: Option[Array[Byte]] = None,
+                                           posted: Option[DateTime] = None) extends PostedEvent
 
   final case class FiatSentCertified(id: UUID, payoutSigs: Seq[TxSig],
                                      posted: Option[DateTime] = None) extends PostedEvent
@@ -149,8 +149,8 @@ object TradeProcess {
     override val identifier: String = "TRADED"
   }
 
-  case object CERT_DELIVERY_REQD extends State {
-    override val identifier: String = "CERT DELIVERY REQD"
+  case object CERT_PAYMENT_REQD extends State {
+    override val identifier: String = "CERT PAYMENT REQD"
   }
 
   case object FIAT_SENT_CERTD extends State {
@@ -218,8 +218,8 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
       case (SellerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withSellerSigs(sots, spts)
 
-      case (BuyerSetFiatDeliveryDetailsKey(_, dk), takenOffer: TakenOffer) =>
-        takenOffer.withFiatDeliveryDetailsKey(dk)
+      case (BuyerSetPaymentDetailsKey(_, dk), takenOffer: TakenOffer) =>
+        takenOffer.withPaymentDetailsKey(dk)
 
       case (BuyerOpenedEscrow(_, th, ut), signedTakenOffer: SignedTakenOffer) =>
         signedTakenOffer.withOpenTx(th, ut)
@@ -237,24 +237,24 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
       // unhappy path
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), fundedTrade: FundedTrade) =>
+      case (CertifyPaymentRequested(_, e, Some(_)), fundedTrade: FundedTrade) =>
         fundedTrade.certifyFiatRequested(e)
 
-      case (CertifyDeliveryRequested(_, e, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
-        certifyFiatEvidence.addCertifyDeliveryRequest(e)
+      case (CertifyPaymentRequested(_, e, Some(_)), certifyFiatEvidence: CertifyPaymentEvidence) =>
+        certifyFiatEvidence.addCertifyPaymentRequest(e)
       //certifyFiatEvidence.copy(evidence = certifyFiatEvidence.evidence ++ e.toSeq)
 
-      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
+      case (FiatSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyPaymentEvidence) =>
         certifyFiatEvidence.withArbitratedFiatSentSigs(ps)
 
-      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyFiatEvidence) =>
+      case (FiatNotSentCertified(_, ps, Some(_)), certifyFiatEvidence: CertifyPaymentEvidence) =>
         certifyFiatEvidence.withArbitratedFiatNotSentSigs(ps)
 
-      case (SellerFunded(_, th, ut), certifiedFiatDelivery: CertifiedFiatDelivery) =>
-        certifiedFiatDelivery.withPayoutTx(th, ut)
+      case (SellerFunded(_, th, ut), certifiedPayment: CertifiedPayment) =>
+        certifiedPayment.withPayoutTx(th, ut)
 
-      case (BuyerRefunded(_, th, ut), certifiedFiatDelivery: CertifiedFiatDelivery) =>
-        certifiedFiatDelivery.withPayoutTx(th, ut)
+      case (BuyerRefunded(_, th, ut), certifiedPayment: CertifiedPayment) =>
+        certifiedPayment.withPayoutTx(th, ut)
 
       // cancel path
 
@@ -277,7 +277,7 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   def startTaken(to: TakenOffer): Unit = {
     startCreate(to.sellOffer)
-    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherFiatDeliveryDetails)
+    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherPaymentDetails)
   }
 
   def startSigned(sto: SignedTakenOffer): Unit = {
@@ -292,7 +292,7 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   def startFunded(ft: FundedTrade): Unit = {
     startOpened(ft.openedTrade)
-    context.parent ! BuyerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.fiatDeliveryDetailsKey)
+    context.parent ! BuyerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.paymentDetailsKey)
   }
 
   // happy path
@@ -309,28 +309,28 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   // unhappy path
 
-  def startCertDeliveryReqd(cfe: CertifyFiatEvidence): Unit = {
+  def startCertPaymentReqd(cfe: CertifyPaymentEvidence): Unit = {
     startFunded(cfe.fundedTrade)
-    context.parent ! CertifyDeliveryRequested(cfe.id)
+    context.parent ! CertifyPaymentRequested(cfe.id)
   }
 
-  def startFiatSentCertd(cfd: CertifiedFiatDelivery): Unit = {
-    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+  def startFiatSentCertd(cfd: CertifiedPayment): Unit = {
+    startCertPaymentReqd(cfd.certifyPaymentEvidence)
     context.parent ! FiatSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs)
   }
 
-  def startFiatNotSentCertd(cfd: CertifiedFiatDelivery): Unit = {
-    startCertDeliveryReqd(cfd.certifyFiatEvidence)
+  def startFiatNotSentCertd(cfd: CertifiedPayment): Unit = {
+    startCertPaymentReqd(cfd.certifyPaymentEvidence)
     context.parent ! FiatNotSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs)
   }
 
   def startSellerFunded(cst: CertifiedSettledTrade): Unit = {
-    startFiatSentCertd(cst.certifiedFiatDelivery)
+    startFiatSentCertd(cst.certifiedPayment)
     context.parent ! SellerFunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
   }
 
   def startBuyerRefunded(cst: CertifiedSettledTrade): Unit = {
-    startFiatNotSentCertd(cst.certifiedFiatDelivery)
+    startFiatNotSentCertd(cst.certifiedPayment)
     context.parent ! BuyerRefunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
   }
 
@@ -381,7 +381,7 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
     outputsEqual(tx1, tx2, 0, until)
   }
 
-  def fiatDeliveryDetailsKey(tx: Transaction): Option[Array[Byte]] = {
+  def paymentDetailsKey(tx: Transaction): Option[Array[Byte]] = {
     Try {
       val outputs = tx.getOutputs
       val lastOutputScript = outputs.get(outputs.size - 1).getScriptPubKey

@@ -25,21 +25,21 @@ import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
 
 case class TakenOffer(sellOffer: SellOffer, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
-                      buyerFundPayoutTxo: Seq[TransactionOutput], cipherFiatDeliveryDetails: Array[Byte],
-                      fiatDeliveryDetailsKey: Option[Array[Byte]] = None) extends Template with TradeData {
+                      buyerFundPayoutTxo: Seq[TransactionOutput], cipherPaymentDetails: Array[Byte],
+                      paymentDetailsKey: Option[Array[Byte]] = None) extends Template with TradeData {
 
   override val id: UUID = sellOffer.id
   override val btcAmount: Money = sellOffer.btcAmount
   override val fiatAmount: Money = sellOffer.fiatAmount
   override val contract: Contract = sellOffer.contract
 
-  // decrypt delivery details with buyer provided AES key
-  val fiatDeliveryDetails: Option[String] = fiatDeliveryDetailsKey.map { k =>
-    new String(cipher(k, sellOffer.seller, buyer).decrypt(cipherFiatDeliveryDetails).map(b => b.toChar))
+  // decrypt payment details with buyer provided AES key
+  val paymentDetails: Option[String] = paymentDetailsKey.map { k =>
+    new String(cipher(k, sellOffer.seller, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
   }
 
   override val text: String = sellOffer.text
-  override val keyValues = sellOffer.keyValues ++ buyerKeyValues(buyer) ++ fiatDeliveryDetailsKeyValues(fiatDeliveryDetails)
+  override val keyValues = sellOffer.keyValues ++ buyerKeyValues(buyer) ++ paymentDetailsKeyValues(paymentDetails)
 
   val seller = sellOffer.seller
 
@@ -56,8 +56,8 @@ case class TakenOffer(sellOffer: SellOffer, buyer: Buyer, buyerOpenTxSigs: Seq[T
   def unsignedPayoutTx(fullySignedOpenTx: OpenTx): PayoutTx =
     super.unsignedPayoutTx(sellOffer.seller, buyer, fullySignedOpenTx, buyerFundPayoutTxo)
 
-  def withFiatDeliveryDetailsKey(fiatDeliveryDetailsKey: Array[Byte]) =
-    this.copy(fiatDeliveryDetailsKey = Some(fiatDeliveryDetailsKey))
+  def withPaymentDetailsKey(paymentDetailsKey: Array[Byte]) =
+    this.copy(paymentDetailsKey = Some(paymentDetailsKey))
 
   def withSellerSigs(sellerOpenTxSigs: Seq[TxSig], sellerPayoutTxSigs: Seq[TxSig]): SignedTakenOffer = {
     SignedTakenOffer(this, sellerOpenTxSigs, sellerPayoutTxSigs)

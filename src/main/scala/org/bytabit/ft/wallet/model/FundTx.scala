@@ -34,7 +34,7 @@ object FundTx extends TxTools {
 case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
                   escrowAddr: Address,
                   buyerFundTxUtxo: Seq[TransactionOutput], buyerChangeAddr: Address,
-                  buyerFiatDeliveryDetailsKey: Array[Byte],
+                  buyerPaymentDetailsKey: Array[Byte],
                   inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_PLEDGE)
@@ -46,8 +46,8 @@ case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
   // verify change amounts
   assert(!coinBuyerChg.isNegative)
 
-  // verify delivery details key lengths
-  assert(buyerFiatDeliveryDetailsKey.length == AESCipher.AES_KEY_LEN)
+  // verify payment details key lengths
+  assert(buyerPaymentDetailsKey.length == AESCipher.AES_KEY_LEN)
 
   // add inputs
   buyerFundTxUtxo.foreach(o => tx.addInput(o))
@@ -63,8 +63,8 @@ case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
     tx.addOutput(coinBuyerChg, buyerChangeAddr)
   }
 
-  // add encrypted aes key to decrypt fiat delivery details
-  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(buyerFiatDeliveryDetailsKey).build())
+  // add encrypted aes key to decrypt payment details
+  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(buyerPaymentDetailsKey).build())
 
   assert(verified)
 

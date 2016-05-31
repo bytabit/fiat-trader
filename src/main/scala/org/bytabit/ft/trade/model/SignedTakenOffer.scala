@@ -45,7 +45,7 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
   def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
 
   def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer,
-    takenOffer.fiatDeliveryDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
+    takenOffer.paymentDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
 
   def unsignedPayoutTx: PayoutTx = takenOffer.unsignedPayoutTx(fullySignedOpenTx)
 

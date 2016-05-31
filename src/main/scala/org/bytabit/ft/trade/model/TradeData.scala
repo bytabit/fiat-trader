@@ -64,7 +64,7 @@ trait TradeData {
   // BTC Cancel Trade Payout to Seller Amount (cancel path)
   lazy val btcSellerCancelPayout = btcArbitratorFee.plus(btcBond)
 
-  // AES cipher for fiat delivery details, init Vector is first 16 bytes of escrow address hash
+  // AES cipher for fiat payment details, init Vector is first 16 bytes of escrow address hash
   def cipher(key: Array[Byte], seller: Seller, buyer: Buyer) =
     AESCipher(key, unsignedOpenTx(seller, buyer).escrowAddr.getHash160.slice(0, AESCipher.AES_IV_LEN))
 
@@ -73,8 +73,8 @@ trait TradeData {
     OpenTx(BTCMoney.toCoin(btcToOpenEscrow), arbitrator, seller, buyer)
 
   // unsigned fund escrow tx
-  def unsignedFundTx(seller: Seller, buyer: Buyer, deliveryDetailsKey: Array[Byte]) =
-    FundTx(BTCMoney.toCoin(btcToFundEscrow), arbitrator, seller, buyer, deliveryDetailsKey)
+  def unsignedFundTx(seller: Seller, buyer: Buyer, paymentDetailsKey: Array[Byte]) =
+    FundTx(BTCMoney.toCoin(btcToFundEscrow), arbitrator, seller, buyer, paymentDetailsKey)
 
   // unsigned happy path payout escrow tx
   def unsignedPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =

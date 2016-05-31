@@ -35,8 +35,8 @@ case class OpenedTrade(signedTakenOffer: SignedTakenOffer, openTxHash: Sha256Has
 
   val escrowAddress = signedTakenOffer.escrowAddress
 
-  val fiatDeliveryDetailsKey = signedTakenOffer.takenOffer.fiatDeliveryDetailsKey
+  val paymentDetailsKey = signedTakenOffer.takenOffer.paymentDetailsKey
 
-  def withFundTx(fundTxHash: Sha256Hash, fundTxUpdateTime: DateTime, fiatDeliveryDetailsKey: Option[Array[Byte]]) =
-    FundedTrade(this, fundTxHash, fundTxUpdateTime, fiatDeliveryDetailsKey)
+  def withFundTx(fundTxHash: Sha256Hash, fundTxUpdateTime: DateTime, paymentDetailsKey: Option[Array[Byte]]) =
+    FundedTrade(this, fundTxHash, fundTxUpdateTime, paymentDetailsKey)
 }

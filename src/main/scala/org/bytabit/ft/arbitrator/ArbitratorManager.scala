@@ -27,7 +27,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
-import org.bitcoinj.core.{NetworkParameters, Sha256Hash}
+import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
@@ -56,7 +56,7 @@ object ArbitratorManager {
 
   case class Start(url: URL) extends Command
 
-  final case class AddContractTemplate(url: URL, currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
+  final case class AddContractTemplate(url: URL, currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) extends Command {
     assert(Monies.isFiat(currencyUnit))
   }
 

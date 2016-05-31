@@ -20,7 +20,7 @@ import java.net.URL
 
 import org.bitcoinj.core.{Context, NetworkParameters}
 import org.bitcoinj.wallet.Wallet
-import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, FiatDeliveryMethod}
+import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, PaymentMethod}
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.scalatest._
 
@@ -35,13 +35,13 @@ class ContractSpec extends FlatSpec with Matchers {
   val bondPercent = 0.20
   val btcArbitratorFee = BTCMoney(1, 0)
   val arbitratorURL = new URL("http://bytabit.org")
-  val fiatDeliveryMethod = FiatDeliveryMethod.swish
+  val paymentMethod = PaymentMethod.swish
   val fiatCurrencyUnit = CurrencyUnits.USD
   val arbitrator = Arbitrator(arbitratorURL, bondPercent, btcArbitratorFee)(arbitratorWallet)
 
   "Contract" should "substitute template parameters" in {
 
-    val contract = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
+    val contract = Contract(arbitrator, fiatCurrencyUnit, paymentMethod)
 
     val contractId = contract.id.toString
     val arbitratorId = contract.arbitrator.id.toString
@@ -52,7 +52,7 @@ class ContractSpec extends FlatSpec with Matchers {
     val btcAmount = NONE
     val sellerId = NONE
     val fiatAmount = NONE
-    val buyerFiatDeliveryDetails = NONE
+    val buyerPaymentDetails = NONE
 
     contract.toString should equal(
       "Fiat Trade Contract \n\n" +
@@ -61,13 +61,13 @@ class ContractSpec extends FlatSpec with Matchers {
         s"3. The arbitrator fee will be $btcArbitratorFee and will be paid to BTC address $arbitratorFeeAddress. \n" +
         "4. Buyer with key ID $buyerId will transfer $btcAmount to the seller.\n" +
         "5. Seller with key ID $sellerId will transfer $fiatAmount to the buyer.\n" +
-        "6. Seller will transfer the $fiatAmount to the buyer using the" + s" $fiatDeliveryMethod fiat delivery method.\n" +
-        "7. The buyer payment details are: $buyerFiatDeliveryDetails.\n")
+        "6. Seller will transfer the $fiatAmount to the buyer using the" + s" $paymentMethod payment method.\n" +
+        "7. The buyer payment details are: $buyerPaymentDetails.\n")
   }
 
   "ContractTemplate" should "have the same id given the same text and parameters" in {
-    val t1 = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
-    val t2 = Contract(arbitrator, fiatCurrencyUnit, fiatDeliveryMethod)
+    val t1 = Contract(arbitrator, fiatCurrencyUnit, paymentMethod)
+    val t2 = Contract(arbitrator, fiatCurrencyUnit, paymentMethod)
 
     t1.id should equal(t2.id)
   }

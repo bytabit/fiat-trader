@@ -25,7 +25,7 @@ import javafx.scene.layout.VBox
 import org.bytabit.ft.fxui.ArbitratorTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.trade.TradeProcess
-import org.bytabit.ft.trade.TradeProcess.CERT_DELIVERY_REQD
+import org.bytabit.ft.trade.TradeProcess.CERT_PAYMENT_REQD
 import org.bytabit.ft.trade.model.{ARBITRATOR, Role}
 
 import scala.collection.JavaConversions._
@@ -59,7 +59,7 @@ class ArbitratorUIActionTableCell(tradefxService: ArbitratorTradeFxService) exte
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, ARBITRATOR, CERT_DELIVERY_REQD), false) =>
+      case (TradeOriginState(u, i, ARBITRATOR, CERT_PAYMENT_REQD), false) =>
         Seq(certifySentButton, certifyNotSentButton)
 
       case _ =>

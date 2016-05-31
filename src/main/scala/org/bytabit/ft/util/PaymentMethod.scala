@@ -18,26 +18,26 @@ package org.bytabit.ft.util
 
 import org.joda.money.CurrencyUnit
 
-object FiatDeliveryMethod {
+object PaymentMethod {
 
-  val moneygram: FiatDeliveryMethod =
-    FiatDeliveryMethod("Moneygram", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Moneygram Info..."))
+  val moneygram: PaymentMethod =
+    PaymentMethod("Moneygram", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Moneygram Info..."))
 
-  val swish: FiatDeliveryMethod =
-    FiatDeliveryMethod("Swish", Seq(CurrencyUnits.SEK), Seq("Swish Phone Number"))
+  val swish: PaymentMethod =
+    PaymentMethod("Swish", Seq(CurrencyUnits.SEK), Seq("Swish Phone Number"))
 
-  val westernUnion: FiatDeliveryMethod =
-    FiatDeliveryMethod("Western Union", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Western Union Info..."))
+  val westernUnion: PaymentMethod =
+    PaymentMethod("Western Union", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Western Union Info..."))
 
   val all = Seq(moneygram, swish, westernUnion)
 
   def forCurrencyUnit(cu: CurrencyUnit) = all.filter(_.currencyUnits.contains(cu))
 
-  def getInstance(name: String): Option[FiatDeliveryMethod] = all.find(fdm => fdm.name == name)
+  def getInstance(name: String): Option[PaymentMethod] = all.find(fdm => fdm.name == name)
 }
 
-case class FiatDeliveryMethod(name: String, currencyUnits: Seq[CurrencyUnit],
-                              requiredDetails: Seq[String]) {
+case class PaymentMethod(name: String, currencyUnits: Seq[CurrencyUnit],
+                         requiredDetails: Seq[String]) {
 
   currencyUnits.foreach(cu => assert(Monies.isFiat(cu)))
 }

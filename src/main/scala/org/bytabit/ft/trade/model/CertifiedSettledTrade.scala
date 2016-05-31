@@ -22,16 +22,16 @@ import org.bitcoinj.core.Sha256Hash
 import org.joda.money.Money
 import org.joda.time.DateTime
 
-case class CertifiedSettledTrade(certifiedFiatDelivery: CertifiedFiatDelivery, payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime)
+case class CertifiedSettledTrade(certifiedPayment: CertifiedPayment, payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime)
   extends Template with TradeData {
 
-  override val id: UUID = certifiedFiatDelivery.id
-  override val btcAmount: Money = certifiedFiatDelivery.btcAmount
-  override val fiatAmount: Money = certifiedFiatDelivery.fiatAmount
-  override val contract: Contract = certifiedFiatDelivery.contract
+  override val id: UUID = certifiedPayment.id
+  override val btcAmount: Money = certifiedPayment.btcAmount
+  override val fiatAmount: Money = certifiedPayment.fiatAmount
+  override val contract: Contract = certifiedPayment.contract
 
-  override val text: String = certifiedFiatDelivery.text
-  override val keyValues: Map[String, Option[String]] = certifiedFiatDelivery.keyValues
+  override val text: String = certifiedPayment.text
+  override val keyValues: Map[String, Option[String]] = certifiedPayment.keyValues
 
-  val escrowAddress = certifiedFiatDelivery.escrowAddress
+  val escrowAddress = certifiedPayment.escrowAddress
 }

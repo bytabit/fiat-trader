@@ -17,7 +17,7 @@
 package org.bytabit.ft.trade.model
 
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.util.{FiatDeliveryMethod, Monies}
+import org.bytabit.ft.util.{Monies, PaymentMethod}
 import org.bytabit.ft.wallet.model.{Arbitrator, Buyer, Seller}
 import org.joda.money.{CurrencyUnit, Money}
 
@@ -28,12 +28,12 @@ trait Template {
 
   override lazy val toString: String = replaceAll(text, keyValues)
 
-  def contractKeyValues(id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod,
+  def contractKeyValues(id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod,
                         arbitrator: Arbitrator, btcNetworkName: String) =
     Map[String, Option[String]](
       "contractId" -> Some(id.toString),
       "fiatCurrencyUnit" -> Some(fiatCurrencyUnit.toString),
-      "fiatDeliveryMethod" -> Some(fiatDeliveryMethod.toString),
+      "paymentMethod" -> Some(paymentMethod.toString),
 
       "arbitratorId" -> Some(arbitrator.id.toString),
       "btcNetworkName" -> Some(btcNetworkName),
@@ -63,9 +63,9 @@ trait Template {
       "buyerPayoutAddress" -> Some(buyer.payoutAddr.toString)
     )
 
-  def fiatDeliveryDetailsKeyValues(fiatDeliveryDetails: Option[String]) =
+  def paymentDetailsKeyValues(paymentDetails: Option[String]) =
     Map[String, Option[String]](
-      "buyerFiatDeliveryDetails" -> fiatDeliveryDetails
+      "buyerPaymentDetails" -> paymentDetails
     )
 
   def replaceAll(text: String, keyValues: Map[String, Option[String]]): String = {

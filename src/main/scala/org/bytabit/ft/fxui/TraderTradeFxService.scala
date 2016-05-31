@@ -83,13 +83,13 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
       updateCurrencyUnits(contracts, sellCurrencyUnits)
-      updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
+      updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
 
     case ContractRemoved(url, id, _) =>
       contracts = contracts.filterNot(_.id == id)
       updateCurrencyUnits(contracts, sellCurrencyUnits)
       updateCurrencyUnits(contracts, sellCurrencyUnits)
-      updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
+      updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
 
     // Handle Trade Events
 
@@ -139,8 +139,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     // unhappy path
 
-    case cdr: CertifyDeliveryRequested =>
-      reqCertDelivery(cdr)
+    case cdr: CertifyPaymentRequested =>
+      reqCertPayment(cdr)
       updateUncommitted()
 
     case fsc: FiatSentCertified =>
@@ -182,15 +182,15 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def setSelectedAddCurrencyUnit(sacu: CurrencyUnit) = {
     sellCurrencyUnitSelected = Some(sacu)
-    updateDeliveryMethods(contracts, sellDeliveryMethods, sellCurrencyUnitSelected)
+    updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
   }
 
-  def setSelectedContract(dm: FiatDeliveryMethod) = {
+  def setSelectedContract(dm: PaymentMethod) = {
     // TODO FT-21: allow user to rank arbitrators in arbitrator client screen so UI can auto pick top ranked one
-    // for now pick lowest fee contract template that matches currency and delivery method
+    // for now pick lowest fee contract template that matches currency and payment method
     sellContractSelected = for {
       fcu <- sellCurrencyUnitSelected
-      c <- contracts.filter(t => t.fiatCurrencyUnit == fcu && t.fiatDeliveryMethod == dm)
+      c <- contracts.filter(t => t.fiatCurrencyUnit == fcu && t.paymentMethod == dm)
         .sortWith((x, y) => x.arbitrator.btcArbitratorFee.isGreaterThan(y.arbitrator.btcArbitratorFee)).headOption
     } yield c
 
@@ -207,15 +207,14 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     //acu.sort(Ordering.String)
   }
 
-  def updateDeliveryMethods(cts: Seq[Contract], adm: ObservableList[FiatDeliveryMethod], cuf: Option[CurrencyUnit]) = {
-    val existingDms = sellDeliveryMethods.toList
+  def updatePaymentMethods(cts: Seq[Contract], adm: ObservableList[PaymentMethod], cuf: Option[CurrencyUnit]) = {
+    val existingDms = sellPaymentMethods.toList
     val filteredCts = cuf.map(cu => cts.filter(ct => ct.fiatCurrencyUnit.equals(cu))).getOrElse(cts)
-    val foundDms = filteredCts.map(ct => ct.fiatDeliveryMethod).distinct
+    val foundDms = filteredCts.map(ct => ct.paymentMethod).distinct
     val addDms = foundDms.filterNot(existingDms.contains(_))
-    val rmDms = existingDms.filterNot(foundDms.contains(_))
-    sellDeliveryMethods.addAll(addDms)
-    sellDeliveryMethods.removeAll(rmDms)
-    //sellDeliveryMethods.sort(Ordering)
+    val rmDms = existingDms.filterNot(foundDms.contains)
+    sellPaymentMethods.addAll(addDms)
+    sellPaymentMethods.removeAll(rmDms)
   }
 
   def updateSellContract(contract: Option[Contract]) = {
@@ -257,7 +256,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     }
   }
 
-  def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: FiatDeliveryMethod) = {
+  def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: PaymentMethod) = {
 
     sellContractSelected.foreach { c =>
       val o = Offer(UUID.randomUUID(), c, fiatAmount, btcAmount)
@@ -270,7 +269,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def takeSellOffer(url: URL, tradeId: UUID): Unit = {
-    // TODO FT-10: get delivery details from delivery details preferences
+    // TODO FT-10: get payment details from payment details preferences
     sendCmd(TakeSellOffer(url, tradeId, "Swish: +467334557"))
   }
 
@@ -283,13 +282,13 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   // TODO FT-91: collect evidence
-  def sellerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
-    sendCmd(SellProcess.RequestCertifyDelivery(url, tradeId))
+  def sellerReqCertPayment(url: URL, tradeId: UUID): Unit = {
+    sendCmd(SellProcess.RequestCertifyPayment(url, tradeId))
   }
 
   // TODO FT-91: collect evidence
-  def buyerReqCertDelivery(url: URL, tradeId: UUID): Unit = {
-    sendCmd(BuyProcess.RequestCertifyDelivery(url, tradeId))
+  def buyerReqCertPayment(url: URL, tradeId: UUID): Unit = {
+    sendCmd(BuyProcess.RequestCertifyPayment(url, tradeId))
   }
 
   def updateUncommitted() = {

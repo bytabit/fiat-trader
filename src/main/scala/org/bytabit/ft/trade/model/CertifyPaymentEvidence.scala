@@ -22,8 +22,8 @@ import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
 
-case class CertifyFiatEvidence(fundedTrade: FundedTrade,
-                               evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
+case class CertifyPaymentEvidence(fundedTrade: FundedTrade,
+                                  evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
 
   override val id: UUID = fundedTrade.id
   override val btcAmount: Money = fundedTrade.btcAmount
@@ -49,23 +49,23 @@ case class CertifyFiatEvidence(fundedTrade: FundedTrade,
     takenOffer.buyerFundPayoutTxo)
 
   def withArbitratedFiatSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
+    CertifiedPayment(this, arbitratorPayoutTxSigs)
 
   def withArbitratedFiatNotSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
+    CertifiedPayment(this, arbitratorPayoutTxSigs)
 
-  def certifyFiatSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+  def certifyFiatSent(implicit arbitratorWallet: Wallet): CertifiedPayment = {
     val arbitratedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, arbitratedFiatSentPayoutTx.inputSigs)
+    CertifiedPayment(this, arbitratedFiatSentPayoutTx.inputSigs)
   }
 
-  def certifyFiatNotSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+  def certifyFiatNotSent(implicit arbitratorWallet: Wallet): CertifiedPayment = {
     val arbitratorFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, arbitratorFiatNotSentPayoutTx.inputSigs)
+    CertifiedPayment(this, arbitratorFiatNotSentPayoutTx.inputSigs)
   }
 
-  def addCertifyDeliveryRequest(evidence: Option[Array[Byte]]) =
+  def addCertifyPaymentRequest(evidence: Option[Array[Byte]]) =
     this.copy(evidence = this.evidence ++ evidence.toSeq)
 }

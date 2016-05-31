@@ -25,8 +25,8 @@ import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.model.TradeUIModel;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.BTCMoney;
-import org.bytabit.ft.util.FiatDeliveryMethod;
 import org.bytabit.ft.util.FiatMoney;
+import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
@@ -55,7 +55,7 @@ public class TraderTradeUI extends AbstractTradeUI {
     private TextField sellExchRateField;
 
     @FXML
-    private ChoiceBox<FiatDeliveryMethod> sellDeliveryMethodChoiceBox;
+    private ChoiceBox<PaymentMethod> sellPaymentMethodChoiceBox;
 
     @FXML
     private Label sellBondPercentLabel;
@@ -86,7 +86,7 @@ public class TraderTradeUI extends AbstractTradeUI {
         // bind data to controls
 
         sellFiatCurrencyChoiceBox.setItems(tradeFxService.sellCurrencyUnits());
-        sellDeliveryMethodChoiceBox.setItems(tradeFxService.sellDeliveryMethods());
+        sellPaymentMethodChoiceBox.setItems(tradeFxService.sellPaymentMethods());
         sellBondPercentLabel.textProperty().bind(tradeFxService.sellBondPercent());
         sellNotaryFeeLabel.textProperty().bind(tradeFxService.sellArbitratorFee());
 
@@ -111,28 +111,28 @@ public class TraderTradeUI extends AbstractTradeUI {
         sellFiatCurrencyChoiceBox.setOnAction((event) -> {
             CurrencyUnit selectedCurrencyUnit = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
             tradeFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
-            if (tradeFxService.sellDeliveryMethods().size() == 1)
-                sellDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
+            if (tradeFxService.sellPaymentMethods().size() == 1)
+                sellPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
-        sellDeliveryMethodChoiceBox.setConverter(new StringConverter<FiatDeliveryMethod>() {
+        sellPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
-            public String toString(FiatDeliveryMethod dm) {
+            public String toString(PaymentMethod dm) {
                 return dm.name();
             }
 
             @Override
-            public FiatDeliveryMethod fromString(String name) {
+            public PaymentMethod fromString(String name) {
                 // TODO need a better way to handle this
-                return FiatDeliveryMethod.getInstance(name).getOrElse(null);
+                return PaymentMethod.getInstance(name).getOrElse(null);
             }
         });
 
-        sellDeliveryMethodChoiceBox.setOnAction((event) -> {
-            FiatDeliveryMethod selectedDeliveryMethod = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
-            tradeFxService.setSelectedContract(selectedDeliveryMethod);
-            if (tradeFxService.sellDeliveryMethods().size() == 1)
-                sellDeliveryMethodChoiceBox.getSelectionModel().selectFirst();
+        sellPaymentMethodChoiceBox.setOnAction((event) -> {
+            PaymentMethod selectedPaymentMethod = sellPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+            tradeFxService.setSelectedContract(selectedPaymentMethod);
+            if (tradeFxService.sellPaymentMethods().size() == 1)
+                sellPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
         sellFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -148,7 +148,7 @@ public class TraderTradeUI extends AbstractTradeUI {
         CurrencyUnit cu = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
         Money fa = FiatMoney.apply(cu, sellFiatAmtField.getText());
         Money ba = BTCMoney.apply(sellBtcAmtField.getText());
-        FiatDeliveryMethod dm = sellDeliveryMethodChoiceBox.getSelectionModel().getSelectedItem();
+        PaymentMethod dm = sellPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
         tradeFxService.createSellOffer(cu, fa, ba, dm);
     }
 

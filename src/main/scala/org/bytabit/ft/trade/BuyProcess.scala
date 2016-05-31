@@ -22,7 +22,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
-import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, RequestCertifyDelivery, Start, TakeSellOffer}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, RequestCertifyPayment, Start, TakeSellOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
@@ -43,11 +43,11 @@ object BuyProcess {
 
   final case class Start(url: URL, id: UUID) extends Command
 
-  final case class TakeSellOffer(url: URL, id: UUID, fiatDeliveryDetails: String) extends Command
+  final case class TakeSellOffer(url: URL, id: UUID, paymentDetails: String) extends Command
 
   final case class ReceiveFiat(url: URL, id: UUID) extends Command
 
-  final case class RequestCertifyDelivery(url: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
+  final case class RequestCertifyPayment(url: URL, id: UUID, evidence: Option[Array[Byte]] = None) extends Command
 
 }
 
@@ -78,14 +78,14 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
       }
 
     case Event(tso: TakeSellOffer, so: SellOffer) =>
-      tradeWalletMgrRef ! TradeWalletManager.TakeSellOffer(so, tso.fiatDeliveryDetails)
+      tradeWalletMgrRef ! TradeWalletManager.TakeSellOffer(so, tso.paymentDetails)
       stay()
 
-    case Event(WalletManager.SellOfferTaken(to), so: SellOffer) if to.fiatDeliveryDetailsKey.isDefined =>
+    case Event(WalletManager.SellOfferTaken(to), so: SellOffer) if to.paymentDetailsKey.isDefined =>
 
       if (to.amountOk) {
-        val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherFiatDeliveryDetails)
-        val bsk = BuyerSetFiatDeliveryDetailsKey(to.id, to.fiatDeliveryDetailsKey.get)
+        val bto = BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherPaymentDetails)
+        val bsk = BuyerSetPaymentDetailsKey(to.id, to.paymentDetailsKey.get)
         stay applying bto applying bsk andThen {
           case to: TakenOffer =>
             postTradeEvent(to.url, bto, self)
@@ -180,7 +180,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
     case Event(etu: EscrowTransactionUpdated, ot: OpenedTrade) =>
       if (outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime), ot.fiatDeliveryDetailsKey)
+        val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime), ot.paymentDetailsKey)
         goto(FUNDED) applying bfe andThen {
           case usto: FundedTrade =>
             tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Funded Trade $id")
@@ -207,13 +207,13 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
           context.parent ! FiatReceived(ft.id)
       }
 
-    case Event(rcf: RequestCertifyDelivery, ft: FundedTrade) =>
-      postTradeEvent(rcf.url, CertifyDeliveryRequested(ft.id, rcf.evidence), self)
+    case Event(rcf: RequestCertifyPayment, ft: FundedTrade) =>
+      postTradeEvent(rcf.url, CertifyPaymentRequested(ft.id, rcf.evidence), self)
       stay()
 
-    case Event(cdr: CertifyDeliveryRequested, ft: FundedTrade) if cdr.posted.isDefined =>
-      goto(CERT_DELIVERY_REQD) applying cdr andThen {
-        case cfe: CertifyFiatEvidence =>
+    case Event(cdr: CertifyPaymentRequested, ft: FundedTrade) if cdr.posted.isDefined =>
+      goto(CERT_PAYMENT_REQD) applying cdr andThen {
+        case cfe: CertifyPaymentEvidence =>
           context.parent ! cdr
       }
 
@@ -272,36 +272,36 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
 
   // unhappy path
 
-  when(CERT_DELIVERY_REQD) {
+  when(CERT_PAYMENT_REQD) {
 
-    case Event(Start, sto: CertifyFiatEvidence) =>
-      startCertDeliveryReqd(sto)
+    case Event(Start, sto: CertifyPaymentEvidence) =>
+      startCertPaymentReqd(sto)
       stay()
 
-    case Event(fsc: FiatSentCertified, cfe: CertifyFiatEvidence) if fsc.posted.isDefined =>
+    case Event(fsc: FiatSentCertified, cfe: CertifyPaymentEvidence) if fsc.posted.isDefined =>
       goto(FIAT_SENT_CERTD) applying fsc andThen {
-        case cfd: CertifiedFiatDelivery =>
+        case cfd: CertifiedPayment =>
           context.parent ! fsc
       }
 
-    case Event(fnsc: FiatNotSentCertified, cfe: CertifyFiatEvidence) if fnsc.posted.isDefined =>
+    case Event(fnsc: FiatNotSentCertified, cfe: CertifyPaymentEvidence) if fnsc.posted.isDefined =>
       goto(FIAT_NOT_SENT_CERTD) applying fnsc andThen {
-        case cfd: CertifiedFiatDelivery =>
+        case cfd: CertifiedPayment =>
           context.parent ! fnsc
           tradeWalletMgrRef ! TradeWalletManager.BroadcastTx(cfd.arbitratorSignedFiatNotSentPayoutTx, Some(cfd.buyer.escrowPubKey))
       }
 
-    case Event(etu: EscrowTransactionUpdated, cfe: CertifyFiatEvidence) =>
+    case Event(etu: EscrowTransactionUpdated, cfe: CertifyPaymentEvidence) =>
       // ignore tx updates until decision event from arbitrator received
       stay()
   }
 
   when(FIAT_SENT_CERTD) {
-    case Event(Start, cfd: CertifiedFiatDelivery) =>
+    case Event(Start, cfd: CertifiedPayment) =>
       startFiatSentCertd(cfd)
       stay()
 
-    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedPayment) =>
       if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val sf = SellerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
@@ -320,11 +320,11 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
   }
 
   when(FIAT_NOT_SENT_CERTD) {
-    case Event(Start, cfd: CertifiedFiatDelivery) =>
+    case Event(Start, cfd: CertifiedPayment) =>
       startFiatNotSentCertd(cfd)
       stay()
 
-    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedFiatDelivery) =>
+    case Event(etu: EscrowTransactionUpdated, cfd: CertifiedPayment) =>
       if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
@@ -338,7 +338,7 @@ case class BuyProcess(sellOffer: SellOffer, tradeWalletMgrRef: ActorRef, escrowW
       else
         stay()
 
-    case Event(TxBroadcast(tx), cfd: CertifiedFiatDelivery) =>
+    case Event(TxBroadcast(tx), cfd: CertifiedPayment) =>
       escrowWalletMgrRef ! EscrowWalletManager.BroadcastSignedTx(tx)
       stay()
 

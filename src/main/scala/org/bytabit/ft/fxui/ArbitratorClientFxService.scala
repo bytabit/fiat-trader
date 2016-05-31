@@ -51,7 +51,7 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
   val arbitrators: ObservableList[ArbitratorUIModel] = FXCollections.observableArrayList[ArbitratorUIModel]
   val addCurrencyUnits: ObservableList[String] = FXCollections.observableArrayList[String]
-  val addDeliveryMethods: ObservableList[String] = FXCollections.observableArrayList[String]
+  val addPaymentMethods: ObservableList[String] = FXCollections.observableArrayList[String]
 
   // Private Data
   private var contractTemplates: Seq[Contract] = Seq()
@@ -134,7 +134,7 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
       case npe: NullPointerException =>
         None
     }
-    updateDeliveryMethods(contractTemplates, addDeliveryMethods, addCurrencyUnitSelected)
+    updatePaymentMethods(contractTemplates, addPaymentMethods, addCurrencyUnitSelected)
   }
 
   def updateCurrencyUnits(cts: Seq[Contract], acu: ObservableList[String]) = {
@@ -147,15 +147,15 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     acu.sort(Ordering.String)
   }
 
-  def updateDeliveryMethods(cts: Seq[Contract], adm: ObservableList[String], cuf: Option[CurrencyUnit]) = {
-    val existingDms = addDeliveryMethods.toList
+  def updatePaymentMethods(cts: Seq[Contract], adm: ObservableList[String], cuf: Option[CurrencyUnit]) = {
+    val existingDms = addPaymentMethods.toList
     val filteredCts = cuf.map(cu => cts.filter(ct => ct.fiatCurrencyUnit.equals(cu))).getOrElse(cts)
-    val foundDms = filteredCts.map(ct => ct.fiatDeliveryMethod.toString).distinct
+    val foundDms = filteredCts.map(ct => ct.paymentMethod.toString).distinct
     val addDms = foundDms.filterNot(existingDms.contains(_))
     val rmDms = existingDms.filterNot(foundDms.contains(_))
-    addDeliveryMethods.addAll(addDms)
-    addDeliveryMethods.removeAll(rmDms)
-    addDeliveryMethods.sort(Ordering.String)
+    addPaymentMethods.addAll(addDms)
+    addPaymentMethods.removeAll(rmDms)
+    addPaymentMethods.sort(Ordering.String)
   }
 
   def calculateAddExchRate(fiatAmt: String, btcAmt: String): String = {

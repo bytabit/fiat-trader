@@ -30,7 +30,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val id = trade.id
   val contract = trade.contract
   val fiatCurrencyUnit = contract.fiatCurrencyUnit
-  val deliveryMethod = contract.fiatDeliveryMethod
+  val paymentMethod = contract.paymentMethod
   val fiatAmount = trade.fiatAmount
   val btcAmount = trade.btcAmount
   val exchangeRate = fiatAmount.dividedBy(btcAmount.getAmount, Monies.roundingMode)
@@ -44,7 +44,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
   val btcAmountProperty = new SimpleStringProperty(btcAmount.toString)
   val exchangeRateProperty = new SimpleStringProperty(exchangeRate.toString)
-  val deliveryMethodProperty = new SimpleStringProperty(deliveryMethod.name)
+  val paymentMethodProperty = new SimpleStringProperty(paymentMethod.name)
 
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val arbitratorFeeProperty = new SimpleStringProperty(arbitratorFee.toString)
@@ -71,7 +71,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
       case (TRADED, SELLER) => "SOLD"
       case (TRADED, BUYER) => "BOUGHT"
       case (TRADED, ARBITRATOR) => "TRADED"
-      case (CERT_DELIVERY_REQD, _) => "CERT REQD"
+      case (CERT_PAYMENT_REQD, _) => "CERT REQD"
       case (FIAT_SENT_CERTD, _) => "FIAT SENT"
       case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
       case (BUYER_REFUNDED, _) => "*REFUNDED"

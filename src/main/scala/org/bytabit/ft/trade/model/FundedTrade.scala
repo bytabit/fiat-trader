@@ -23,7 +23,7 @@ import org.joda.money.Money
 import org.joda.time.DateTime
 
 case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxUpdateTime: DateTime,
-                       fiatDeliveryDetailsKey: Option[Array[Byte]])
+                       paymentDetailsKey: Option[Array[Byte]])
 
   extends Template with TradeData {
 
@@ -43,18 +43,18 @@ case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxU
 
   val seller = openedTrade.signedTakenOffer.seller
   val buyer = openedTrade.signedTakenOffer.buyer
-  val cipherFiatDeliveryDetails = openedTrade.signedTakenOffer.takenOffer.cipherFiatDeliveryDetails
+  val cipherPaymentDetails = openedTrade.signedTakenOffer.takenOffer.cipherPaymentDetails
 
-  // decrypt delivery details with buyer provided AES key
-  val fiatDeliveryDetails: String = fiatDeliveryDetailsKey.map { k =>
-    new String(cipher(k, seller, buyer).decrypt(cipherFiatDeliveryDetails).map(b => b.toChar))
+  // decrypt payment details with buyer provided AES key
+  val paymentDetails: String = paymentDetailsKey.map { k =>
+    new String(cipher(k, seller, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
   }.getOrElse("UNKNOWN")
 
   def certifyFiatRequested(evidence: Option[Array[Byte]]) =
-    CertifyFiatEvidence(this, evidence.toSeq)
+    CertifyPaymentEvidence(this, evidence.toSeq)
 
-  def withFiatDeliveryDetailsKey(fiatDeliveryDetailsKey: Array[Byte]) =
-    this.copy(fiatDeliveryDetailsKey = Some(fiatDeliveryDetailsKey))
+  def withPaymentDetailsKey(paymentDetailsKey: Array[Byte]) =
+    this.copy(paymentDetailsKey = Some(paymentDetailsKey))
 
   def withPayoutTx(payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime) =
     SettledTrade(this, payoutTxHash, payoutTxUpdateTime)

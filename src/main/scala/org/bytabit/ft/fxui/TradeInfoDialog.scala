@@ -105,10 +105,10 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
   private var btcTxFeeLabel: Label = null
 
   @FXML
-  private var fiatDeliveryMethodLabel: Label = null
+  private var paymentMethodLabel: Label = null
 
   @FXML
-  private var fiatDeliveryDetailsLabel: Label = null
+  private var paymentDetailsLabel: Label = null
 
   @FXML
   private var escrowAddressLabel: Label = null
@@ -160,7 +160,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
     setHeaderText("Trade Information")
 
     btcTxFeeLabel.textProperty().setValue(tm.trade.btcMinerFee.toString)
-    fiatDeliveryMethodLabel.textProperty().setValue(tm.deliveryMethod.name)
+    paymentMethodLabel.textProperty().setValue(tm.paymentMethod.name)
     fiatAmountLabel.textProperty().setValue(tm.fiatAmount.toString)
     exchRateLabel.textProperty().setValue(tm.exchangeRate.toString)
     btcAmountLabel.textProperty().setValue(tm.btcAmount.toString)
@@ -184,7 +184,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
         addEscrowTxHistory(tm.state, ot, None, None, None)
 
       case ft: FundedTrade =>
-        setFiatDeliveryDetails(ft)
+        setPaymentDetails(ft)
         setEscrowAddress(ft.openedTrade.signedTakenOffer.takenOffer)
         addEscrowTxHistory(tm.state, ft.openedTrade, Some(ft), None, None)
 
@@ -194,29 +194,29 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
         setEscrowAddress(st.fundedTrade.openedTrade.signedTakenOffer.takenOffer)
         val ft = st.fundedTrade
         val ot = ft.openedTrade
-        setFiatDeliveryDetails(st.fundedTrade)
+        setPaymentDetails(st.fundedTrade)
         addEscrowTxHistory(tm.state, ot, Some(ft), Some(st), None)
 
       // unhappy path
 
-      case ce: CertifyFiatEvidence =>
+      case ce: CertifyPaymentEvidence =>
         val ft = ce.fundedTrade
-        setFiatDeliveryDetails(ft)
+        setPaymentDetails(ft)
         setEscrowAddress(ft.openedTrade.signedTakenOffer.takenOffer)
         addEscrowTxHistory(tm.state, ft.openedTrade, Some(ft), None, None)
 
-      case cd: CertifiedFiatDelivery =>
-        val ft = cd.certifyFiatEvidence.fundedTrade
-        setFiatDeliveryDetails(ft)
+      case cp: CertifiedPayment =>
+        val ft = cp.certifyPaymentEvidence.fundedTrade
+        setPaymentDetails(ft)
         setEscrowAddress(ft.openedTrade.signedTakenOffer.takenOffer)
         addEscrowTxHistory(tm.state, ft.openedTrade, Some(ft), None, None)
 
       case cs: CertifiedSettledTrade =>
-        val ce = cs.certifiedFiatDelivery.certifyFiatEvidence
+        val ce = cs.certifiedPayment.certifyPaymentEvidence
         setEscrowAddress(ce.fundedTrade.openedTrade.signedTakenOffer.takenOffer)
         val ft = ce.fundedTrade
         val ot = ft.openedTrade
-        setFiatDeliveryDetails(ce.fundedTrade)
+        setPaymentDetails(ce.fundedTrade)
         addEscrowTxHistory(tm.state, ot, Some(ft), None, Some(cs))
 
       case _ =>
@@ -228,8 +228,8 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
     escrowAddressLabel.textProperty().setValue(to.escrowAddress.toString)
   }
 
-  def setFiatDeliveryDetails(ft: FundedTrade) = {
-    fiatDeliveryDetailsLabel.textProperty.setValue(ft.fiatDeliveryDetails)
+  def setPaymentDetails(ft: FundedTrade) = {
+    paymentDetailsLabel.textProperty.setValue(ft.paymentDetails)
   }
 
 
@@ -277,7 +277,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
 
     // certified settle escrow tx details
     cs.foreach { t =>
-      val ft = t.certifiedFiatDelivery.certifyFiatEvidence.fundedTrade
+      val ft = t.certifiedPayment.certifyPaymentEvidence.fundedTrade
       val payoutTo = s match {
         case SELLER_FUNDED => "seller"
         case BUYER_REFUNDED => "buyer"
