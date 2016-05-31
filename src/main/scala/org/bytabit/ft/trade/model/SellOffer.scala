@@ -23,8 +23,9 @@ import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
+import org.joda.time.DateTime
 
-case class SellOffer(offer: Offer, seller: Seller) extends Template with TradeData {
+case class SellOffer(offer: Offer, seller: Seller, posted: Option[DateTime] = None) extends Template with TradeData {
 
   override val id: UUID = offer.id
   override val btcAmount: Money = offer.btcAmount
@@ -54,5 +55,7 @@ case class SellOffer(offer: Offer, seller: Seller) extends Template with TradeDa
 
     withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherFiatDeliveryDetails, Some(fiatDeliveryDetailsKey))
   }
+
+  def withPosted(posted: DateTime) = this.copy(posted = Some(posted))
 
 }

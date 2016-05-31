@@ -108,7 +108,9 @@ trait WalletManager extends FSM[State, Data] {
 
   val netParams = NetworkParameters.fromID(Config.walletNet)
   val btcContext = Context.getOrCreate(netParams)
+
   def kit: WalletAppKit
+
   def kitListener: Listener
 
   def txConfidenceEventListener = new TransactionConfidenceEventListener {
@@ -139,7 +141,7 @@ trait WalletManager extends FSM[State, Data] {
     }
   }
 
-  def startWallet(k: WalletAppKit, dpt: DownloadProgressTracker, autoSave: Boolean = true) = {
+  def startWallet(k: WalletAppKit, dpt: DownloadProgressTracker): WalletAppKit = {
     Context.propagate(btcContext)
     // setup wallet app kit
     k.setAutoSave(true)
@@ -147,11 +149,10 @@ trait WalletManager extends FSM[State, Data] {
     k.setUserAgent(Config.config, Config.version)
     k.setDownloadListener(dpt)
     k.addListener(kitListener, dispatcher)
-    k.setAutoSave(autoSave)
     if (netParams == RegTestParams.get) k.connectToLocalHost()
-
     // start wallet app kit
     k.startAsync()
+    k
   }
 
   def stopWallet(k: WalletAppKit): Unit = {

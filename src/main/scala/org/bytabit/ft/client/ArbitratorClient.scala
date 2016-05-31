@@ -24,6 +24,7 @@ import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
 import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.trade.{ArbitrateProcess, TradeProcess}
+import org.bytabit.ft.util.{BTCMoney, Config}
 import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
 
 import scala.concurrent.duration._
@@ -55,7 +56,7 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
     // create arbitrator
 
     case Event(npe: NoPostedEventsReceived, d) =>
-      tradeWalletMgr ! TradeWalletManager //.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+      tradeWalletMgr ! TradeWalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
       stay()
 
     // new arbitrator created

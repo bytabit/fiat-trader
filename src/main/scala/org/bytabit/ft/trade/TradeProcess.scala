@@ -203,8 +203,11 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
       // common path
 
-      case (SellerCreatedOffer(_, so, Some(_)), offer: Offer) =>
-        so
+      case (SellerCreatedOffer(_, so, Some(p)), offer: Offer) =>
+        so.withPosted(p)
+
+      case (SellerCreatedOffer(_, so, Some(p)), sellOffer: SellOffer) =>
+        so.withPosted(p)
 
       case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), sellOffer: SellOffer) =>
         sellOffer.withBuyer(b, bots, bfpt, cdd)
