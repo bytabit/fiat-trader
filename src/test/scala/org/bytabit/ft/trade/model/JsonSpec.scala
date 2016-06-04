@@ -21,10 +21,10 @@ import java.util.UUID
 
 import org.bitcoinj.core._
 import org.bitcoinj.wallet.Wallet
-import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
+import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
 import org.bytabit.ft.trade.{TradeJsonProtocol, TradeProcess}
 import org.bytabit.ft.util._
-import org.bytabit.ft.wallet.model.{Arbitrator, Seller}
+import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer}
 import org.scalatest._
 import spray.json._
 
@@ -35,7 +35,7 @@ class JsonSpec extends FlatSpec with Matchers with TradeJsonProtocol {
   Context.propagate(new Context(params))
 
   val arbitratorWallet = new Wallet(params)
-  val sellerWallet = new Wallet(params)
+  val btcBuyerWallet = new Wallet(params)
 
   val btcAmt = BTCMoney(5, 0)
   val fiatAmt = FiatMoney(CurrencyUnits.USD, "1500.00")
@@ -51,11 +51,11 @@ class JsonSpec extends FlatSpec with Matchers with TradeJsonProtocol {
 
   val offer = Offer(UUID.randomUUID(), contract, fiatAmt, btcAmt)
 
-  val sellOffer = SellOffer(offer, Seller(offer.coinToOpenEscrow)(sellerWallet))
+  val btcBuyOffer = BtcBuyOffer(offer, BtcBuyer(offer.coinToOpenEscrow)(btcBuyerWallet))
 
   it should "serialize Offer to json" in {
 
-    val evt: TradeProcess.PostedEvent = SellerCreatedOffer(UUID.randomUUID(), sellOffer)
+    val evt: TradeProcess.PostedEvent = BtcBuyerCreatedOffer(UUID.randomUUID(), btcBuyOffer)
 
     val json: String = tradePostedEventJsonFormat.write(evt).toString()
     //System.out.println(json)

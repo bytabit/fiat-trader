@@ -50,7 +50,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val arbitratorFeeProperty = new SimpleStringProperty(arbitratorFee.toString)
 
   val uncommitted = (role, state) match {
-    case (SELLER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BTCBUYER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
     case (BUYER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
 
     case _ => false
@@ -68,16 +68,16 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
       case (FUNDED, _) => "FUNDED"
       case (FIAT_SENT, _) => "FIAT SENT"
       case (FIAT_RCVD, _) => "FIAT RCVD"
-      case (TRADED, SELLER) => "SOLD"
+      case (TRADED, BTCBUYER) => "SOLD"
       case (TRADED, BUYER) => "BOUGHT"
       case (TRADED, ARBITRATOR) => "TRADED"
       case (CERT_PAYMENT_REQD, _) => "CERT REQD"
       case (FIAT_SENT_CERTD, _) => "FIAT SENT"
       case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
       case (BUYER_REFUNDED, _) => "*REFUNDED"
-      case (SELLER_FUNDED, SELLER) => "*SOLD"
-      case (SELLER_FUNDED, BUYER) => "*BOUGHT"
-      case (SELLER_FUNDED, ARBITRATOR) => "*TRADED"
+      case (BTCBUYER_FUNDED, BTCBUYER) => "*SOLD"
+      case (BTCBUYER_FUNDED, BUYER) => "*BOUGHT"
+      case (BTCBUYER_FUNDED, ARBITRATOR) => "*TRADED"
 
       case _ => "ERROR!"
     }

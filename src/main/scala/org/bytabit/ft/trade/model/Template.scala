@@ -18,7 +18,7 @@ package org.bytabit.ft.trade.model
 
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.util.{Monies, PaymentMethod}
-import org.bytabit.ft.wallet.model.{Arbitrator, Buyer, Seller}
+import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer, Buyer}
 import org.joda.money.{CurrencyUnit, Money}
 
 trait Template {
@@ -51,10 +51,10 @@ trait Template {
       "btcBondAmount" -> Some(btcAmount.multipliedBy(bondPercent, Monies.roundingMode).toString)
     )
 
-  def sellerKeyValues(seller: Seller) =
+  def btcBuyerKeyValues(btcBuyer: BtcBuyer) =
     Map[String, Option[String]](
-      "sellerId" -> Some(seller.id.toString),
-      "sellerPayoutAddress" -> Some(seller.payoutAddr.toString)
+      "btcBuyerId" -> Some(btcBuyer.id.toString),
+      "btcBuyerPayoutAddress" -> Some(btcBuyer.payoutAddr.toString)
     )
 
   def buyerKeyValues(buyer: Buyer) =

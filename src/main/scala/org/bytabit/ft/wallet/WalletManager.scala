@@ -74,9 +74,9 @@ object WalletManager {
 
   case class ArbitratorCreated(arbitrator: Arbitrator) extends Event
 
-  case class SellOfferCreated(sellOffer: SellOffer) extends Event
+  case class BtcBuyOfferCreated(btcBuyOffer: BtcBuyOffer) extends Event
 
-  case class SellOfferTaken(takenOffer: TakenOffer) extends Event
+  case class BtcBuyOfferTaken(takenOffer: TakenOffer) extends Event
 
   case class TakenOfferSigned(signedTakenOffer: SignedTakenOffer) extends Event
 

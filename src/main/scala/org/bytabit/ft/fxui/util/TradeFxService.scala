@@ -36,10 +36,10 @@ trait TradeFxService extends ActorFxService {
   // UI Data
 
   val trades: ObservableList[TradeUIModel] = FXCollections.observableArrayList[TradeUIModel]
-  val sellCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
-  val sellPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
-  val sellBondPercent = new SimpleStringProperty()
-  val sellArbitratorFee = new SimpleStringProperty()
+  val btcBuyCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
+  val btcBuyPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
+  val btcBuyBondPercent = new SimpleStringProperty()
+  val btcBuyArbitratorFee = new SimpleStringProperty()
 
   // UI update functions
 
@@ -61,26 +61,26 @@ trait TradeFxService extends ActorFxService {
 
   // common path
 
-  def createOffer(role: Role, sellOffer: SellOffer): Unit = {
-    trades.add(TradeUIModel(role, CREATED, sellOffer))
+  def createOffer(role: Role, btcBuyOffer: BtcBuyOffer): Unit = {
+    trades.add(TradeUIModel(role, CREATED, btcBuyOffer))
   }
 
   def takeOffer(bto: BuyerTookOffer): Unit = {
     findTrade(bto.id) match {
-      case Some(TradeUIModel(r, s, so: SellOffer)) =>
+      case Some(TradeUIModel(r, s, so: BtcBuyOffer)) =>
         updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs,
           bto.buyerFundPayoutTxo, bto.cipherBuyerPaymentDetails)))
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
         log.warning("Can't take offer that was already taken.")
       case _ =>
-        log.error("No sell offer found to take.")
+        log.error("No btc buy offer found to take.")
     }
   }
 
-  def signOffer(sso: SellerSignedOffer): Unit = {
+  def signOffer(sso: BtcBuyerSignedOffer): Unit = {
     findTrade(sso.id) match {
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
-        updateTrade(TradeUIModel(r, s, to), TradeUIModel(r, SIGNED, to.withSellerSigs(sso.openSigs, sso.payoutSigs)))
+        updateTrade(TradeUIModel(r, s, to), TradeUIModel(r, SIGNED, to.withBtcBuyerSigs(sso.openSigs, sso.payoutSigs)))
       case _ =>
         log.error("No taken offer found to sign.")
     }
@@ -166,12 +166,12 @@ trait TradeFxService extends ActorFxService {
     }
   }
 
-  def fundSeller(sf: SellerFunded): Unit = {
+  def fundBtcBuyer(sf: BtcBuyerFunded): Unit = {
     findTrade(sf.id) match {
       case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
-        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, SELLER_FUNDED, cfd.withPayoutTx(sf.txHash, sf.updateTime)))
+        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BTCBUYER_FUNDED, cfd.withPayoutTx(sf.txHash, sf.updateTime)))
       case _ =>
-        log.error("No certified payment found to fund seller.")
+        log.error("No certified payment found to fund btc buyer.")
     }
   }
 

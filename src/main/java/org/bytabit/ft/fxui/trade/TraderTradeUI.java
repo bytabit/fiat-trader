@@ -37,31 +37,31 @@ public class TraderTradeUI extends AbstractTradeUI {
     @FXML
     protected TableColumn<TradeUIModel, String> roleColumn;
 
-    // sell row
+    // btc buy row
 
     @FXML
-    private Button sellButton;
+    private Button btcBuyButton;
 
     @FXML
-    private ChoiceBox<CurrencyUnit> sellFiatCurrencyChoiceBox;
+    private ChoiceBox<CurrencyUnit> btcBuyFiatCurrencyChoiceBox;
 
     @FXML
-    private TextField sellFiatAmtField;
+    private TextField btcBuyFiatAmtField;
 
     @FXML
-    private TextField sellBtcAmtField;
+    private TextField btcBuyBtcAmtField;
 
     @FXML
-    private TextField sellExchRateField;
+    private TextField btcBuyExchRateField;
 
     @FXML
-    private ChoiceBox<PaymentMethod> sellPaymentMethodChoiceBox;
+    private ChoiceBox<PaymentMethod> btcBuyPaymentMethodChoiceBox;
 
     @FXML
-    private Label sellBondPercentLabel;
+    private Label btcBuyBondPercentLabel;
 
     @FXML
-    private Label sellNotaryFeeLabel;
+    private Label btcBuyArbitratorFeeLabel;
 
     public TraderTradeUI(ActorSystem system) {
 
@@ -85,18 +85,18 @@ public class TraderTradeUI extends AbstractTradeUI {
 
         // bind data to controls
 
-        sellFiatCurrencyChoiceBox.setItems(tradeFxService.sellCurrencyUnits());
-        sellPaymentMethodChoiceBox.setItems(tradeFxService.sellPaymentMethods());
-        sellBondPercentLabel.textProperty().bind(tradeFxService.sellBondPercent());
-        sellNotaryFeeLabel.textProperty().bind(tradeFxService.sellArbitratorFee());
+        btcBuyFiatCurrencyChoiceBox.setItems(tradeFxService.btcBuyCurrencyUnits());
+        btcBuyPaymentMethodChoiceBox.setItems(tradeFxService.btcBuyPaymentMethods());
+        btcBuyBondPercentLabel.textProperty().bind(tradeFxService.btcBuyBondPercent());
+        btcBuyArbitratorFeeLabel.textProperty().bind(tradeFxService.btcBuyArbitratorFee());
 
         // handle change events
 
         tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
-            sellButton.disableProperty().setValue(newValue1);
+            btcBuyButton.disableProperty().setValue(newValue1);
         });
 
-        sellFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
+        btcBuyFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
             @Override
             public String toString(CurrencyUnit cu) {
                 return cu.getCode();
@@ -108,14 +108,14 @@ public class TraderTradeUI extends AbstractTradeUI {
             }
         });
 
-        sellFiatCurrencyChoiceBox.setOnAction((event) -> {
-            CurrencyUnit selectedCurrencyUnit = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+        btcBuyFiatCurrencyChoiceBox.setOnAction((event) -> {
+            CurrencyUnit selectedCurrencyUnit = btcBuyFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
             tradeFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
-            if (tradeFxService.sellPaymentMethods().size() == 1)
-                sellPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
+                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
-        sellPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
+        btcBuyPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
             public String toString(PaymentMethod dm) {
                 return dm.name();
@@ -128,33 +128,33 @@ public class TraderTradeUI extends AbstractTradeUI {
             }
         });
 
-        sellPaymentMethodChoiceBox.setOnAction((event) -> {
-            PaymentMethod selectedPaymentMethod = sellPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+        btcBuyPaymentMethodChoiceBox.setOnAction((event) -> {
+            PaymentMethod selectedPaymentMethod = btcBuyPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
             tradeFxService.setSelectedContract(selectedPaymentMethod);
-            if (tradeFxService.sellPaymentMethods().size() == 1)
-                sellPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
+                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
-        sellFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
+        btcBuyFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateAddTradeBtcAmt();
         });
 
-        sellExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
+        btcBuyExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateAddTradeBtcAmt();
         });
     }
 
-    public void handleCreateSellOffer() {
-        CurrencyUnit cu = sellFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-        Money fa = FiatMoney.apply(cu, sellFiatAmtField.getText());
-        Money ba = BTCMoney.apply(sellBtcAmtField.getText());
-        PaymentMethod dm = sellPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
-        tradeFxService.createSellOffer(cu, fa, ba, dm);
+    public void handleCreateBtcBuyOffer() {
+        CurrencyUnit cu = btcBuyFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+        Money fa = FiatMoney.apply(cu, btcBuyFiatAmtField.getText());
+        Money ba = BTCMoney.apply(btcBuyBtcAmtField.getText());
+        PaymentMethod dm = btcBuyPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+        tradeFxService.createBtcBuyOffer(cu, fa, ba, dm);
     }
 
     private void updateAddTradeBtcAmt() {
-        String fiatAmt = sellFiatAmtField.getText();
-        String exchRate = sellExchRateField.getText();
-        sellBtcAmtField.setText(tradeFxService.calculateAddBtcAmt(fiatAmt, exchRate));
+        String fiatAmt = btcBuyFiatAmtField.getText();
+        String exchRate = btcBuyExchRateField.getText();
+        btcBuyBtcAmtField.setText(tradeFxService.calculateAddBtcAmt(fiatAmt, exchRate));
     }
 }

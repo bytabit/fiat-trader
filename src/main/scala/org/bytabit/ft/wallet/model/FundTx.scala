@@ -26,7 +26,7 @@ import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 object FundTx extends TxTools {
 
   // create new unsigned fund tx
-  def apply(coinFundEscrow: Coin, n: Arbitrator, s: Seller, b: Buyer, ddk: Array[Byte]) =
+  def apply(coinFundEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: Buyer, ddk: Array[Byte]) =
 
     new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b), b.fundTxUtxo, b.changeAddr, ddk)
 }

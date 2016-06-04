@@ -25,30 +25,30 @@ import org.bytabit.ft.wallet.model.TxTools.COIN_MINER_FEE
 object OpenTx extends TxTools {
 
   // create new unsigned open tx
-  def apply(coinOpenEscrow: Coin, n: Arbitrator, s: Seller, b: Buyer) =
+  def apply(coinOpenEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: Buyer) =
     new OpenTx(n.netParams, coinOpenEscrow, escrowAddress(n, s, b), s.openTxUtxo, s.changeAddr,
       b.openTxUtxo, b.changeAddr)
 }
 
 case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
-                  escrowAddr: Address, sellerOpenTxUtxo: Seq[TransactionOutput], sellerChangeAddr: Address,
+                  escrowAddr: Address, btcBuyerOpenTxUtxo: Seq[TransactionOutput], btcBuyerChangeAddr: Address,
                   buyerOpenTxUtxo: Seq[TransactionOutput], buyerChangeAddr: Address,
                   inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_PLEDGE)
 
-  val coinSellerInput = Tx.coinTotalOutputValue(sellerOpenTxUtxo)
+  val coinBtcBuyerInput = Tx.coinTotalOutputValue(btcBuyerOpenTxUtxo)
   val coinBuyerInput = Tx.coinTotalOutputValue(buyerOpenTxUtxo)
 
-  val coinSellerChg = coinSellerInput.subtract(coinOpenEscrow)
+  val coinBtcBuyerChg = coinBtcBuyerInput.subtract(coinOpenEscrow)
   val coinBuyerChg = coinBuyerInput.subtract(coinOpenEscrow)
 
   // verify change amounts
-  assert(!coinSellerChg.isNegative && !coinBuyerChg.isNegative)
+  assert(!coinBtcBuyerChg.isNegative && !coinBuyerChg.isNegative)
 
   // add inputs
   buyerOpenTxUtxo.foreach(o => tx.addInput(o))
-  sellerOpenTxUtxo.foreach(o => tx.addInput(o))
+  btcBuyerOpenTxUtxo.foreach(o => tx.addInput(o))
 
   // add input unlock input scripts to tx, use first available signature
   setInputUnlockScriptsP2PKH(inputSigs)
@@ -57,8 +57,8 @@ case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
   tx.addOutput(coinOpenEscrow.multiply(2).subtract(COIN_MINER_FEE), escrowAddr)
 
   // add change outputs
-  if (coinSellerChg.isPositive) {
-    tx.addOutput(coinSellerChg, sellerChangeAddr)
+  if (coinBtcBuyerChg.isPositive) {
+    tx.addOutput(coinBtcBuyerChg, btcBuyerChangeAddr)
   }
   if (coinBuyerChg.isPositive) {
     tx.addOutput(coinBuyerChg, buyerChangeAddr)

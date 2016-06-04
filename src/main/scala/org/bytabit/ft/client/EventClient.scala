@@ -82,7 +82,7 @@ object EventClient {
 
   // trade events
 
-  final case class TradeAdded(url: URL, role: Role, tradeId: UUID, offer: SellOffer, posted: Option[DateTime] = None) extends Event
+  final case class TradeAdded(url: URL, role: Role, tradeId: UUID, offer: BtcBuyOffer, posted: Option[DateTime] = None) extends Event
 
   final case class TradeRemoved(url: URL, tradeId: UUID, posted: Option[DateTime]) extends Event
 
@@ -116,15 +116,15 @@ object EventClient {
   }
 
   case class ActiveServer(latestPosted: DateTime, arbitrator: Arbitrator,
-                          trades: Map[Role, Map[UUID, SellOffer]] = Map()) extends Data {
+                          trades: Map[Role, Map[UUID, BtcBuyOffer]] = Map()) extends Data {
 
     val serverUrl = arbitrator.url
 
     def postedEventReceived(posted: DateTime) =
       this.copy(latestPosted = latest(posted, latestPosted))
 
-    def tradeAdded(role: Role, id: UUID, offer: SellOffer, posted: DateTime) = {
-      val updatedRoleTrades: Map[UUID, SellOffer] = trades.getOrElse(role, Map()) + (id -> offer)
+    def tradeAdded(role: Role, id: UUID, offer: BtcBuyOffer, posted: DateTime) = {
+      val updatedRoleTrades: Map[UUID, BtcBuyOffer] = trades.getOrElse(role, Map()) + (id -> offer)
       this.copy(trades = trades + (role -> updatedRoleTrades),
         latestPosted = latest(posted, latestPosted))
     }
@@ -238,15 +238,15 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
   }
 
   // create trade Processes
-  def createArbitrateTrade(id: UUID, so: SellOffer): ActorRef = {
+  def createArbitrateTrade(id: UUID, so: BtcBuyOffer): ActorRef = {
     context.actorOf(TradeProcess.arbitrateProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
-  def createSellTrade(id: UUID, o: Offer): ActorRef = {
-    context.actorOf(TradeProcess.sellProps(o, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
+  def createBtcBuyTrade(id: UUID, o: Offer): ActorRef = {
+    context.actorOf(TradeProcess.btcBuyProps(o, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
-  def createBuyTrade(id: UUID, so: SellOffer): ActorRef = {
+  def createBuyTrade(id: UUID, so: BtcBuyOffer): ActorRef = {
     context.actorOf(TradeProcess.buyProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 

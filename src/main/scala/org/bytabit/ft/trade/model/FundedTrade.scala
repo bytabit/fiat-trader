@@ -37,17 +37,17 @@ case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxU
 
   val escrowAddress = openedTrade.escrowAddress
 
-  val sellerSignedPayoutTx = openedTrade.signedTakenOffer.sellerSignedPayoutTx
+  val btcBuyerSignedPayoutTx = openedTrade.signedTakenOffer.btcBuyerSignedPayoutTx
 
   val unsignedPayoutTx = openedTrade.signedTakenOffer.unsignedPayoutTx
 
-  val seller = openedTrade.signedTakenOffer.seller
+  val btcBuyer = openedTrade.signedTakenOffer.btcBuyer
   val buyer = openedTrade.signedTakenOffer.buyer
   val cipherPaymentDetails = openedTrade.signedTakenOffer.takenOffer.cipherPaymentDetails
 
   // decrypt payment details with buyer provided AES key
   val paymentDetails: String = paymentDetailsKey.map { k =>
-    new String(cipher(k, seller, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
+    new String(cipher(k, btcBuyer, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
   }.getOrElse("UNKNOWN")
 
   def certifyFiatRequested(evidence: Option[Array[Byte]]) =

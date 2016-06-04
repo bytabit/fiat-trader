@@ -36,10 +36,10 @@ case class CertifiedPayment(certifyPaymentEvidence: CertifyPaymentEvidence,
 
   val escrowAddress = certifyPaymentEvidence.escrowAddress
 
-  val seller = certifyPaymentEvidence.seller
+  val btcBuyer = certifyPaymentEvidence.btcBuyer
   val buyer = certifyPaymentEvidence.buyer
 
-  val sellOffer = certifyPaymentEvidence.sellOffer
+  val btcBuyOffer = certifyPaymentEvidence.btcBuyOffer
   val fullySignedOpenTx = certifyPaymentEvidence.fullySignedOpenTx
 
   def unsignedFiatSentPayoutTx: PayoutTx = certifyPaymentEvidence.unsignedFiatSentPayoutTx

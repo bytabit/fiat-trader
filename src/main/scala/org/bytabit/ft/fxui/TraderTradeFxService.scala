@@ -26,11 +26,11 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeSellOffer}
-import org.bytabit.ft.trade.SellProcess.{AddSellOffer, CancelSellOffer, SendFiat}
+import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeBtcBuyOffer}
+import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, SendFiat}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{BUYER, Contract, Offer, SELLER}
+import org.bytabit.ft.trade.model.{BUYER, Contract, Offer, BTCBUYER}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 import org.joda.money.{CurrencyUnit, Money}
@@ -54,8 +54,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   // Private Data
   private var contracts: Seq[Contract] = Seq()
-  private var sellCurrencyUnitSelected: Option[CurrencyUnit] = None
-  private var sellContractSelected: Option[Contract] = None
+  private var btcBuyCurrencyUnitSelected: Option[CurrencyUnit] = None
+  private var btcBuyContractSelected: Option[Contract] = None
 
   override def start() {
     if (!Config.arbitratorEnabled) {
@@ -82,32 +82,32 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
-      updateCurrencyUnits(contracts, sellCurrencyUnits)
-      updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
+      updateCurrencyUnits(contracts, btcBuyCurrencyUnits)
+      updatePaymentMethods(contracts, btcBuyPaymentMethods, btcBuyCurrencyUnitSelected)
 
     case ContractRemoved(url, id, _) =>
       contracts = contracts.filterNot(_.id == id)
-      updateCurrencyUnits(contracts, sellCurrencyUnits)
-      updateCurrencyUnits(contracts, sellCurrencyUnits)
-      updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
+      updateCurrencyUnits(contracts, btcBuyCurrencyUnits)
+      updateCurrencyUnits(contracts, btcBuyCurrencyUnits)
+      updatePaymentMethods(contracts, btcBuyPaymentMethods, btcBuyCurrencyUnitSelected)
 
     // Handle Trade Events
 
     // common path
 
-    case LocalSellerCreatedOffer(id, sellOffer, p) =>
-      createOffer(SELLER, sellOffer)
+    case LocalBtcBuyerCreatedOffer(id, btcBuyOffer, p) =>
+      createOffer(BTCBUYER, btcBuyOffer)
       updateUncommitted()
 
-    case SellerCreatedOffer(id, sellOffer, p) =>
-      createOffer(BUYER, sellOffer)
+    case BtcBuyerCreatedOffer(id, btcBuyOffer, p) =>
+      createOffer(BUYER, btcBuyOffer)
       updateUncommitted()
 
     case bto: BuyerTookOffer =>
       takeOffer(bto)
       updateUncommitted()
 
-    case sso: SellerSignedOffer =>
+    case sso: BtcBuyerSignedOffer =>
       signOffer(sso)
       updateUncommitted()
 
@@ -133,7 +133,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       payoutEscrow(id, txHash, txUpdated)
       updateUncommitted()
 
-    case SellerReceivedPayout(id, txHash, txUpdated) =>
+    case BtcBuyerReceivedPayout(id, txHash, txUpdated) =>
       payoutEscrow(id, txHash, txUpdated)
       updateUncommitted()
 
@@ -151,8 +151,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       certifyFiatNotSent(fnc)
       updateUncommitted()
 
-    case sf: SellerFunded =>
-      fundSeller(sf)
+    case sf: BtcBuyerFunded =>
+      fundBtcBuyer(sf)
       updateUncommitted()
 
     case rb: BuyerRefunded =>
@@ -161,7 +161,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
     // cancel path
 
-    case SellerCanceledOffer(id, p) =>
+    case BtcBuyerCanceledOffer(id, p) =>
       removeTradeUIModel(id)
       updateUncommitted()
 
@@ -181,24 +181,24 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def setSelectedAddCurrencyUnit(sacu: CurrencyUnit) = {
-    sellCurrencyUnitSelected = Some(sacu)
-    updatePaymentMethods(contracts, sellPaymentMethods, sellCurrencyUnitSelected)
+    btcBuyCurrencyUnitSelected = Some(sacu)
+    updatePaymentMethods(contracts, btcBuyPaymentMethods, btcBuyCurrencyUnitSelected)
   }
 
   def setSelectedContract(dm: PaymentMethod) = {
     // TODO FT-21: allow user to rank arbitrators in arbitrator client screen so UI can auto pick top ranked one
     // for now pick lowest fee contract template that matches currency and payment method
-    sellContractSelected = for {
-      fcu <- sellCurrencyUnitSelected
+    btcBuyContractSelected = for {
+      fcu <- btcBuyCurrencyUnitSelected
       c <- contracts.filter(t => t.fiatCurrencyUnit == fcu && t.paymentMethod == dm)
         .sortWith((x, y) => x.arbitrator.btcArbitratorFee.isGreaterThan(y.arbitrator.btcArbitratorFee)).headOption
     } yield c
 
-    updateSellContract(sellContractSelected)
+    updateBtcBuyContract(btcBuyContractSelected)
   }
 
   def updateCurrencyUnits(cts: Seq[Contract], acu: ObservableList[CurrencyUnit]) = {
-    val existingCus = sellCurrencyUnits.toList
+    val existingCus = btcBuyCurrencyUnits.toList
     val foundCus = cts.map(ct => ct.fiatCurrencyUnit).distinct
     val addCus = foundCus.filterNot(existingCus.contains(_))
     val rmCus = existingCus.filterNot(foundCus.contains(_))
@@ -208,25 +208,25 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   def updatePaymentMethods(cts: Seq[Contract], adm: ObservableList[PaymentMethod], cuf: Option[CurrencyUnit]) = {
-    val existingDms = sellPaymentMethods.toList
+    val existingDms = btcBuyPaymentMethods.toList
     val filteredCts = cuf.map(cu => cts.filter(ct => ct.fiatCurrencyUnit.equals(cu))).getOrElse(cts)
     val foundDms = filteredCts.map(ct => ct.paymentMethod).distinct
     val addDms = foundDms.filterNot(existingDms.contains(_))
     val rmDms = existingDms.filterNot(foundDms.contains)
-    sellPaymentMethods.addAll(addDms)
-    sellPaymentMethods.removeAll(rmDms)
+    btcBuyPaymentMethods.addAll(addDms)
+    btcBuyPaymentMethods.removeAll(rmDms)
   }
 
-  def updateSellContract(contract: Option[Contract]) = {
+  def updateBtcBuyContract(contract: Option[Contract]) = {
     contract.foreach { c =>
-      sellBondPercent.set(f"${c.arbitrator.bondPercent * 100}%f")
-      sellArbitratorFee.set(c.arbitrator.btcArbitratorFee.toString)
+      btcBuyBondPercent.set(f"${c.arbitrator.bondPercent * 100}%f")
+      btcBuyArbitratorFee.set(c.arbitrator.btcArbitratorFee.toString)
     }
   }
 
   def calculateAddBtcAmt(fiatAmt: String, exchRate: String): String = {
     try {
-      sellCurrencyUnitSelected.map { cu =>
+      btcBuyCurrencyUnitSelected.map { cu =>
         val fa: Money = FiatMoney(cu, fiatAmt)
         val er: BigDecimal = BigDecimal(1.0) / BigDecimal(exchRate)
         fa.convertedTo(CurrencyUnits.XBT, er.bigDecimal, Monies.roundingMode).getAmount.toString
@@ -238,7 +238,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def calculateAddFiatAmt(fiatAmt: String): String = {
     try {
-      sellCurrencyUnitSelected.map { cu =>
+      btcBuyCurrencyUnitSelected.map { cu =>
         FiatMoney(cu, fiatAmt).toString
       }.getOrElse("")
     } catch {
@@ -248,7 +248,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def calculateAddBtcAmt(btcAmt: String): String = {
     try {
-      sellCurrencyUnitSelected.map { cu =>
+      btcBuyCurrencyUnitSelected.map { cu =>
         BTCMoney(btcAmt).toString
       }.getOrElse("")
     } catch {
@@ -256,21 +256,21 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     }
   }
 
-  def createSellOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: PaymentMethod) = {
+  def createBtcBuyOffer(fcu: CurrencyUnit, fiatAmount: Money, btcAmount: Money, fdm: PaymentMethod) = {
 
-    sellContractSelected.foreach { c =>
+    btcBuyContractSelected.foreach { c =>
       val o = Offer(UUID.randomUUID(), c, fiatAmount, btcAmount)
-      sendCmd(AddSellOffer(o.url, o.id, o))
+      sendCmd(AddBtcBuyOffer(o.url, o.id, o))
     }
   }
 
-  def cancelSellOffer(url: URL, tradeId: UUID): Unit = {
-    sendCmd(CancelSellOffer(url, tradeId))
+  def cancelBtcBuyOffer(url: URL, tradeId: UUID): Unit = {
+    sendCmd(CancelBtcBuyOffer(url, tradeId))
   }
 
-  def takeSellOffer(url: URL, tradeId: UUID): Unit = {
+  def takeBtcBuyOffer(url: URL, tradeId: UUID): Unit = {
     // TODO FT-10: get payment details from payment details preferences
-    sendCmd(TakeSellOffer(url, tradeId, "Swish: +467334557"))
+    sendCmd(TakeBtcBuyOffer(url, tradeId, "Swish: +467334557"))
   }
 
   def receiveFiat(url: URL, tradeId: UUID): Unit = {
@@ -282,8 +282,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   // TODO FT-91: collect evidence
-  def sellerReqCertPayment(url: URL, tradeId: UUID): Unit = {
-    sendCmd(SellProcess.RequestCertifyPayment(url, tradeId))
+  def btcBuyerReqCertPayment(url: URL, tradeId: UUID): Unit = {
+    sendCmd(BtcBuyProcess.RequestCertifyPayment(url, tradeId))
   }
 
   // TODO FT-91: collect evidence
@@ -295,7 +295,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     tradeUncommitted.set(trades.exists(_.uncommitted))
   }
 
-  def sendCmd(cmd: SellProcess.Command) = sendMsg(clientMgrRef, cmd)
+  def sendCmd(cmd: BtcBuyProcess.Command) = sendMsg(clientMgrRef, cmd)
 
   def sendCmd(cmd: BuyProcess.Command) = sendMsg(clientMgrRef, cmd)
 

@@ -20,7 +20,7 @@ import java.util.UUID
 
 import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.Monies
-import org.bytabit.ft.wallet.model.Seller
+import org.bytabit.ft.wallet.model.BtcBuyer
 import org.joda.money.Money
 
 case class Offer(id: UUID, contract: Contract, fiatAmount: Money, btcAmount: Money)
@@ -32,9 +32,9 @@ case class Offer(id: UUID, contract: Contract, fiatAmount: Money, btcAmount: Mon
   override val text = contract.text
   override val keyValues = contract.keyValues ++ amountKeyValues(fiatAmount, btcAmount, contract.arbitrator.bondPercent)
 
-  def withSeller(seller: Seller) = SellOffer(this, seller)
+  def withBtcBuyer(btcBuyer: BtcBuyer) = BtcBuyOffer(this, btcBuyer)
 
-  def withSeller(implicit sellerWallet: Wallet): SellOffer = {
-    withSeller(Seller(coinToOpenEscrow)(sellerWallet))
+  def withBtcBuyer(implicit btcBuyerWallet: Wallet): BtcBuyOffer = {
+    withBtcBuyer(BtcBuyer(coinToOpenEscrow)(btcBuyerWallet))
   }
 }

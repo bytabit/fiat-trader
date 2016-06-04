@@ -21,7 +21,7 @@ import java.net.URL
 import akka.actor.{ActorRef, Props}
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.EventClient._
-import org.bytabit.ft.trade.TradeProcess.SellerCreatedOffer
+import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
 import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.trade.{ArbitrateProcess, TradeProcess}
 import org.bytabit.ft.util.{BTCMoney, Config}
@@ -152,23 +152,23 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
     // handle posted trade events
 
     // create trade
-    case Event(ReceivePostedTradeEvent(sco: SellerCreatedOffer), ActiveServer(lp, a, at)) =>
-      tradeProcess(sco.id) match {
+    case Event(ReceivePostedTradeEvent(bco: BtcBuyerCreatedOffer), ActiveServer(lp, a, at)) =>
+      tradeProcess(bco.id) match {
         case Some(ref) =>
-          ref ! sco
+          ref ! bco
         case None =>
-          createArbitrateTrade(sco.id, sco.offer) ! sco
+          createArbitrateTrade(bco.id, bco.offer) ! bco
       }
       stay()
 
     // add trade and update latestUpdate
-    case Event(sco: TradeProcess.SellerCreatedOffer, ActiveServer(lp, a, at)) =>
+    case Event(sco: TradeProcess.BtcBuyerCreatedOffer, ActiveServer(lp, a, at)) =>
       stay() applying TradeAdded(a.url, ARBITRATOR, sco.id, sco.offer, sco.posted) andThen { ud =>
         context.parent ! sco
       }
 
     // remove trade and update latestUpdate
-    case Event(sco: TradeProcess.SellerCanceledOffer, ActiveServer(lp, a, at)) =>
+    case Event(sco: TradeProcess.BtcBuyerCanceledOffer, ActiveServer(lp, a, at)) =>
       stay() applying TradeRemoved(a.url, sco.id, sco.posted) andThen { ud =>
         context.parent ! sco
         stopTrade(sco.id)

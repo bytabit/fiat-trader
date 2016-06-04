@@ -28,9 +28,9 @@ object Contract {
     "1. The transactions in this contract are based on contract id $contractId published on the $btcNetworkName Bitcoin network.\n" +
     "2. In case of a dispute the arbitrator at URL $arbitratorURL and id $arbitratorId will decide the outcome. \n" +
     "3. The arbitrator fee will be $btcArbitratorFee and will be paid to BTC address $arbitratorFeeAddress. \n" +
-    "4. Buyer with key ID $buyerId will transfer $btcAmount to the seller.\n" +
-    "5. Seller with key ID $sellerId will transfer $fiatAmount to the buyer.\n" +
-    "6. Seller will transfer the $fiatAmount to the buyer using the $paymentMethod payment method.\n" +
+    "4. Buyer with key ID $buyerId will transfer $btcAmount to the btc buyer.\n" +
+    "5. BTC buyer with key ID $btcBuyerId will transfer $fiatAmount to the buyer.\n" +
+    "6. BTC buyer will transfer the $fiatAmount to the buyer using the $paymentMethod payment method.\n" +
     "7. The buyer payment details are: $buyerPaymentDetails.\n"
 
   def apply(arbitrator: Arbitrator, fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod): Contract =

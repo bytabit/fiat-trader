@@ -25,7 +25,7 @@ import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
 import org.joda.time.DateTime
 
-case class SellOffer(offer: Offer, seller: Seller, posted: Option[DateTime] = None) extends Template with TradeData {
+case class BtcBuyOffer(offer: Offer, btcBuyer: BtcBuyer, posted: Option[DateTime] = None) extends Template with TradeData {
 
   override val id: UUID = offer.id
   override val btcAmount: Money = offer.btcAmount
@@ -33,13 +33,13 @@ case class SellOffer(offer: Offer, seller: Seller, posted: Option[DateTime] = No
   override val contract: Contract = offer.contract
 
   override val text: String = offer.text
-  override val keyValues = offer.keyValues ++ sellerKeyValues(seller)
+  override val keyValues = offer.keyValues ++ btcBuyerKeyValues(btcBuyer)
 
-  val amountOK = Tx.coinTotalOutputValue(seller.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
+  val amountOK = Tx.coinTotalOutputValue(btcBuyer.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
 
-  def unsignedOpenTx(buyer: Buyer): OpenTx = super.unsignedOpenTx(seller, buyer)
+  def unsignedOpenTx(buyer: Buyer): OpenTx = super.unsignedOpenTx(btcBuyer, buyer)
 
-  def unsignedFundTx(buyer: Buyer, paymentDetailsKey: Array[Byte]): FundTx = super.unsignedFundTx(seller, buyer, paymentDetailsKey)
+  def unsignedFundTx(buyer: Buyer, paymentDetailsKey: Array[Byte]): FundTx = super.unsignedFundTx(btcBuyer, buyer, paymentDetailsKey)
 
   def withBuyer(buyer: Buyer, buyerOpenTxSigs: Seq[TxSig], buyerFundPayoutTxo: Seq[TransactionOutput],
                 cipherPaymentDetails: Array[Byte], paymentDetailsKey: Option[Array[Byte]] = None) =
@@ -51,7 +51,7 @@ case class SellOffer(offer: Offer, seller: Seller, posted: Option[DateTime] = No
     val buyerOpenTxSigs: Seq[TxSig] = unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
     val buyerFundPayoutTxo: Seq[TransactionOutput] = unsignedFundTx(buyer, paymentDetailsKey).sign(buyerWallet).outputsToEscrow
     val cipherPaymentDetails: Array[Byte] =
-      cipher(paymentDetailsKey, seller, buyer).encrypt(paymentDetails.map(_.toByte).toArray)
+      cipher(paymentDetailsKey, btcBuyer, buyer).encrypt(paymentDetails.map(_.toByte).toArray)
 
     withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherPaymentDetails, Some(paymentDetailsKey))
   }

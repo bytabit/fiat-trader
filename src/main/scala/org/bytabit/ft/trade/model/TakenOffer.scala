@@ -24,53 +24,53 @@ import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.model._
 import org.joda.money.Money
 
-case class TakenOffer(sellOffer: SellOffer, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
+case class TakenOffer(btcBuyOffer: BtcBuyOffer, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
                       buyerFundPayoutTxo: Seq[TransactionOutput], cipherPaymentDetails: Array[Byte],
                       paymentDetailsKey: Option[Array[Byte]] = None) extends Template with TradeData {
 
-  override val id: UUID = sellOffer.id
-  override val btcAmount: Money = sellOffer.btcAmount
-  override val fiatAmount: Money = sellOffer.fiatAmount
-  override val contract: Contract = sellOffer.contract
+  override val id: UUID = btcBuyOffer.id
+  override val btcAmount: Money = btcBuyOffer.btcAmount
+  override val fiatAmount: Money = btcBuyOffer.fiatAmount
+  override val contract: Contract = btcBuyOffer.contract
 
   // decrypt payment details with buyer provided AES key
   val paymentDetails: Option[String] = paymentDetailsKey.map { k =>
-    new String(cipher(k, sellOffer.seller, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
+    new String(cipher(k, btcBuyOffer.btcBuyer, buyer).decrypt(cipherPaymentDetails).map(b => b.toChar))
   }
 
-  override val text: String = sellOffer.text
-  override val keyValues = sellOffer.keyValues ++ buyerKeyValues(buyer) ++ paymentDetailsKeyValues(paymentDetails)
+  override val text: String = btcBuyOffer.text
+  override val keyValues = btcBuyOffer.keyValues ++ buyerKeyValues(buyer) ++ paymentDetailsKeyValues(paymentDetails)
 
-  val seller = sellOffer.seller
+  val btcBuyer = btcBuyOffer.btcBuyer
 
   val openAmountOK = Tx.coinTotalOutputValue(buyer.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
   val fundAmountOK = Tx.coinTotalOutputValue(buyer.fundTxUtxo).compareTo(BTCMoney.toCoin(btcToFundEscrow)) >= 0
   val amountOk = openAmountOK && fundAmountOK
 
-  def unsignedOpenTx: OpenTx = unsignedOpenTx(sellOffer.seller, buyer)
+  def unsignedOpenTx: OpenTx = unsignedOpenTx(btcBuyOffer.btcBuyer, buyer)
 
   def escrowAddress = unsignedOpenTx.escrowAddr
 
   def buyerSignedOpenTx: OpenTx = unsignedOpenTx.addInputSigs(buyerOpenTxSigs)
 
   def unsignedPayoutTx(fullySignedOpenTx: OpenTx): PayoutTx =
-    super.unsignedPayoutTx(sellOffer.seller, buyer, fullySignedOpenTx, buyerFundPayoutTxo)
+    super.unsignedPayoutTx(btcBuyOffer.btcBuyer, buyer, fullySignedOpenTx, buyerFundPayoutTxo)
 
   def withPaymentDetailsKey(paymentDetailsKey: Array[Byte]) =
     this.copy(paymentDetailsKey = Some(paymentDetailsKey))
 
-  def withSellerSigs(sellerOpenTxSigs: Seq[TxSig], sellerPayoutTxSigs: Seq[TxSig]): SignedTakenOffer = {
-    SignedTakenOffer(this, sellerOpenTxSigs, sellerPayoutTxSigs)
+  def withBtcBuyerSigs(btcBuyerOpenTxSigs: Seq[TxSig], btcBuyerPayoutTxSigs: Seq[TxSig]): SignedTakenOffer = {
+    SignedTakenOffer(this, btcBuyerOpenTxSigs, btcBuyerPayoutTxSigs)
   }
 
-  def sign(implicit sellerWallet: Wallet): SignedTakenOffer = {
+  def sign(implicit btcBuyerWallet: Wallet): SignedTakenOffer = {
 
-    val sellerOpenTxSigs: Seq[TxSig] = unsignedOpenTx.sign(sellerWallet).inputSigs
-    val fullySignedOpenTx = buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
-    val sellerPayoutTxSigs: Seq[TxSig] = unsignedPayoutTx(fullySignedOpenTx)
-      .sign(seller.escrowPubKey)(sellerWallet).inputSigs
+    val btcBuyerOpenTxSigs: Seq[TxSig] = unsignedOpenTx.sign(btcBuyerWallet).inputSigs
+    val fullySignedOpenTx = buyerSignedOpenTx.addInputSigs(btcBuyerOpenTxSigs)
+    val btcBuyerPayoutTxSigs: Seq[TxSig] = unsignedPayoutTx(fullySignedOpenTx)
+      .sign(btcBuyer.escrowPubKey)(btcBuyerWallet).inputSigs
 
-    withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs)
+    withBtcBuyerSigs(btcBuyerOpenTxSigs, btcBuyerPayoutTxSigs)
   }
 
 }

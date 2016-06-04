@@ -23,7 +23,7 @@ import akka.event.Logging
 import akka.persistence.{PersistentActor, SnapshotOffer}
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager._
-import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, SellProcess, TradeProcess}
+import org.bytabit.ft.trade.{ArbitrateProcess, BuyProcess, BuyerProcess$, TradeProcess}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{Config, ListenerUpdater}
 
@@ -143,7 +143,7 @@ class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) e
     case apc: ArbitrateProcess.Command =>
       client(apc.url).foreach(_ ! apc)
 
-    case spc: SellProcess.Command =>
+    case spc: BuyerProcess.Command =>
       client(spc.url).foreach(_ ! spc)
 
     case bpc: BuyProcess.Command =>
