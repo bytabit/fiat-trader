@@ -28,8 +28,8 @@ object Contract {
     "1. The transactions in this contract are based on contract id $contractId published on the $btcNetworkName Bitcoin network.\n" +
     "2. In case of a dispute the arbitrator at URL $arbitratorURL and id $arbitratorId will decide the outcome. \n" +
     "3. The arbitrator fee will be $btcArbitratorFee and will be paid to BTC address $arbitratorFeeAddress. \n" +
-    "4. BTC Seller with key ID $btcSellerId will transfer $btcAmount to the btc buyer.\n" +
-    "5. BTC buyer with key ID $btcBuyerId will transfer $fiatAmount to the seller.\n" +
+    "4. BTC seller with key ID $btcSellerId will transfer $btcAmount to the BTC buyer.\n" +
+    "5. BTC buyer with key ID $btcBuyerId will transfer $fiatAmount to the BTC seller.\n" +
     "6. BTC buyer will transfer the $fiatAmount to the BTC seller using the $paymentMethod payment method.\n" +
     "7. The BTC seller payment details are: $btcSellerPaymentDetails.\n"
 
