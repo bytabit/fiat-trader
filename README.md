@@ -42,7 +42,7 @@ gradle run gradle run -Dconfig.file=./src/test/resources/server1-regtest.conf
 ### Run Event Server with IntelliJ using Custom Configs 
 
 ```
-Main class: org.bytabit.fxui.FiatTrader
+Main class: org.bytabit.ft.server.Main
 VM options: -Dconfig.file=./src/test/resources/server1-regtest.conf
 Working directory: <project directory>
 Use classpath of module: fiat-trader

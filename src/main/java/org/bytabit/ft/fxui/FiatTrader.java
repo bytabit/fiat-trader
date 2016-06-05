@@ -40,6 +40,7 @@ import scala.concurrent.ExecutionContext;
 import scala.concurrent.duration.Duration;
 import scala.util.Try;
 
+import java.io.File;
 import java.io.IOException;
 
 public class FiatTrader extends Application {
@@ -57,6 +58,9 @@ public class FiatTrader extends Application {
         }
         if (Config.createDir(Config.journalDir()).isFailure()) {
             log.error("Unable to create journal directory.");
+        }
+        if (Config.createDir(new File(Config.walletDir())).isFailure()) {
+            log.error("Unable to create wallet directory.");
         }
 
         // Create actors
