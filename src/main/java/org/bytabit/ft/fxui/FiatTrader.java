@@ -18,27 +18,20 @@ package org.bytabit.ft.fxui;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.Terminated;
-import akka.dispatch.OnComplete;
 import akka.event.LoggingAdapter;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.bytabit.ft.client.ClientManager;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
-import org.bytabit.ft.fxui.util.JavaFXExecutionContext;
 import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.wallet.EscrowWalletManager;
 import org.bytabit.ft.wallet.TradeWalletManager;
-import scala.Function1;
 import scala.concurrent.Await;
-import scala.concurrent.ExecutionContext;
 import scala.concurrent.duration.Duration;
-import scala.util.Try;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +71,7 @@ public class FiatTrader extends Application {
         loader.setControllerFactory(new ActorControllerFactory(system));
 
         Parent mainUI = loader.load();
-        Scene scene = new Scene(mainUI, 1150, 350);
+        Scene scene = new Scene(mainUI, 940, 350);
         String title = "Fiat Trader (" + Config.walletNet() + ", v" + Config.version();
         if (Config.config().length() > 0 && !Config.config().equals("default")) title += ", " + Config.config();
         title += ")";

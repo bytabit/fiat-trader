@@ -38,7 +38,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val arbitratorFee = contract.arbitrator.btcArbitratorFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
-  val roleProperty = new SimpleStringProperty(role.toString)
+  val roleProperty = new SimpleStringProperty(role.identifier)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
@@ -68,15 +68,15 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
       case (FUNDED, _) => "FUNDED"
       case (FIAT_SENT, _) => "FIAT SENT"
       case (FIAT_RCVD, _) => "FIAT RCVD"
-      case (TRADED, BTCBUYER) => "SOLD"
-      case (TRADED, BTCSELLER) => "BOUGHT"
+      case (TRADED, BTCBUYER) => "BOUGHT"
+      case (TRADED, BTCSELLER) => "SOLD"
       case (TRADED, ARBITRATOR) => "TRADED"
       case (CERT_PAYMENT_REQD, _) => "CERT REQD"
       case (FIAT_SENT_CERTD, _) => "FIAT SENT"
       case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
       case (BTCSELLER_REFUNDED, _) => "*REFUNDED"
-      case (BTCBUYER_FUNDED, BTCBUYER) => "*SOLD"
-      case (BTCBUYER_FUNDED, BTCSELLER) => "*BOUGHT"
+      case (BTCBUYER_FUNDED, BTCBUYER) => "*BOUGHT"
+      case (BTCBUYER_FUNDED, BTCSELLER) => "*SOLD"
       case (BTCBUYER_FUNDED, ARBITRATOR) => "*TRADED"
 
       case _ => "ERROR!"

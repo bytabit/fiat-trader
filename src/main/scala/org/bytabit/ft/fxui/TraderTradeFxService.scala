@@ -26,13 +26,13 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, SendFiat}
+import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{BTCSELLER, Contract, Offer, BTCBUYER}
+import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util._
+import org.bytabit.ft.util.{BTCMoney, _}
 import org.joda.money.{CurrencyUnit, Money}
 
 import scala.collection.JavaConversions._
@@ -232,7 +232,19 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
         fa.convertedTo(CurrencyUnits.XBT, er.bigDecimal, Monies.roundingMode).getAmount.toString
       }.getOrElse("")
     } catch {
-      case x: Exception => "ERROR"
+      case x: Exception => ""
+    }
+  }
+
+  def calculateAddFiatAmt(btcAmt: String, exchRate: String): String = {
+    try {
+      btcBuyCurrencyUnitSelected.map { cu =>
+        val ba: Money = BTCMoney(btcAmt)
+        val er: BigDecimal = BigDecimal(1.0) / BigDecimal(exchRate)
+        ba.convertedTo(cu, er.bigDecimal, Monies.roundingMode).getAmount.toString
+      }.getOrElse("")
+    } catch {
+      case x: Exception => ""
     }
   }
 

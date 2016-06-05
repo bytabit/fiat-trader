@@ -266,7 +266,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       stay()
 
     case e =>
-      log.error(s"Received event after being traded: $e")
+      log.warning(s"Received event after being traded: ${e.getClass}")
       stay()
   }
 
@@ -315,7 +315,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
         stay()
 
     case e =>
-      log.error(s"Received event after fiat sent certified by arbitrator: $e")
+      log.warning(s"Received event after fiat sent certified by arbitrator: ${e.getClass}")
       stay()
   }
 
@@ -343,7 +343,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       stay()
 
     case e =>
-      log.error(s"Received event after fiat not sent certified by arbitrator: $e")
+      log.warning(s"Received event after fiat not sent certified by arbitrator: ${e.getClass}")
       stay()
   }
 
@@ -357,7 +357,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       stay()
 
     case e =>
-      log.error(s"Received event after btc buyer funded: $e")
+      log.warning(s"Received event after btc buyer funded: ${e.getClass}")
       stay()
   }
 
@@ -371,7 +371,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       stay()
 
     case e =>
-      log.error(s"Received event after seller refunded: $e")
+      log.warning(s"Received event after seller refunded: ${e.getClass}")
       stay()
   }
 
@@ -379,7 +379,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
 
   when(CANCELED) {
     case e =>
-      log.error(s"Received event after being canceled: $e")
+      log.warning(s"Received event after being canceled: ${e.getClass}")
       stay()
   }
 

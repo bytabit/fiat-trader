@@ -18,7 +18,10 @@ package org.bytabit.ft.fxui.trade;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
 import org.bytabit.ft.fxui.TraderTradeFxService;
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
@@ -43,6 +46,9 @@ public class TraderTradeUI extends AbstractTradeUI {
     private Button btcBuyButton;
 
     @FXML
+    private Button btcSellButton;
+
+    @FXML
     private ChoiceBox<CurrencyUnit> btcBuyFiatCurrencyChoiceBox;
 
     @FXML
@@ -56,12 +62,6 @@ public class TraderTradeUI extends AbstractTradeUI {
 
     @FXML
     private ChoiceBox<PaymentMethod> btcBuyPaymentMethodChoiceBox;
-
-    @FXML
-    private Label btcBuyBondPercentLabel;
-
-    @FXML
-    private Label btcBuyArbitratorFeeLabel;
 
     public TraderTradeUI(ActorSystem system) {
 
@@ -87,8 +87,6 @@ public class TraderTradeUI extends AbstractTradeUI {
 
         btcBuyFiatCurrencyChoiceBox.setItems(tradeFxService.btcBuyCurrencyUnits());
         btcBuyPaymentMethodChoiceBox.setItems(tradeFxService.btcBuyPaymentMethods());
-        btcBuyBondPercentLabel.textProperty().bind(tradeFxService.btcBuyBondPercent());
-        btcBuyArbitratorFeeLabel.textProperty().bind(tradeFxService.btcBuyArbitratorFee());
 
         // handle change events
 
@@ -136,11 +134,14 @@ public class TraderTradeUI extends AbstractTradeUI {
         });
 
         btcBuyFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
-            updateAddTradeBtcAmt();
+            String exchRate = btcBuyExchRateField.getText();
+            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !exchRate.isEmpty()) updateAddTradeBtcAmt();
         });
 
         btcBuyExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
-            updateAddTradeBtcAmt();
+            String fiatAmt = btcBuyFiatAmtField.getText();
+            //String btcAmt = btcBuyBtcAmtField.getText();
+            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !fiatAmt.isEmpty()) updateAddTradeBtcAmt();
         });
     }
 
@@ -152,9 +153,15 @@ public class TraderTradeUI extends AbstractTradeUI {
         tradeFxService.createBtcBuyOffer(cu, fa, ba, dm);
     }
 
+    public void handleCreateBtcSellOffer() {
+        // TODO
+    }
+
     private void updateAddTradeBtcAmt() {
         String fiatAmt = btcBuyFiatAmtField.getText();
         String exchRate = btcBuyExchRateField.getText();
-        btcBuyBtcAmtField.setText(tradeFxService.calculateAddBtcAmt(fiatAmt, exchRate));
+        if (!fiatAmt.isEmpty() && !exchRate.isEmpty()) {
+            btcBuyBtcAmtField.setText(tradeFxService.calculateAddBtcAmt(fiatAmt, exchRate));
+        }
     }
 }

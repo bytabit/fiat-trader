@@ -233,7 +233,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
         stay()
 
     case e =>
-      log.error(s"Received event after fiat sent certified by arbitrator: $e")
+      log.warning(s"Received event after fiat sent certified by arbitrator: ${e.getClass}")
       stay()
   }
 
@@ -267,7 +267,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case e =>
-      log.error(s"Received event after btc buyer funded: $e")
+      log.warning(s"Received event after btc buyer funded: ${e.getClass}")
       stay()
   }
 
@@ -281,7 +281,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case e =>
-      log.error(s"Received event after seller refunded: $e")
+      log.warning(s"Received event after seller refunded: ${e.getClass}")
       stay()
   }
 
@@ -289,7 +289,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
 
   when(CANCELED) {
     case e =>
-      log.error(s"Received event after being canceled: $e")
+      log.warning(s"Received event after being canceled: ${e.getClass}")
       stay()
   }
 

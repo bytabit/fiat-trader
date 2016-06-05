@@ -61,12 +61,6 @@ public abstract class AbstractTradeUI implements ActorController {
     @FXML
     protected TableColumn<TradeUIModel, String> paymentMethodColumn;
 
-    @FXML
-    protected TableColumn<TradeUIModel, String> bondPercentColumn;
-
-    @FXML
-    protected TableColumn<TradeUIModel, String> arbitratorFeeColumn;
-
     final private ActorSystem sys;
 
     public AbstractTradeUI(ActorSystem system) {
@@ -107,9 +101,6 @@ public abstract class AbstractTradeUI implements ActorController {
         btcAmountColumn.setCellValueFactory(t -> t.getValue().btcAmountProperty());
         exchRateColumn.setCellValueFactory(t -> t.getValue().exchangeRateProperty());
         paymentMethodColumn.setCellValueFactory(t -> t.getValue().paymentMethodProperty());
-        bondPercentColumn.setCellValueFactory(t -> t.getValue().bondPercentProperty());
-        arbitratorFeeColumn.setCellValueFactory(t -> t.getValue().arbitratorFeeProperty());
-
     }
 
 }
