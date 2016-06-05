@@ -37,7 +37,7 @@ case class CertifiedPayment(certifyPaymentEvidence: CertifyPaymentEvidence,
   val escrowAddress = certifyPaymentEvidence.escrowAddress
 
   val btcBuyer = certifyPaymentEvidence.btcBuyer
-  val buyer = certifyPaymentEvidence.buyer
+  val btcSeller = certifyPaymentEvidence.btcSeller
 
   val btcBuyOffer = certifyPaymentEvidence.btcBuyOffer
   val fullySignedOpenTx = certifyPaymentEvidence.fullySignedOpenTx

@@ -39,14 +39,14 @@ case class CertifyPaymentEvidence(fundedTrade: FundedTrade,
   val takenOffer = signedTakenOffer.takenOffer
   val btcBuyOffer = takenOffer.btcBuyOffer
   val btcBuyer = signedTakenOffer.btcBuyer
-  val buyer = signedTakenOffer.buyer
+  val btcSeller = signedTakenOffer.btcSeller
   val fullySignedOpenTx = signedTakenOffer.fullySignedOpenTx
 
-  def unsignedFiatSentPayoutTx: PayoutTx = super.unsignedFiatSentPayoutTx(btcBuyer, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
+  def unsignedFiatSentPayoutTx: PayoutTx = super.unsignedFiatSentPayoutTx(btcBuyer, btcSeller, fullySignedOpenTx,
+    takenOffer.btcSellerFundPayoutTxo)
 
-  def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(btcBuyer, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
+  def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(btcBuyer, btcSeller, fullySignedOpenTx,
+    takenOffer.btcSellerFundPayoutTxo)
 
   def withArbitratedFiatSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
     CertifiedPayment(this, arbitratorPayoutTxSigs)

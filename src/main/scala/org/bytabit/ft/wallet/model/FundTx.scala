@@ -26,31 +26,31 @@ import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 object FundTx extends TxTools {
 
   // create new unsigned fund tx
-  def apply(coinFundEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: Buyer, ddk: Array[Byte]) =
+  def apply(coinFundEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: BtcSeller, ddk: Array[Byte]) =
 
     new FundTx(n.netParams, coinFundEscrow, escrowAddress(n, s, b), b.fundTxUtxo, b.changeAddr, ddk)
 }
 
 case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
                   escrowAddr: Address,
-                  buyerFundTxUtxo: Seq[TransactionOutput], buyerChangeAddr: Address,
-                  buyerPaymentDetailsKey: Array[Byte],
+                  btcSellerFundTxUtxo: Seq[TransactionOutput], btcSellerChangeAddr: Address,
+                  btcSellerPaymentDetailsKey: Array[Byte],
                   inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_PLEDGE)
 
-  val coinBuyerInput = Tx.coinTotalOutputValue(buyerFundTxUtxo)
+  val coinBtcSellerInput = Tx.coinTotalOutputValue(btcSellerFundTxUtxo)
 
-  val coinBuyerChg = coinBuyerInput.subtract(coinFundEscrow)
+  val coinBtcSellerChg = coinBtcSellerInput.subtract(coinFundEscrow)
 
   // verify change amounts
-  assert(!coinBuyerChg.isNegative)
+  assert(!coinBtcSellerChg.isNegative)
 
   // verify payment details key lengths
-  assert(buyerPaymentDetailsKey.length == AESCipher.AES_KEY_LEN)
+  assert(btcSellerPaymentDetailsKey.length == AESCipher.AES_KEY_LEN)
 
   // add inputs
-  buyerFundTxUtxo.foreach(o => tx.addInput(o))
+  btcSellerFundTxUtxo.foreach(o => tx.addInput(o))
 
   // add input unlock input scripts to tx, use first available signature
   setInputUnlockScriptsP2PKH(inputSigs)
@@ -59,12 +59,12 @@ case class FundTx(netParams: NetworkParameters, coinFundEscrow: Coin,
   tx.addOutput(coinFundEscrow.subtract(COIN_MINER_FEE).subtract(COIN_OP_RETURN_FEE), escrowAddr)
 
   // add change output
-  if (coinBuyerChg.isPositive) {
-    tx.addOutput(coinBuyerChg, buyerChangeAddr)
+  if (coinBtcSellerChg.isPositive) {
+    tx.addOutput(coinBtcSellerChg, btcSellerChangeAddr)
   }
 
   // add encrypted aes key to decrypt payment details
-  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(buyerPaymentDetailsKey).build())
+  tx.addOutput(COIN_OP_RETURN_FEE, new ScriptBuilder().op(ScriptOpCodes.OP_RETURN).data(btcSellerPaymentDetailsKey).build())
 
   assert(verified)
 

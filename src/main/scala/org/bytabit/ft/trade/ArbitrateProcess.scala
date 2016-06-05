@@ -76,7 +76,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       }
 
     // someone took the offer
-    case Event(bto: BuyerTookOffer, so: BtcBuyOffer) if bto.posted.isDefined =>
+    case Event(bto: BtcSellerTookOffer, so: BtcBuyOffer) if bto.posted.isDefined =>
       goto(TAKEN) applying bto andThen { to =>
         context.parent ! bto
       }
@@ -104,7 +104,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
       if (outputsEqual(sto.unsignedOpenTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val boe = BuyerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        val boe = BtcSellerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(OPENED) applying boe andThen {
           case ot: OpenedTrade =>
             context.parent ! boe
@@ -122,7 +122,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
     case Event(etu: WalletManager.EscrowTransactionUpdated, ot: OpenedTrade) =>
       if (outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val bfe = BuyerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime),
+        val bfe = BtcSellerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime),
           paymentDetailsKey(etu.tx))
         goto(FUNDED) applying bfe andThen {
           case ft: FundedTrade =>
@@ -147,7 +147,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
     case Event(etu: WalletManager.EscrowTransactionUpdated, ft: FundedTrade) =>
       if (outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val brp = BuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        val brp = BtcSellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
             context.parent ! brp
@@ -245,8 +245,8 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedPayment) =>
       if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val br = BuyerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
-        goto(BUYER_REFUNDED) applying br andThen {
+        val br = BtcSellerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(BTCSELLER_REFUNDED) applying br andThen {
           case cst: CertifiedSettledTrade =>
             tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Arbitrate Fee Trade $id")
             context.parent ! br
@@ -259,7 +259,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
 
   when(BTCBUYER_FUNDED) {
     case Event(Start, cst: CertifiedSettledTrade) =>
-      startBuyerFunded(cst)
+      startBtcBuyerFunded(cst)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cst: CertifiedSettledTrade) =>
@@ -271,17 +271,17 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
   }
 
-  when(BUYER_REFUNDED) {
+  when(BTCSELLER_REFUNDED) {
     case Event(Start, cst: CertifiedSettledTrade) =>
-      startBuyerRefunded(cst)
+      startBtcSellerRefunded(cst)
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cst: CertifiedSettledTrade) =>
-      //log.warning("Received escrow tx update after buyer refunded")
+      //log.warning("Received escrow tx update after seller refunded")
       stay()
 
     case e =>
-      log.error(s"Received event after buyer refunded: $e")
+      log.error(s"Received event after seller refunded: $e")
       stay()
   }
 

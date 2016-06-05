@@ -65,11 +65,11 @@ trait TradeFxService extends ActorFxService {
     trades.add(TradeUIModel(role, CREATED, btcBuyOffer))
   }
 
-  def takeOffer(bto: BuyerTookOffer): Unit = {
-    findTrade(bto.id) match {
+  def takeOffer(sto: BtcSellerTookOffer): Unit = {
+    findTrade(sto.id) match {
       case Some(TradeUIModel(r, s, so: BtcBuyOffer)) =>
-        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs,
-          bto.buyerFundPayoutTxo, bto.cipherBuyerPaymentDetails)))
+        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBtcSeller(sto.btcSeller, sto.btcSellerOpenTxSigs,
+          sto.btcSellerFundPayoutTxo, sto.cipherBtcSellerPaymentDetails)))
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
         log.warning("Can't take offer that was already taken.")
       case _ =>
@@ -86,7 +86,7 @@ trait TradeFxService extends ActorFxService {
     }
   }
 
-  def openEscrow(boe: BuyerOpenedEscrow): Unit = {
+  def openEscrow(boe: BtcSellerOpenedEscrow): Unit = {
     findTrade(boe.id) match {
       case Some(TradeUIModel(r, s, sto: SignedTakenOffer)) =>
         updateTrade(TradeUIModel(r, s, sto), TradeUIModel(r, OPENED, sto.withOpenTx(boe.txHash, boe.updateTime)))
@@ -95,7 +95,7 @@ trait TradeFxService extends ActorFxService {
     }
   }
 
-  def fundEscrow(bfe: BuyerFundedEscrow): Unit = {
+  def fundEscrow(bfe: BtcSellerFundedEscrow): Unit = {
     findTrade(bfe.id) match {
       case Some(TradeUIModel(r, s, ot: OpenedTrade)) =>
         updateTrade(TradeUIModel(r, s, ot), TradeUIModel(r, FUNDED, ot.withFundTx(bfe.txHash, bfe.updateTime,
@@ -175,12 +175,12 @@ trait TradeFxService extends ActorFxService {
     }
   }
 
-  def refundBuyer(br: BuyerRefunded): Unit = {
+  def refundBtcSeller(br: BtcSellerRefunded): Unit = {
     findTrade(br.id) match {
       case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
-        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BUYER_REFUNDED, cfd.withPayoutTx(br.txHash, br.updateTime)))
+        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BTCSELLER_REFUNDED, cfd.withPayoutTx(br.txHash, br.updateTime)))
       case _ =>
-        log.error("No certified non-payment found to refund buyer.")
+        log.error("No certified non-payment found to refund seller.")
     }
   }
 

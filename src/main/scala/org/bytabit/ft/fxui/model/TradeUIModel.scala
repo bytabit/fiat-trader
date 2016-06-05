@@ -51,7 +51,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
 
   val uncommitted = (role, state) match {
     case (BTCBUYER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
-    case (BUYER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BTCSELLER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
 
     case _ => false
   }
@@ -69,14 +69,14 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
       case (FIAT_SENT, _) => "FIAT SENT"
       case (FIAT_RCVD, _) => "FIAT RCVD"
       case (TRADED, BTCBUYER) => "SOLD"
-      case (TRADED, BUYER) => "BOUGHT"
+      case (TRADED, BTCSELLER) => "BOUGHT"
       case (TRADED, ARBITRATOR) => "TRADED"
       case (CERT_PAYMENT_REQD, _) => "CERT REQD"
       case (FIAT_SENT_CERTD, _) => "FIAT SENT"
       case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
-      case (BUYER_REFUNDED, _) => "*REFUNDED"
+      case (BTCSELLER_REFUNDED, _) => "*REFUNDED"
       case (BTCBUYER_FUNDED, BTCBUYER) => "*SOLD"
-      case (BTCBUYER_FUNDED, BUYER) => "*BOUGHT"
+      case (BTCBUYER_FUNDED, BTCSELLER) => "*BOUGHT"
       case (BTCBUYER_FUNDED, ARBITRATOR) => "*TRADED"
 
       case _ => "ERROR!"

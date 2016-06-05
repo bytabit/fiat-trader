@@ -26,11 +26,11 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.util.TradeFxService
-import org.bytabit.ft.trade.BuyProcess.{ReceiveFiat, TakeBtcBuyOffer}
+import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, SendFiat}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{BUYER, Contract, Offer, BTCBUYER}
+import org.bytabit.ft.trade.model.{BTCSELLER, Contract, Offer, BTCBUYER}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 import org.joda.money.{CurrencyUnit, Money}
@@ -49,7 +49,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   val clientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
   lazy val clientMgrRef = clientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  // TODO FT-99: disable buy buttons if current trade is uncommitted
+  // TODO FT-99: disable btc buy and sell buttons if current trade is uncommitted
   val tradeUncommitted: SimpleBooleanProperty = new SimpleBooleanProperty(false)
 
   // Private Data
@@ -100,10 +100,10 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       updateUncommitted()
 
     case BtcBuyerCreatedOffer(id, btcBuyOffer, p) =>
-      createOffer(BUYER, btcBuyOffer)
+      createOffer(BTCSELLER, btcBuyOffer)
       updateUncommitted()
 
-    case bto: BuyerTookOffer =>
+    case bto: BtcSellerTookOffer =>
       takeOffer(bto)
       updateUncommitted()
 
@@ -111,11 +111,11 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       signOffer(sso)
       updateUncommitted()
 
-    case boe: BuyerOpenedEscrow =>
+    case boe: BtcSellerOpenedEscrow =>
       openEscrow(boe)
       updateUncommitted()
 
-    case bfe: BuyerFundedEscrow =>
+    case bfe: BtcSellerFundedEscrow =>
       fundEscrow(bfe)
       updateUncommitted()
 
@@ -129,7 +129,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       fiatReceived(fr)
       updateUncommitted()
 
-    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+    case BtcSellerReceivedPayout(id, txHash, txUpdated) =>
       payoutEscrow(id, txHash, txUpdated)
       updateUncommitted()
 
@@ -155,8 +155,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       fundBtcBuyer(sf)
       updateUncommitted()
 
-    case rb: BuyerRefunded =>
-      refundBuyer(rb)
+    case rb: BtcSellerRefunded =>
+      refundBtcSeller(rb)
       updateUncommitted()
 
     // cancel path
@@ -287,8 +287,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   }
 
   // TODO FT-91: collect evidence
-  def buyerReqCertPayment(url: URL, tradeId: UUID): Unit = {
-    sendCmd(BuyProcess.RequestCertifyPayment(url, tradeId))
+  def btcSellerReqCertPayment(url: URL, tradeId: UUID): Unit = {
+    sendCmd(BtcSellProcess.RequestCertifyPayment(url, tradeId))
   }
 
   def updateUncommitted() = {
@@ -297,7 +297,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def sendCmd(cmd: BtcBuyProcess.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: BuyProcess.Command) = sendMsg(clientMgrRef, cmd)
+  def sendCmd(cmd: BtcSellProcess.Command) = sendMsg(clientMgrRef, cmd)
 
   def sendCmd(cmd: ListenerUpdater.Command) = {
     sendMsg(clientMgrRef, cmd)

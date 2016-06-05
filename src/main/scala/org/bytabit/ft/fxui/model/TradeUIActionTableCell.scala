@@ -26,7 +26,7 @@ import org.bytabit.ft.fxui.TraderTradeFxService
 import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.{CREATED, FIAT_SENT, FUNDED}
-import org.bytabit.ft.trade.model.{BUYER, Role, BTCBUYER}
+import org.bytabit.ft.trade.model.{BTCSELLER, Role, BTCBUYER}
 
 import scala.collection.JavaConversions._
 
@@ -52,7 +52,7 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       tradefxService.cancelBtcBuyOffer(item.url, item.id)
     })
 
-    val buyButton = actionButton("BUY", event => {
+    val btcSellButton = actionButton("SELL", event => {
       tradefxService.takeBtcBuyOffer(item.url, item.id)
     })
 
@@ -69,8 +69,8 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
       tradefxService.btcBuyerReqCertPayment(item.url, item.id)
     })
 
-    val buyerReqCertPaymentButton = actionButton("REQ CERT", event => {
-      tradefxService.buyerReqCertPayment(item.url, item.id)
+    val btcSellerReqCertPaymentButton = actionButton("REQ CERT", event => {
+      tradefxService.btcSellerReqCertPayment(item.url, item.id)
     })
 
     // valid action buttons for item
@@ -78,10 +78,10 @@ class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends Actio
     val buttons: Seq[Button] = (item, empty) match {
       case (TradeOriginState(u, i, BTCBUYER, CREATED), false) =>
         Seq(cancelButton)
-      case (TradeOriginState(u, i, BUYER, CREATED), false) =>
-        Seq(buyButton)
-      case (TradeOriginState(u, i, BUYER, FUNDED), false) =>
-        Seq(fiatReceivedButton, buyerReqCertPaymentButton)
+      case (TradeOriginState(u, i, BTCSELLER, CREATED), false) =>
+        Seq(btcSellButton)
+      case (TradeOriginState(u, i, BTCSELLER, FUNDED), false) =>
+        Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
       case (TradeOriginState(u, i, BTCBUYER, FUNDED), false) =>
         Seq(fiatSentButton)
       case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT), false) =>

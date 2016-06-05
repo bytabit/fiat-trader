@@ -48,21 +48,21 @@ class ContractSpec extends FlatSpec with Matchers {
     val btcNetworkName = contract.btcNetworkName
     val arbitratorFeeAddress = contract.arbitrator.feesAddr.toString
     val NONE = "<NONE>"
-    val buyerId = NONE
+    val btcSellerId = NONE
     val btcAmount = NONE
     val btcBuyerId = NONE
     val fiatAmount = NONE
-    val buyerPaymentDetails = NONE
+    val btcSellerPaymentDetails = NONE
 
     contract.toString should equal(
       "Fiat Trade Contract \n\n" +
         s"1. The transactions in this contract are based on contract id $contractId published on the $btcNetworkName Bitcoin network.\n" +
         s"2. In case of a dispute the arbitrator at URL $arbitratorURL and id $arbitratorId will decide the outcome. \n" +
         s"3. The arbitrator fee will be $btcArbitratorFee and will be paid to BTC address $arbitratorFeeAddress. \n" +
-        "4. Buyer with key ID $buyerId will transfer $btcAmount to the BTC buyer.\n" +
-        "5. BTC buyer with key ID $btcBuyerId will transfer $fiatAmount to the buyer.\n" +
-        "6. BTC buyer will transfer the $fiatAmount to the buyer using the" + s" $paymentMethod payment method.\n" +
-        "7. The buyer payment details are: $buyerPaymentDetails.\n")
+        "4. BTC seller with key ID $btcSellerId will transfer $btcAmount to the BTC buyer.\n" +
+        "5. BTC buyer with key ID $btcBuyerId will transfer $fiatAmount to the BTC seller.\n" +
+        "6. BTC buyer will transfer the $fiatAmount to the BTC buyer using the" + s" $paymentMethod payment method.\n" +
+        "7. The BTC seller payment details are: $btcSellerPaymentDetails.\n")
   }
 
   "ContractTemplate" should "have the same id given the same text and parameters" in {

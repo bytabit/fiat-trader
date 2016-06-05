@@ -17,7 +17,7 @@
 package org.bytabit.ft.trade
 
 import org.bytabit.ft.trade.TradeProcess._
-import org.bytabit.ft.trade.model.{Contract, BtcBuyOffer, SignedTakenOffer, TakenOffer, _}
+import org.bytabit.ft.trade.model.{BtcBuyOffer, Contract, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
 import spray.json._
@@ -30,7 +30,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def btcBuyOfferJsonFormat = jsonFormat(BtcBuyOffer.apply, "offer", "btcBuyer", "posted")
 
-  implicit def takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "btcBuyOffer", "buyer", "buyerOpenTxSigs", "buyerFundPayoutTxo", "cipherPaymentDetails", "paymentDetailsKey")
+  implicit def takenOfferJsonFormat = jsonFormat(TakenOffer.apply, "btcBuyOffer", "btcSeller", "btcSellerOpenTxSigs", "btcSellerFundPayoutTxo", "cipherPaymentDetails", "paymentDetailsKey")
 
   implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "btcBuyerOpenTxSigs", "btcBuyerPayoutTxSigs")
 
@@ -72,40 +72,40 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def btcBuyerCanceledOfferJsonFormat = jsonFormat2(BtcBuyerCanceledOffer)
 
-  implicit def buyerSetPaymentDetailsKeyJsonFormat = jsonFormat2(BuyerSetPaymentDetailsKey)
+  implicit def btcSellerSetPaymentDetailsKeyJsonFormat = jsonFormat2(BtcSellerSetPaymentDetailsKey)
 
-  implicit def buyerTookOfferJsonFormat = jsonFormat6(BuyerTookOffer)
+  implicit def btcSellerTookOfferJsonFormat = jsonFormat6(BtcSellerTookOffer)
 
   implicit def btcBuyerSignedOfferJsonFormat = jsonFormat5(BtcBuyerSignedOffer)
 
-  implicit def buyerOpenedEscrowJsonFormat = jsonFormat3(BuyerOpenedEscrow)
+  implicit def btcSellerOpenedEscrowJsonFormat = jsonFormat3(BtcSellerOpenedEscrow)
 
-  implicit def buyerFundedEscrowJsonFormat = jsonFormat4(BuyerFundedEscrow)
+  implicit def btcSellerFundedEscrowJsonFormat = jsonFormat4(BtcSellerFundedEscrow)
 
   implicit def btcBuyerReceivedPayoutJsonFormat = jsonFormat3(BtcBuyerReceivedPayout)
 
-  implicit def buyerReceivedPayoutJsonFormat = jsonFormat3(BuyerReceivedPayout)
+  implicit def btcSellerReceivedPayoutJsonFormat = jsonFormat3(BtcSellerReceivedPayout)
 
   implicit def btcBuyerFundedJsonFormat = jsonFormat3(BtcBuyerFunded)
 
-  implicit def buyerRefundedJsonFormat = jsonFormat3(BuyerRefunded)
+  implicit def btcSellerRefundedJsonFormat = jsonFormat3(BtcSellerRefunded)
 
   val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeProcess.Event]] = Map(
     simpleName(classOf[LocalBtcBuyerCreatedOffer]) -> localBtcBuyerCreatedOfferJsonFormat,
     simpleName(classOf[BtcBuyerCreatedOffer]) -> btcBuyerCreatedOfferJsonFormat,
     simpleName(classOf[BtcBuyerCanceledOffer]) -> btcBuyerCanceledOfferJsonFormat,
-    simpleName(classOf[BuyerTookOffer]) -> buyerTookOfferJsonFormat,
-    simpleName(classOf[BuyerSetPaymentDetailsKey]) -> buyerSetPaymentDetailsKeyJsonFormat,
+    simpleName(classOf[BtcSellerTookOffer]) -> btcSellerTookOfferJsonFormat,
+    simpleName(classOf[BtcSellerSetPaymentDetailsKey]) -> btcSellerSetPaymentDetailsKeyJsonFormat,
     simpleName(classOf[BtcBuyerAddedToOffer]) -> btcBuyerAddedToOfferJsonFormat,
     simpleName(classOf[BtcBuyerSignedOffer]) -> btcBuyerSignedOfferJsonFormat,
-    simpleName(classOf[BuyerOpenedEscrow]) -> buyerOpenedEscrowJsonFormat,
-    simpleName(classOf[BuyerFundedEscrow]) -> buyerFundedEscrowJsonFormat,
+    simpleName(classOf[BtcSellerOpenedEscrow]) -> btcSellerOpenedEscrowJsonFormat,
+    simpleName(classOf[BtcSellerFundedEscrow]) -> btcSellerFundedEscrowJsonFormat,
     simpleName(classOf[CertifyPaymentRequested]) -> certifyPaymentRequestedJsonFormat,
     simpleName(classOf[FiatSentCertified]) -> fiatSentCertifiedJsonFormat,
     simpleName(classOf[FiatNotSentCertified]) -> fiatNotSentCertifiedJsonFormat,
-    simpleName(classOf[BuyerReceivedPayout]) -> buyerReceivedPayoutJsonFormat,
+    simpleName(classOf[BtcSellerReceivedPayout]) -> btcSellerReceivedPayoutJsonFormat,
     simpleName(classOf[BtcBuyerReceivedPayout]) -> btcBuyerReceivedPayoutJsonFormat,
-    simpleName(classOf[BuyerRefunded]) -> buyerRefundedJsonFormat,
+    simpleName(classOf[BtcSellerRefunded]) -> btcSellerRefundedJsonFormat,
     simpleName(classOf[BtcBuyerFunded]) -> btcBuyerFundedJsonFormat
   )
 
@@ -128,7 +128,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
     def read(value: JsValue) = value match {
       case JsString(ARBITRATOR.identifier) => ARBITRATOR
       case JsString(BTCBUYER.identifier) => BTCBUYER
-      case JsString(BUYER.identifier) => BUYER
+      case JsString(BTCSELLER.identifier) => BTCSELLER
 
       case _ => deserializationError("TradeStatus expected")
     }

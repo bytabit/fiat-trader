@@ -37,7 +37,7 @@ public class TraderTradeUI extends AbstractTradeUI {
     @FXML
     protected TableColumn<TradeUIModel, String> roleColumn;
 
-    // btc buy row
+    // trade row
 
     @FXML
     private Button btcBuyButton;

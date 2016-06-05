@@ -45,7 +45,7 @@ object TradeProcess {
 
   def btcBuyProps(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new BtcBuyProcess(offer, tradeWalletMgrRef, escrowWalletMgrRef))
 
-  def buyProps(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new BuyProcess(btcBuyOffer, tradeWalletMgrRef, escrowWalletMgrRef))
+  def btcSellProps(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new BtcSellProcess(btcBuyOffer, tradeWalletMgrRef, escrowWalletMgrRef))
 
   def arbitrateProps(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) = Props(new ArbitrateProcess(btcBuyOffer, tradeWalletMgrRef, escrowWalletMgrRef))
 
@@ -70,25 +70,25 @@ object TradeProcess {
   final case class BtcBuyerCanceledOffer(id: UUID,
                                          posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BuyerSetPaymentDetailsKey(id: UUID, paymentDetailsKey: Array[Byte]) extends Event
+  final case class BtcSellerSetPaymentDetailsKey(id: UUID, paymentDetailsKey: Array[Byte]) extends Event
 
-  final case class BuyerTookOffer(id: UUID, buyer: Buyer, buyerOpenTxSigs: Seq[TxSig],
-                                  buyerFundPayoutTxo: Seq[TransactionOutput],
-                                  cipherBuyerPaymentDetails: Array[Byte],
-                                  posted: Option[DateTime] = None) extends PostedEvent
+  final case class BtcSellerTookOffer(id: UUID, btcSeller: BtcSeller, btcSellerOpenTxSigs: Seq[TxSig],
+                                      btcSellerFundPayoutTxo: Seq[TransactionOutput],
+                                      cipherBtcSellerPaymentDetails: Array[Byte],
+                                      posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BtcBuyerSignedOffer(id: UUID, buyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
+  final case class BtcBuyerSignedOffer(id: UUID, btcBuyerId: Address, openSigs: Seq[TxSig], payoutSigs: Seq[TxSig],
                                        posted: Option[DateTime] = None) extends PostedEvent
 
-  final case class BuyerOpenedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
+  final case class BtcSellerOpenedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class BuyerFundedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime, paymentDetailsKey: Option[Array[Byte]]) extends Event
+  final case class BtcSellerFundedEscrow(id: UUID, txHash: Sha256Hash, updateTime: DateTime, paymentDetailsKey: Option[Array[Byte]]) extends Event
 
   final case class FiatReceived(id: UUID) extends Event
 
   final case class FiatSent(id: UUID) extends Event
 
-  final case class BuyerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
+  final case class BtcSellerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
   final case class BtcBuyerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
@@ -103,7 +103,7 @@ object TradeProcess {
 
   final case class BtcBuyerFunded(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
-  final case class BuyerRefunded(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
+  final case class BtcSellerRefunded(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
   // states
 
@@ -165,8 +165,8 @@ object TradeProcess {
     override val identifier: String = "BTCBUYER FUNDED"
   }
 
-  case object BUYER_REFUNDED extends State {
-    override val identifier: String = "BUYER REFUNDED"
+  case object BTCSELLER_REFUNDED extends State {
+    override val identifier: String = "BTCSELLER REFUNDED"
   }
 
 }
@@ -209,27 +209,27 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
       case (BtcBuyerCreatedOffer(_, so, Some(p)), btcBuyOffer: BtcBuyOffer) =>
         so.withPosted(p)
 
-      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), btcBuyOffer: BtcBuyOffer) =>
-        btcBuyOffer.withBuyer(b, bots, bfpt, cdd)
+      case (BtcSellerTookOffer(_, b, bots, bfpt, cdd, _), btcBuyOffer: BtcBuyOffer) =>
+        btcBuyOffer.withBtcSeller(b, bots, bfpt, cdd)
 
-      case (BuyerTookOffer(_, b, bots, bfpt, cdd, _), takenOffer: TakenOffer) =>
+      case (BtcSellerTookOffer(_, b, bots, bfpt, cdd, _), takenOffer: TakenOffer) =>
         takenOffer
 
       case (BtcBuyerSignedOffer(_, bi, sots, spts, Some(_)), takenOffer: TakenOffer) =>
         takenOffer.withBtcBuyerSigs(sots, spts)
 
-      case (BuyerSetPaymentDetailsKey(_, dk), takenOffer: TakenOffer) =>
+      case (BtcSellerSetPaymentDetailsKey(_, dk), takenOffer: TakenOffer) =>
         takenOffer.withPaymentDetailsKey(dk)
 
-      case (BuyerOpenedEscrow(_, th, ut), signedTakenOffer: SignedTakenOffer) =>
+      case (BtcSellerOpenedEscrow(_, th, ut), signedTakenOffer: SignedTakenOffer) =>
         signedTakenOffer.withOpenTx(th, ut)
 
-      case (BuyerFundedEscrow(_, th, ut, fdk), openedTrade: OpenedTrade) =>
+      case (BtcSellerFundedEscrow(_, th, ut, fdk), openedTrade: OpenedTrade) =>
         openedTrade.withFundTx(th, ut, fdk)
 
       // happy path
 
-      case (BuyerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
+      case (BtcSellerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
         fundedTrade.withPayoutTx(txh, ut)
 
       case (BtcBuyerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
@@ -253,7 +253,7 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
       case (BtcBuyerFunded(_, th, ut), certifiedPayment: CertifiedPayment) =>
         certifiedPayment.withPayoutTx(th, ut)
 
-      case (BuyerRefunded(_, th, ut), certifiedPayment: CertifiedPayment) =>
+      case (BtcSellerRefunded(_, th, ut), certifiedPayment: CertifiedPayment) =>
         certifiedPayment.withPayoutTx(th, ut)
 
       // cancel path
@@ -277,22 +277,22 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
   def startTaken(to: TakenOffer): Unit = {
     startCreate(to.btcBuyOffer)
-    context.parent ! BuyerTookOffer(to.id, to.buyer, to.buyerOpenTxSigs, to.buyerFundPayoutTxo, to.cipherPaymentDetails)
+    context.parent ! BtcSellerTookOffer(to.id, to.btcSeller, to.btcSellerOpenTxSigs, to.btcSellerFundPayoutTxo, to.cipherPaymentDetails)
   }
 
   def startSigned(sto: SignedTakenOffer): Unit = {
     startTaken(sto.takenOffer)
-    context.parent ! BtcBuyerSignedOffer(sto.id, sto.buyer.id, sto.btcBuyerOpenTxSigs, sto.btcBuyerPayoutTxSigs)
+    context.parent ! BtcBuyerSignedOffer(sto.id, sto.btcSeller.id, sto.btcBuyerOpenTxSigs, sto.btcBuyerPayoutTxSigs)
   }
 
   def startOpened(ot: OpenedTrade): Unit = {
     startSigned(ot.signedTakenOffer)
-    context.parent ! BuyerOpenedEscrow(ot.id, ot.openTxHash, ot.openTxUpdateTime)
+    context.parent ! BtcSellerOpenedEscrow(ot.id, ot.openTxHash, ot.openTxUpdateTime)
   }
 
   def startFunded(ft: FundedTrade): Unit = {
     startOpened(ft.openedTrade)
-    context.parent ! BuyerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.paymentDetailsKey)
+    context.parent ! BtcSellerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.paymentDetailsKey)
   }
 
   // happy path
@@ -302,9 +302,9 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
     context.parent ! BtcBuyerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
   }
 
-  def startBuyerTraded(st: SettledTrade): Unit = {
+  def startBtcSellerTraded(st: SettledTrade): Unit = {
     startFunded(st.fundedTrade)
-    context.parent ! BuyerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
+    context.parent ! BtcSellerReceivedPayout(st.id, st.payoutTxHash, st.payoutTxUpdateTime)
   }
 
   // unhappy path
@@ -324,14 +324,14 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
     context.parent ! FiatNotSentCertified(cfd.id, cfd.arbitratorPayoutTxSigs)
   }
 
-  def startBuyerFunded(cst: CertifiedSettledTrade): Unit = {
+  def startBtcBuyerFunded(cst: CertifiedSettledTrade): Unit = {
     startFiatSentCertd(cst.certifiedPayment)
     context.parent ! BtcBuyerFunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
   }
 
-  def startBuyerRefunded(cst: CertifiedSettledTrade): Unit = {
+  def startBtcSellerRefunded(cst: CertifiedSettledTrade): Unit = {
     startFiatNotSentCertd(cst.certifiedPayment)
-    context.parent ! BuyerRefunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
+    context.parent ! BtcSellerRefunded(cst.id, cst.payoutTxHash, cst.payoutTxUpdateTime)
   }
 
   // http flow

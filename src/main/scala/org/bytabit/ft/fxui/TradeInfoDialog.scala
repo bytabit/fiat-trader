@@ -32,7 +32,7 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.fxui.util.ActorController
 import org.bytabit.ft.trade.TradeProcess
-import org.bytabit.ft.trade.TradeProcess.{BUYER_REFUNDED, BTCBUYER_FUNDED}
+import org.bytabit.ft.trade.TradeProcess.{BTCBUYER_FUNDED, BTCSELLER_REFUNDED}
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{BTCMoney, Monies}
 import org.joda.money.Money
@@ -243,22 +243,22 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
     // open escrow tx details
     val btcBuyerOpenDetail = EscrowDetailUIModel(ot.openTxUpdateTime, "BTC buyer bond, arbitrator and TX fees to open escrow",
       ot.openTxHash, Some(ot.btcToOpenEscrow), None, ot.btcToOpenEscrow)
-    val buyerOpenDetail = btcBuyerOpenDetail.deposit("Buyer bond, arbitrator and TX fees to open escrow", ot.btcToOpenEscrow)
-    val minerFee1Detail = buyerOpenDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
+    val btcSellerOpenDetail = btcBuyerOpenDetail.deposit("BTC seller bond, arbitrator and TX fees to open escrow", ot.btcToOpenEscrow)
+    val minerFee1Detail = btcSellerOpenDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
     balance = minerFee1Detail.balance
 
     escrowDetails.add(btcBuyerOpenDetail)
-    escrowDetails.add(buyerOpenDetail)
+    escrowDetails.add(btcSellerOpenDetail)
     escrowDetails.add(minerFee1Detail)
 
     // fund escrow tx details
     ft.foreach { t =>
-      val buyerFundDetail = EscrowDetailUIModel(t.fundTxUpdateTime, "Buyer trade amount and TX fee to fund escrow",
+      val btcSellerFundDetail = EscrowDetailUIModel(t.fundTxUpdateTime, "BTC seller trade amount and TX fee to fund escrow",
         t.fundTxHash, Some(t.btcToFundEscrow), None, t.btcToFundEscrow.plus(balance))
-      val minerFee2Detail = buyerFundDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
+      val minerFee2Detail = btcSellerFundDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
       balance = minerFee2Detail.balance
 
-      escrowDetails.add(buyerFundDetail)
+      escrowDetails.add(btcSellerFundDetail)
       escrowDetails.add(minerFee2Detail)
     }
 
@@ -266,12 +266,12 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
     st.foreach { t =>
       val ft = t.fundedTrade
       val btcBuyerPayoutDetail = EscrowDetailUIModel(t.payoutTxUpdateTime, "Trade amount, bond and arbitrator fee to BTC Buyer",
-        t.payoutTxHash, None, Some(ft.btcBuyer2Payout), balance.minus(ft.btcBuyer2Payout))
-      val buyerPayoutDetail = btcBuyerPayoutDetail.withdraw("Bond and arbitrator fee to buyer", ft.btcBuyerPayout)
-      val minerFee3Detail = buyerPayoutDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
+        t.payoutTxHash, None, Some(ft.btcBuyerPayout), balance.minus(ft.btcBuyerPayout))
+      val btcSellerPayoutDetail = btcBuyerPayoutDetail.withdraw("Bond and arbitrator fee to BTC seller", ft.btcSellerPayout)
+      val minerFee3Detail = btcSellerPayoutDetail.withdraw(TX_FEE_MSG, ot.btcMinerFee)
       balance = minerFee3Detail.balance
       escrowDetails.add(btcBuyerPayoutDetail)
-      escrowDetails.add(buyerPayoutDetail)
+      escrowDetails.add(btcSellerPayoutDetail)
       escrowDetails.add(minerFee3Detail)
     }
 
@@ -280,7 +280,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
       val ft = t.certifiedPayment.certifyPaymentEvidence.fundedTrade
       val payoutTo = s match {
         case BTCBUYER_FUNDED => "btc buyer"
-        case BUYER_REFUNDED => "buyer"
+        case BTCSELLER_REFUNDED => "btc seller"
         case _ => "ERROR"
       }
       val traderPayoutDetail = EscrowDetailUIModel(t.payoutTxUpdateTime, s"Trade amount, arbitrator fee, both bonds to $payoutTo",

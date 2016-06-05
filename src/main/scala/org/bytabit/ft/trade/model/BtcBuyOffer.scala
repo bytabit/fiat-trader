@@ -37,23 +37,23 @@ case class BtcBuyOffer(offer: Offer, btcBuyer: BtcBuyer, posted: Option[DateTime
 
   val amountOK = Tx.coinTotalOutputValue(btcBuyer.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
 
-  def unsignedOpenTx(buyer: Buyer): OpenTx = super.unsignedOpenTx(btcBuyer, buyer)
+  def unsignedOpenTx(btcSeller: BtcSeller): OpenTx = super.unsignedOpenTx(btcBuyer, btcSeller)
 
-  def unsignedFundTx(buyer: Buyer, paymentDetailsKey: Array[Byte]): FundTx = super.unsignedFundTx(btcBuyer, buyer, paymentDetailsKey)
+  def unsignedFundTx(btcSeller: BtcSeller, paymentDetailsKey: Array[Byte]): FundTx = super.unsignedFundTx(btcBuyer, btcSeller, paymentDetailsKey)
 
-  def withBuyer(buyer: Buyer, buyerOpenTxSigs: Seq[TxSig], buyerFundPayoutTxo: Seq[TransactionOutput],
-                cipherPaymentDetails: Array[Byte], paymentDetailsKey: Option[Array[Byte]] = None) =
-    TakenOffer(this, buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherPaymentDetails, paymentDetailsKey)
+  def withBtcSeller(btcSeller: BtcSeller, btcSellerOpenTxSigs: Seq[TxSig], btcSellerFundPayoutTxo: Seq[TransactionOutput],
+                    cipherPaymentDetails: Array[Byte], paymentDetailsKey: Option[Array[Byte]] = None) =
+    TakenOffer(this, btcSeller, btcSellerOpenTxSigs, btcSellerFundPayoutTxo, cipherPaymentDetails, paymentDetailsKey)
 
-  def take(paymentDetails: String, paymentDetailsKey: Array[Byte])(implicit buyerWallet: Wallet): TakenOffer = {
+  def take(paymentDetails: String, paymentDetailsKey: Array[Byte])(implicit btcSellerWallet: Wallet): TakenOffer = {
 
-    val buyer = Buyer(coinToOpenEscrow, coinToFundEscrow)(buyerWallet)
-    val buyerOpenTxSigs: Seq[TxSig] = unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
-    val buyerFundPayoutTxo: Seq[TransactionOutput] = unsignedFundTx(buyer, paymentDetailsKey).sign(buyerWallet).outputsToEscrow
+    val btcSeller = BtcSeller(coinToOpenEscrow, coinToFundEscrow)(btcSellerWallet)
+    val btcSellerOpenTxSigs: Seq[TxSig] = unsignedOpenTx(btcSeller).sign(btcSellerWallet).inputSigs
+    val btcSellerFundPayoutTxo: Seq[TransactionOutput] = unsignedFundTx(btcSeller, paymentDetailsKey).sign(btcSellerWallet).outputsToEscrow
     val cipherPaymentDetails: Array[Byte] =
-      cipher(paymentDetailsKey, btcBuyer, buyer).encrypt(paymentDetails.map(_.toByte).toArray)
+      cipher(paymentDetailsKey, btcBuyer, btcSeller).encrypt(paymentDetails.map(_.toByte).toArray)
 
-    withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherPaymentDetails, Some(paymentDetailsKey))
+    withBtcSeller(btcSeller, btcSellerOpenTxSigs, btcSellerFundPayoutTxo, cipherPaymentDetails, Some(paymentDetailsKey))
   }
 
   def withPosted(posted: DateTime) = this.copy(posted = Some(posted))

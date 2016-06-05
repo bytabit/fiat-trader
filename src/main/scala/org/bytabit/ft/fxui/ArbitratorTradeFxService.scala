@@ -77,24 +77,24 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
     case BtcBuyerCreatedOffer(id, btcBuyOffer, p) =>
       createOffer(ARBITRATOR, btcBuyOffer)
 
-    case bto: BuyerTookOffer =>
-      takeOffer(bto)
+    case sto: BtcSellerTookOffer =>
+      takeOffer(sto)
 
-    case sso: BtcBuyerSignedOffer =>
-      signOffer(sso)
+    case bso: BtcBuyerSignedOffer =>
+      signOffer(bso)
 
-    case boe: BuyerOpenedEscrow =>
-      openEscrow(boe)
+    case soe: BtcSellerOpenedEscrow =>
+      openEscrow(soe)
 
-    case bfe: BuyerFundedEscrow =>
-      fundEscrow(bfe)
+    case sfe: BtcSellerFundedEscrow =>
+      fundEscrow(sfe)
 
     // happy path
 
     case fr: FiatReceived =>
       fiatReceived(fr)
 
-    case BuyerReceivedPayout(id, txHash, txUpdated) =>
+    case BtcSellerReceivedPayout(id, txHash, txUpdated) =>
       payoutEscrow(id, txHash, txUpdated)
 
     case BtcBuyerReceivedPayout(id, txHash, txUpdated) =>
@@ -111,11 +111,11 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
     case fnc: FiatNotSentCertified =>
       certifyFiatNotSent(fnc)
 
-    case sf: BtcBuyerFunded =>
-      fundBtcBuyer(sf)
+    case bf: BtcBuyerFunded =>
+      fundBtcBuyer(bf)
 
-    case rb: BuyerRefunded =>
-      refundBuyer(rb)
+    case sr: BtcSellerRefunded =>
+      refundBtcSeller(sr)
 
     // cancel path
 

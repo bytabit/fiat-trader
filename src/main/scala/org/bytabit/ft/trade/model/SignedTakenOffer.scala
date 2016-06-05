@@ -36,15 +36,15 @@ case class SignedTakenOffer(takenOffer: TakenOffer, btcBuyerOpenTxSigs: Seq[TxSi
   override val keyValues: Map[String, Option[String]] = takenOffer.keyValues
 
   val btcBuyer = takenOffer.btcBuyer
-  val buyer = takenOffer.buyer
+  val btcSeller = takenOffer.btcSeller
 
   def unsignedOpenTx: OpenTx = takenOffer.unsignedOpenTx
 
   def escrowAddress = takenOffer.escrowAddress
 
-  def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(btcBuyerOpenTxSigs)
+  def fullySignedOpenTx: OpenTx = takenOffer.btcSellerSignedOpenTx.addInputSigs(btcBuyerOpenTxSigs)
 
-  def unsignedFundTx: FundTx = super.unsignedFundTx(btcBuyer, buyer,
+  def unsignedFundTx: FundTx = super.unsignedFundTx(btcBuyer, btcSeller,
     takenOffer.paymentDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
 
   def unsignedPayoutTx: PayoutTx = takenOffer.unsignedPayoutTx(fullySignedOpenTx)

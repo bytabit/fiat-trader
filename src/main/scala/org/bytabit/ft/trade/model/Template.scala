@@ -18,7 +18,7 @@ package org.bytabit.ft.trade.model
 
 import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.util.{Monies, PaymentMethod}
-import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer, Buyer}
+import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer, BtcSeller, BtcSeller$}
 import org.joda.money.{CurrencyUnit, Money}
 
 trait Template {
@@ -57,15 +57,15 @@ trait Template {
       "btcBuyerPayoutAddress" -> Some(btcBuyer.payoutAddr.toString)
     )
 
-  def buyerKeyValues(buyer: Buyer) =
+  def btcSellerKeyValues(btcSeller: BtcSeller) =
     Map[String, Option[String]](
-      "buyerId" -> Some(buyer.id.toString),
-      "buyerPayoutAddress" -> Some(buyer.payoutAddr.toString)
+      "btcSellerId" -> Some(btcSeller.id.toString),
+      "btcSellerPayoutAddress" -> Some(btcSeller.payoutAddr.toString)
     )
 
   def paymentDetailsKeyValues(paymentDetails: Option[String]) =
     Map[String, Option[String]](
-      "buyerPaymentDetails" -> paymentDetails
+      "btcSellerPaymentDetails" -> paymentDetails
     )
 
   def replaceAll(text: String, keyValues: Map[String, Option[String]]): String = {

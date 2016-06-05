@@ -25,29 +25,29 @@ import org.bytabit.ft.wallet.model.TxTools.COIN_MINER_FEE
 object OpenTx extends TxTools {
 
   // create new unsigned open tx
-  def apply(coinOpenEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: Buyer) =
+  def apply(coinOpenEscrow: Coin, n: Arbitrator, s: BtcBuyer, b: BtcSeller) =
     new OpenTx(n.netParams, coinOpenEscrow, escrowAddress(n, s, b), s.openTxUtxo, s.changeAddr,
       b.openTxUtxo, b.changeAddr)
 }
 
 case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
                   escrowAddr: Address, btcBuyerOpenTxUtxo: Seq[TransactionOutput], btcBuyerChangeAddr: Address,
-                  buyerOpenTxUtxo: Seq[TransactionOutput], buyerChangeAddr: Address,
+                  btcSellerOpenTxUtxo: Seq[TransactionOutput], btcSellerChangeAddr: Address,
                   inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_PLEDGE)
 
   val coinBtcBuyerInput = Tx.coinTotalOutputValue(btcBuyerOpenTxUtxo)
-  val coinBuyerInput = Tx.coinTotalOutputValue(buyerOpenTxUtxo)
+  val coinBtcSellerInput = Tx.coinTotalOutputValue(btcSellerOpenTxUtxo)
 
   val coinBtcBuyerChg = coinBtcBuyerInput.subtract(coinOpenEscrow)
-  val coinBuyerChg = coinBuyerInput.subtract(coinOpenEscrow)
+  val coinBtcSellerChg = coinBtcSellerInput.subtract(coinOpenEscrow)
 
   // verify change amounts
-  assert(!coinBtcBuyerChg.isNegative && !coinBuyerChg.isNegative)
+  assert(!coinBtcBuyerChg.isNegative && !coinBtcSellerChg.isNegative)
 
   // add inputs
-  buyerOpenTxUtxo.foreach(o => tx.addInput(o))
+  btcSellerOpenTxUtxo.foreach(o => tx.addInput(o))
   btcBuyerOpenTxUtxo.foreach(o => tx.addInput(o))
 
   // add input unlock input scripts to tx, use first available signature
@@ -60,8 +60,8 @@ case class OpenTx(netParams: NetworkParameters, coinOpenEscrow: Coin,
   if (coinBtcBuyerChg.isPositive) {
     tx.addOutput(coinBtcBuyerChg, btcBuyerChangeAddr)
   }
-  if (coinBuyerChg.isPositive) {
-    tx.addOutput(coinBuyerChg, buyerChangeAddr)
+  if (coinBtcSellerChg.isPositive) {
+    tx.addOutput(coinBtcSellerChg, btcSellerChangeAddr)
   }
 
   // TODO FT-28: add hash of contract details in op return?

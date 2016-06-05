@@ -23,8 +23,8 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.trade.BtcBuyProcess.AddBtcBuyOffer
 import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
-import org.bytabit.ft.trade.model.{BUYER, BTCBUYER}
-import org.bytabit.ft.trade.{BuyProcess, BtcBuyProcess, TradeProcess}
+import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER}
+import org.bytabit.ft.trade.{BtcBuyProcess, BtcSellProcess, TradeProcess}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -80,7 +80,7 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
 
       // start active trades
       at.get(BTCBUYER).foreach(_.foreach(t => createBtcBuyTrade(t._1, t._2.offer) ! BtcBuyProcess.Start))
-      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+      at.get(BTCSELLER).foreach(_.foreach(t => createBtcSellTrade(t._1, t._2) ! BtcSellProcess.Start))
 
       // request new events from event server
       reqPostedEvents(url, Some(lp))
@@ -133,24 +133,24 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
       stay()
 
 
-    // send buyer commands to trades
+    // send btc seller commands to trades
 
-    case Event(sc: BuyProcess.Command, d) =>
+    case Event(sc: BtcSellProcess.Command, d) =>
       tradeProcess(sc.id) match {
         case Some(ref) => ref ! sc
-        case None => log.error(s"Could not send buy process command to ${sc.id}")
+        case None => log.error(s"Could not send sell process command to ${sc.id}")
       }
       stay()
 
     // handle posted trade events
 
-    // send event to existing local btc buyer trade or create remote buyer trade
+    // send event to existing local btc buyer trade or create remote btc buyer trade
     case Event(ReceivePostedTradeEvent(sco: BtcBuyerCreatedOffer), ActiveServer(lp, a, at)) =>
       tradeProcess(sco.id) match {
         case Some(ref) =>
           ref ! sco
         case None =>
-          createBuyTrade(sco.id, sco.offer) ! sco
+          createBtcSellTrade(sco.id, sco.offer) ! sco
       }
       stay()
 
@@ -160,9 +160,9 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
         context.parent ! sco
       }
 
-    // add remote buyer created trade and update latestUpdate
+    // add remote btc buyer created trade and update latestUpdate
     case Event(sco: TradeProcess.BtcBuyerCreatedOffer, ActiveServer(lp, a, at)) =>
-      stay() applying TradeAdded(a.url, BUYER, sco.id, sco.offer, sco.posted) andThen { ud =>
+      stay() applying TradeAdded(a.url, BTCSELLER, sco.id, sco.offer, sco.posted) andThen { ud =>
         context.parent ! sco
       }
 
@@ -201,7 +201,7 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
 
 //      // start active trades
 //      at.get(BTCBUYER).foreach(_.foreach(t => createBtcBuyTrade(t._1, t._2.offer) ! BtcBuyProcess.Start))
-//      at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+//      at.get(BTCSELLER).foreach(_.foreach(t => createBtcSellTrade(t._1, t._2) ! BtcSellProcess.Start))
 
       // request new events from event server
       reqPostedEvents(url, Some(lp))
@@ -219,7 +219,7 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
         // create and start active trades
         // TODO FT-23: disable trade negotation buttons in trade UI when arbitrator is offline
         at.get(BTCBUYER).foreach(_.foreach(t => createBtcBuyTrade(t._1, t._2.offer) ! BtcBuyProcess.Start))
-        at.get(BUYER).foreach(_.foreach(t => createBuyTrade(t._1, t._2) ! BuyProcess.Start))
+        at.get(BTCSELLER).foreach(_.foreach(t => createBtcSellTrade(t._1, t._2) ! BtcSellProcess.Start))
 
         // create and start arbitrator
         createArbitratorManager(a) ! ArbitratorManager.Start

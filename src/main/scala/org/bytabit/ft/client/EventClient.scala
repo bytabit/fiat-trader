@@ -246,8 +246,8 @@ trait EventClient extends PersistentFSM[EventClient.State, EventClient.Data, Eve
     context.actorOf(TradeProcess.btcBuyProps(o, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
-  def createBuyTrade(id: UUID, so: BtcBuyOffer): ActorRef = {
-    context.actorOf(TradeProcess.buyProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
+  def createBtcSellTrade(id: UUID, so: BtcBuyOffer): ActorRef = {
+    context.actorOf(TradeProcess.btcSellProps(so, tradeWalletMgr, escrowWalletMgr), TradeProcess.name(id))
   }
 
   // find trade process
