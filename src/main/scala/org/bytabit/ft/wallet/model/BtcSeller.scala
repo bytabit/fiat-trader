@@ -19,9 +19,9 @@ package org.bytabit.ft.wallet.model
 import org.bitcoinj.core._
 import org.bitcoinj.wallet.Wallet
 
-object Buyer extends WalletTools {
+object BtcSeller extends WalletTools {
 
-  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin)(implicit w: Wallet): Buyer = {
+  def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin)(implicit w: Wallet): BtcSeller = {
 
     val allUnspent = unspent
 
@@ -33,11 +33,11 @@ object Buyer extends WalletTools {
   }
 
   def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin, openTxUtxo: List[TransactionOutput],
-            fundTxUtxo: List[TransactionOutput])(implicit w: Wallet): Buyer =
+            fundTxUtxo: List[TransactionOutput])(implicit w: Wallet): BtcSeller =
 
-    new Buyer(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo)
+    new BtcSeller(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo)
 }
 
-case class Buyer(netParams: NetworkParameters, escrowPubKey: PubECKey,
-                 changeAddr: Address, payoutAddr: Address,
-                 openTxUtxo: Seq[TransactionOutput], fundTxUtxo: Seq[TransactionOutput]) extends ParticipantDetails
+case class BtcSeller(netParams: NetworkParameters, escrowPubKey: PubECKey,
+                     changeAddr: Address, payoutAddr: Address,
+                     openTxUtxo: Seq[TransactionOutput], fundTxUtxo: Seq[TransactionOutput]) extends ParticipantDetails

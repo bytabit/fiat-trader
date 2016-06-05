@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.wallet.{DeterministicSeed, KeyChain, SendRequest}
-import org.bytabit.ft.trade.model.{CertifyFiatEvidence, Offer, SellOffer, TakenOffer}
+import org.bytabit.ft.trade.model.{CertifyPaymentEvidence, Offer, BtcBuyOffer, TakenOffer}
 import org.bytabit.ft.util.{AESCipher, BTCMoney, Config, Monies}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
@@ -56,15 +56,15 @@ object TradeWalletManager {
 
   case class CreateArbitrator(url: URL, bondPercent: Double, btcNotaryFee: Money) extends Command
 
-  case class CreateSellOffer(offer: Offer) extends Command
+  case class CreateBtcBuyOffer(offer: Offer) extends Command
 
-  case class TakeSellOffer(sellOffer: SellOffer, deliveryDetails: String) extends Command
+  case class TakeBtcBuyOffer(btcBuyOffer: BtcBuyOffer, paymentDetails: String) extends Command
 
   case class SignTakenOffer(takenOffer: TakenOffer) extends Command
 
-  case class CertifyFiatSent(certifyFiatEvidence: CertifyFiatEvidence) extends Command
+  case class CertifyFiatSent(certifyFiatEvidence: CertifyPaymentEvidence) extends Command
 
-  case class CertifyFiatNotSent(certifyFiatEvidence: CertifyFiatEvidence) extends Command
+  case class CertifyFiatNotSent(certifyFiatEvidence: CertifyPaymentEvidence) extends Command
 
   case class BroadcastTx(tx: Tx, escrowPubKey: Option[PubECKey] = None) extends Command
 
@@ -144,17 +144,17 @@ class TradeWalletManager extends WalletManager {
       sender ! ArbitratorCreated(Arbitrator(u, bp, nf)(w))
       stay()
 
-    case Event(CreateSellOffer(offer: Offer), Data(k, wl, al)) =>
+    case Event(CreateBtcBuyOffer(offer: Offer), Data(k, wl, al)) =>
       Context.propagate(btcContext)
       val w = k.wallet
-      sender ! SellOfferCreated(offer.withSeller(w))
+      sender ! BtcBuyOfferCreated(offer.withBtcBuyer(w))
       stay()
 
-    case Event(TakeSellOffer(sellOffer: SellOffer, deliveryDetails: String), Data(k, wl, al)) =>
+    case Event(TakeBtcBuyOffer(btcBuyOffer: BtcBuyOffer, paymentDetails: String), Data(k, wl, al)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val key = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
-      sender ! SellOfferTaken(sellOffer.take(deliveryDetails, key)(w))
+      sender ! BtcBuyOfferTaken(btcBuyOffer.take(paymentDetails, key)(w))
       stay()
 
     case Event(SignTakenOffer(takenOffer: TakenOffer), Data(k, wl, al)) =>

@@ -24,10 +24,10 @@ import spray.json._
 
 trait WalletJsonProtocol extends UtilJsonProtocol {
 
-  implicit def buyerJsonFormat = jsonFormat(Buyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+  implicit def btcSellerJsonFormat = jsonFormat(BtcSeller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
     "openTxUtxo", "fundTxUtxo")
 
-  implicit def sellerJsonFormat = jsonFormat(Seller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+  implicit def btcBuyerJsonFormat = jsonFormat(BtcBuyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
     "openTxUtxo")
 
   implicit def NotaryJsonFormat = jsonFormat(Arbitrator.apply, "url", "netParams", "escrowPubKey", "feesAddr",

@@ -22,8 +22,8 @@ import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
 
-case class CertifyFiatEvidence(fundedTrade: FundedTrade,
-                               evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
+case class CertifyPaymentEvidence(fundedTrade: FundedTrade,
+                                  evidence: Seq[Array[Byte]] = Seq()) extends Template with TradeData {
 
   override val id: UUID = fundedTrade.id
   override val btcAmount: Money = fundedTrade.btcAmount
@@ -37,35 +37,35 @@ case class CertifyFiatEvidence(fundedTrade: FundedTrade,
 
   val signedTakenOffer = fundedTrade.openedTrade.signedTakenOffer
   val takenOffer = signedTakenOffer.takenOffer
-  val sellOffer = takenOffer.sellOffer
-  val seller = signedTakenOffer.seller
-  val buyer = signedTakenOffer.buyer
+  val btcBuyOffer = takenOffer.btcBuyOffer
+  val btcBuyer = signedTakenOffer.btcBuyer
+  val btcSeller = signedTakenOffer.btcSeller
   val fullySignedOpenTx = signedTakenOffer.fullySignedOpenTx
 
-  def unsignedFiatSentPayoutTx: PayoutTx = super.unsignedFiatSentPayoutTx(seller, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
+  def unsignedFiatSentPayoutTx: PayoutTx = super.unsignedFiatSentPayoutTx(btcBuyer, btcSeller, fullySignedOpenTx,
+    takenOffer.btcSellerFundPayoutTxo)
 
-  def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(seller, buyer, fullySignedOpenTx,
-    takenOffer.buyerFundPayoutTxo)
+  def unsignedFiatNotSentPayoutTx: PayoutTx = super.unsignedFiatNotSentPayoutTx(btcBuyer, btcSeller, fullySignedOpenTx,
+    takenOffer.btcSellerFundPayoutTxo)
 
   def withArbitratedFiatSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
+    CertifiedPayment(this, arbitratorPayoutTxSigs)
 
   def withArbitratedFiatNotSentSigs(arbitratorPayoutTxSigs: Seq[TxSig]) =
-    CertifiedFiatDelivery(this, arbitratorPayoutTxSigs)
+    CertifiedPayment(this, arbitratorPayoutTxSigs)
 
-  def certifyFiatSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+  def certifyFiatSent(implicit arbitratorWallet: Wallet): CertifiedPayment = {
     val arbitratedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, arbitratedFiatSentPayoutTx.inputSigs)
+    CertifiedPayment(this, arbitratedFiatSentPayoutTx.inputSigs)
   }
 
-  def certifyFiatNotSent(implicit arbitratorWallet: Wallet): CertifiedFiatDelivery = {
+  def certifyFiatNotSent(implicit arbitratorWallet: Wallet): CertifiedPayment = {
     val arbitratorFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.sign(arbitrator.escrowPubKey)
 
-    CertifiedFiatDelivery(this, arbitratorFiatNotSentPayoutTx.inputSigs)
+    CertifiedPayment(this, arbitratorFiatNotSentPayoutTx.inputSigs)
   }
 
-  def addCertifyDeliveryRequest(evidence: Option[Array[Byte]]) =
+  def addCertifyPaymentRequest(evidence: Option[Array[Byte]]) =
     this.copy(evidence = this.evidence ++ evidence.toSeq)
 }

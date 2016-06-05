@@ -26,19 +26,19 @@ import scala.collection.JavaConversions._
 
 // create new unsigned payout tx
 object PayoutTx extends TxTools {
-  def apply(n: Arbitrator, s: Seller, b: Buyer, coinSellerPayout: Option[Coin], coinBuyerPayout: Option[Coin],
+  def apply(n: Arbitrator, s: BtcBuyer, b: BtcSeller, coinBtcBuyerPayout: Option[Coin], coinBtcSellerPayout: Option[Coin],
             coinArbitratorFee: Option[Coin], signedOpenTx: OpenTx, signedFundTxOutputs: Option[Seq[TransactionOutput]]) = {
 
     assert(signedOpenTx.fullySigned)
-    new PayoutTx(n.netParams, coinSellerPayout, coinBuyerPayout, coinArbitratorFee,
+    new PayoutTx(n.netParams, coinBtcBuyerPayout, coinBtcSellerPayout, coinArbitratorFee,
       signedOpenTx.outputsToEscrow ++ signedFundTxOutputs.getOrElse(Seq()), s.payoutAddr, b.payoutAddr, n.feesAddr,
       escrowRedeemScript(n, s, b))
   }
 }
 
-case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin], coinBuyerPayout: Option[Coin],
+case class PayoutTx(netParams: NetworkParameters, coinBtcBuyerPayout: Option[Coin], coinBtcSellerPayout: Option[Coin],
                     coinArbitratorFee: Option[Coin], outputsToEscrow: Seq[TransactionOutput],
-                    sellerPayoutAddr: Address, buyerPayoutAddr: Address, arbitratorFeeAddr: Address,
+                    btcBuyerPayoutAddr: Address, btcSellerPayoutAddr: Address, arbitratorFeeAddr: Address,
                     redeemScript: Script, inputSigs: Seq[TxSig] = Seq()) extends Tx {
 
   tx.setPurpose(Purpose.ASSURANCE_CONTRACT_CLAIM)
@@ -46,7 +46,7 @@ case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin]
   val coinEscrowAmt = outputsToEscrow.foldLeft(Coin.ZERO)((t, o) => t.add(o.getValue))
 
   // verify inputs from escrow and payout amounts
-  assert(coinEscrowAmt.subtract(coinSellerPayout.getOrElse(Coin.ZERO)).subtract(coinBuyerPayout.getOrElse(Coin.ZERO))
+  assert(coinEscrowAmt.subtract(coinBtcBuyerPayout.getOrElse(Coin.ZERO)).subtract(coinBtcSellerPayout.getOrElse(Coin.ZERO))
     .subtract(coinArbitratorFee.getOrElse(Coin.ZERO)).subtract(COIN_MINER_FEE).isZero)
 
   // add  inputs with empty unlock scripts
@@ -64,8 +64,8 @@ case class PayoutTx(netParams: NetworkParameters, coinSellerPayout: Option[Coin]
   }
 
   // add outputs
-  coinSellerPayout.foreach(tx.addOutput(_, sellerPayoutAddr))
-  coinBuyerPayout.foreach(tx.addOutput(_, buyerPayoutAddr))
+  coinBtcBuyerPayout.foreach(tx.addOutput(_, btcBuyerPayoutAddr))
+  coinBtcSellerPayout.foreach(tx.addOutput(_, btcSellerPayoutAddr))
   coinArbitratorFee.foreach(tx.addOutput(_, arbitratorFeeAddr))
 
   assert(verified)

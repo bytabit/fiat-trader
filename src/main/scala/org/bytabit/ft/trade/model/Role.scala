@@ -24,10 +24,10 @@ case object ARBITRATOR extends Role {
   override val identifier: String = "ARBITRATOR"
 }
 
-case object SELLER extends Role {
-  override val identifier: String = "SELLER"
+case object BTCBUYER extends Role {
+  override val identifier: String = "BTC BUYER"
 }
 
-case object BUYER extends Role {
-  override val identifier: String = "BUYER"
+case object BTCSELLER extends Role {
+  override val identifier: String = "BTC SELLER"
 }

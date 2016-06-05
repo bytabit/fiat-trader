@@ -225,27 +225,27 @@ class EventServer() extends PersistentActor with EventServerHttpProtocol {
 
     // handle trade events
 
-    case PostTradeEvent(evt: TradeProcess.SellerCreatedOffer) =>
+    case PostTradeEvent(evt: TradeProcess.BtcBuyerCreatedOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeProcess.SellerCanceledOffer) =>
+    case PostTradeEvent(evt: TradeProcess.BtcBuyerCanceledOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeProcess.BuyerTookOffer) =>
+    case PostTradeEvent(evt: TradeProcess.BtcSellerTookOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeProcess.SellerSignedOffer) =>
+    case PostTradeEvent(evt: TradeProcess.BtcBuyerSignedOffer) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep
 
-    case PostTradeEvent(evt: TradeProcess.CertifyDeliveryRequested) =>
+    case PostTradeEvent(evt: TradeProcess.CertifyPaymentRequested) =>
       val tep = TradeEventPosted(evt.copy(posted = Some(DateTime.now())))
       persist(tep)(updateData)
       sender ! tep

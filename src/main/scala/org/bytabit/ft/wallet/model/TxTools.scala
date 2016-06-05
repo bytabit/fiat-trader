@@ -39,14 +39,14 @@ trait TxTools {
   // create p2sh escrow address
   def sortedEscrowKeys(pubKeys: Seq[PubECKey]): Seq[ECKey] = pubKeys.sortWith(PubECKey.lt).map(_.eckey)
 
-  def sortedEscrowKeys(a: Arbitrator, s: Seller, b: Buyer): Seq[ECKey] =
+  def sortedEscrowKeys(a: Arbitrator, s: BtcBuyer, b: BtcSeller): Seq[ECKey] =
     sortedEscrowKeys(List(a.escrowPubKey, b.escrowPubKey, s.escrowPubKey))
 
-  def escrowPayoutScript(a: Arbitrator, s: Seller, b: Buyer): Script =
+  def escrowPayoutScript(a: Arbitrator, s: BtcBuyer, b: BtcSeller): Script =
     ScriptBuilder.createP2SHOutputScript(2, sortedEscrowKeys(a, s, b))
 
-  def escrowRedeemScript(a: Arbitrator, s: Seller, b: Buyer): Script =
+  def escrowRedeemScript(a: Arbitrator, s: BtcBuyer, b: BtcSeller): Script =
     ScriptBuilder.createRedeemScript(2, sortedEscrowKeys(a, s, b))
 
-  def escrowAddress(a: Arbitrator, s: Seller, b: Buyer) = escrowPayoutScript(a, s, b).getToAddress(a.netParams)
+  def escrowAddress(a: Arbitrator, s: BtcBuyer, b: BtcSeller) = escrowPayoutScript(a, s, b).getToAddress(a.netParams)
 }

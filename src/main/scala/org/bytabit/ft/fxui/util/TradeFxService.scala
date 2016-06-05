@@ -25,7 +25,7 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.fxui.model.TradeUIModel
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
-import org.bytabit.ft.util.FiatDeliveryMethod
+import org.bytabit.ft.util.PaymentMethod
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
 
@@ -36,10 +36,10 @@ trait TradeFxService extends ActorFxService {
   // UI Data
 
   val trades: ObservableList[TradeUIModel] = FXCollections.observableArrayList[TradeUIModel]
-  val sellCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
-  val sellDeliveryMethods: ObservableList[FiatDeliveryMethod] = FXCollections.observableArrayList[FiatDeliveryMethod]
-  val sellBondPercent = new SimpleStringProperty()
-  val sellArbitratorFee = new SimpleStringProperty()
+  val btcBuyCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
+  val btcBuyPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
+  val btcBuyBondPercent = new SimpleStringProperty()
+  val btcBuyArbitratorFee = new SimpleStringProperty()
 
   // UI update functions
 
@@ -61,32 +61,32 @@ trait TradeFxService extends ActorFxService {
 
   // common path
 
-  def createOffer(role: Role, sellOffer: SellOffer): Unit = {
-    trades.add(TradeUIModel(role, CREATED, sellOffer))
+  def createOffer(role: Role, btcBuyOffer: BtcBuyOffer): Unit = {
+    trades.add(TradeUIModel(role, CREATED, btcBuyOffer))
   }
 
-  def takeOffer(bto: BuyerTookOffer): Unit = {
-    findTrade(bto.id) match {
-      case Some(TradeUIModel(r, s, so: SellOffer)) =>
-        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBuyer(bto.buyer, bto.buyerOpenTxSigs,
-          bto.buyerFundPayoutTxo, bto.cipherBuyerDeliveryDetails)))
+  def takeOffer(sto: BtcSellerTookOffer): Unit = {
+    findTrade(sto.id) match {
+      case Some(TradeUIModel(r, s, so: BtcBuyOffer)) =>
+        updateTrade(TradeUIModel(r, s, so), TradeUIModel(r, TAKEN, so.withBtcSeller(sto.btcSeller, sto.btcSellerOpenTxSigs,
+          sto.btcSellerFundPayoutTxo, sto.cipherBtcSellerPaymentDetails)))
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
         log.warning("Can't take offer that was already taken.")
       case _ =>
-        log.error("No sell offer found to take.")
+        log.error("No btc buy offer found to take.")
     }
   }
 
-  def signOffer(sso: SellerSignedOffer): Unit = {
+  def signOffer(sso: BtcBuyerSignedOffer): Unit = {
     findTrade(sso.id) match {
       case Some(TradeUIModel(r, s, to: TakenOffer)) =>
-        updateTrade(TradeUIModel(r, s, to), TradeUIModel(r, SIGNED, to.withSellerSigs(sso.openSigs, sso.payoutSigs)))
+        updateTrade(TradeUIModel(r, s, to), TradeUIModel(r, SIGNED, to.withBtcBuyerSigs(sso.openSigs, sso.payoutSigs)))
       case _ =>
         log.error("No taken offer found to sign.")
     }
   }
 
-  def openEscrow(boe: BuyerOpenedEscrow): Unit = {
+  def openEscrow(boe: BtcSellerOpenedEscrow): Unit = {
     findTrade(boe.id) match {
       case Some(TradeUIModel(r, s, sto: SignedTakenOffer)) =>
         updateTrade(TradeUIModel(r, s, sto), TradeUIModel(r, OPENED, sto.withOpenTx(boe.txHash, boe.updateTime)))
@@ -95,11 +95,11 @@ trait TradeFxService extends ActorFxService {
     }
   }
 
-  def fundEscrow(bfe: BuyerFundedEscrow): Unit = {
+  def fundEscrow(bfe: BtcSellerFundedEscrow): Unit = {
     findTrade(bfe.id) match {
       case Some(TradeUIModel(r, s, ot: OpenedTrade)) =>
         updateTrade(TradeUIModel(r, s, ot), TradeUIModel(r, FUNDED, ot.withFundTx(bfe.txHash, bfe.updateTime,
-          bfe.fiatDeliveryDetailsKey)))
+          bfe.paymentDetailsKey)))
       case _ =>
         log.error("No opened trade found to fund.")
     }
@@ -136,21 +136,21 @@ trait TradeFxService extends ActorFxService {
 
   // unhappy path
 
-  def reqCertDelivery(cdr: CertifyDeliveryRequested): Unit = {
-    findTrade(cdr.id) match {
+  def reqCertPayment(cpr: CertifyPaymentRequested): Unit = {
+    findTrade(cpr.id) match {
       case Some(TradeUIModel(r, s, ft: FundedTrade)) =>
-        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, CERT_DELIVERY_REQD, ft.certifyFiatRequested(cdr.evidence)))
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, CERT_PAYMENT_REQD, ft.certifyFiatRequested(cpr.evidence)))
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         // add to existing evidence
-        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, CERT_DELIVERY_REQD, cfe.addCertifyDeliveryRequest(cdr.evidence)))
+        updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, CERT_PAYMENT_REQD, cfe.addCertifyPaymentRequest(cpr.evidence)))
       case _ =>
-        log.error("No funded trade found to request fiat delivery certification.")
+        log.error("No funded trade found to request payment certification.")
     }
   }
 
   def certifyFiatSent(fsc: FiatSentCertified): Unit = {
     findTrade(fsc.id) match {
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fsc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat sent.")
@@ -159,28 +159,28 @@ trait TradeFxService extends ActorFxService {
 
   def certifyFiatNotSent(fnc: FiatNotSentCertified): Unit = {
     findTrade(fnc.id) match {
-      case Some(TradeUIModel(r, s, cfe: CertifyFiatEvidence)) =>
+      case Some(TradeUIModel(r, s, cfe: CertifyPaymentEvidence)) =>
         updateTrade(TradeUIModel(r, s, cfe), TradeUIModel(r, FIAT_NOT_SENT_CERTD, cfe.withArbitratedFiatSentSigs(fnc.payoutSigs)))
       case _ =>
         log.error("No certified fiat evidence found to certify fiat not sent.")
     }
   }
 
-  def fundSeller(sf: SellerFunded): Unit = {
+  def fundBtcBuyer(sf: BtcBuyerFunded): Unit = {
     findTrade(sf.id) match {
-      case Some(TradeUIModel(r, s, cfd: CertifiedFiatDelivery)) =>
-        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, SELLER_FUNDED, cfd.withPayoutTx(sf.txHash, sf.updateTime)))
+      case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
+        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BTCBUYER_FUNDED, cfd.withPayoutTx(sf.txHash, sf.updateTime)))
       case _ =>
-        log.error("No certified fiat delivery found to fund seller.")
+        log.error("No certified payment found to fund btc buyer.")
     }
   }
 
-  def refundBuyer(br: BuyerRefunded): Unit = {
+  def refundBtcSeller(br: BtcSellerRefunded): Unit = {
     findTrade(br.id) match {
-      case Some(TradeUIModel(r, s, cfd: CertifiedFiatDelivery)) =>
-        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BUYER_REFUNDED, cfd.withPayoutTx(br.txHash, br.updateTime)))
+      case Some(TradeUIModel(r, s, cfd: CertifiedPayment)) =>
+        updateTrade(TradeUIModel(r, s, cfd), TradeUIModel(r, BTCSELLER_REFUNDED, cfd.withPayoutTx(br.txHash, br.updateTime)))
       case _ =>
-        log.error("No certified fiat non-delivery found to refund buyer.")
+        log.error("No certified non-payment found to refund seller.")
     }
   }
 

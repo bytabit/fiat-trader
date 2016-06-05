@@ -24,8 +24,8 @@ import org.bytabit.ft.wallet.model.{FundTx, OpenTx, PayoutTx, TxSig}
 import org.joda.money.Money
 import org.joda.time.DateTime
 
-case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig],
-                            sellerPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
+case class SignedTakenOffer(takenOffer: TakenOffer, btcBuyerOpenTxSigs: Seq[TxSig],
+                            btcBuyerPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
 
   override val id: UUID = takenOffer.id
   override val btcAmount: Money = takenOffer.btcAmount
@@ -35,21 +35,21 @@ case class SignedTakenOffer(takenOffer: TakenOffer, sellerOpenTxSigs: Seq[TxSig]
   override val text: String = takenOffer.text
   override val keyValues: Map[String, Option[String]] = takenOffer.keyValues
 
-  val seller = takenOffer.seller
-  val buyer = takenOffer.buyer
+  val btcBuyer = takenOffer.btcBuyer
+  val btcSeller = takenOffer.btcSeller
 
   def unsignedOpenTx: OpenTx = takenOffer.unsignedOpenTx
 
   def escrowAddress = takenOffer.escrowAddress
 
-  def fullySignedOpenTx: OpenTx = takenOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
+  def fullySignedOpenTx: OpenTx = takenOffer.btcSellerSignedOpenTx.addInputSigs(btcBuyerOpenTxSigs)
 
-  def unsignedFundTx: FundTx = super.unsignedFundTx(seller, buyer,
-    takenOffer.fiatDeliveryDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
+  def unsignedFundTx: FundTx = super.unsignedFundTx(btcBuyer, btcSeller,
+    takenOffer.paymentDetailsKey.getOrElse(Array.fill[Byte](AESCipher.AES_KEY_LEN)(0)))
 
   def unsignedPayoutTx: PayoutTx = takenOffer.unsignedPayoutTx(fullySignedOpenTx)
 
-  def sellerSignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(sellerPayoutTxSigs)
+  def btcBuyerSignedPayoutTx: PayoutTx = unsignedPayoutTx.addInputSigs(btcBuyerPayoutTxSigs)
 
   def withOpenTx(openTxHash: Sha256Hash, openTxUpdateTime: DateTime) = OpenedTrade(this, openTxHash, openTxUpdateTime)
 }

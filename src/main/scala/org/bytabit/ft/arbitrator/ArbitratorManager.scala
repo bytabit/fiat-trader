@@ -56,7 +56,7 @@ object ArbitratorManager {
 
   case class Start(url: URL) extends Command
 
-  final case class AddContractTemplate(url: URL, currencyUnit: CurrencyUnit, deliveryMethod: FiatDeliveryMethod) extends Command {
+  final case class AddContractTemplate(url: URL, currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) extends Command {
     assert(Monies.isFiat(currencyUnit))
   }
 

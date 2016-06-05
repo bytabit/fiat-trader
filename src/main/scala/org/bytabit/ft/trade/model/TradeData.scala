@@ -49,51 +49,51 @@ trait TradeData {
   lazy val btcToFundEscrow = BTC_MINER_FEE.plus(BTC_OP_RETURN_FEE).plus(btcAmount)
   lazy val coinToFundEscrow = BTCMoney.toCoin(btcToFundEscrow)
 
-  // BTC Payout to Seller Amount (happy path)
-  lazy val btcSellerPayout = btcArbitratorFee.plus(btcBond).plus(btcAmount)
+  // BTC Payout to btc buyer Amount (happy path)
+  lazy val btcBuyerPayout = btcArbitratorFee.plus(btcBond).plus(btcAmount)
 
-  // BTC Payout to Buyer Amount (happy path)
-  lazy val btcBuyerPayout = btcArbitratorFee.plus(btcBond)
+  // BTC Payout to seller Amount (happy path)
+  lazy val btcSellerPayout = btcArbitratorFee.plus(btcBond)
 
-  // BTC Dispute Payout to Buyer or Seller Amount (dispute path)
+  // BTC Dispute Payout to BTC Buyer or Seller Amount (dispute path)
   lazy val btcDisputeWinnerPayout = btcArbitratorFee.plus(btcBond).plus(btcBond).plus(btcAmount)
 
-  // BTC Cancel Trade Payout to Buyer Amount (cancel path)
-  lazy val btcBuyerCancelPayout = btcArbitratorFee.plus(btcBond)
-
-  // BTC Cancel Trade Payout to Seller Amount (cancel path)
+  // BTC Cancel Trade Payout to btc seller Amount (cancel path)
   lazy val btcSellerCancelPayout = btcArbitratorFee.plus(btcBond)
 
-  // AES cipher for fiat delivery details, init Vector is first 16 bytes of escrow address hash
-  def cipher(key: Array[Byte], seller: Seller, buyer: Buyer) =
-    AESCipher(key, unsignedOpenTx(seller, buyer).escrowAddr.getHash160.slice(0, AESCipher.AES_IV_LEN))
+  // BTC Cancel Trade Payout to btc buyer Amount (cancel path)
+  lazy val btcBuyerCancelPayout = btcArbitratorFee.plus(btcBond)
+
+  // AES cipher for fiat payment details, init Vector is first 16 bytes of escrow address hash
+  def cipher(key: Array[Byte], btcBuyer: BtcBuyer, btcSeller: BtcSeller) =
+    AESCipher(key, unsignedOpenTx(btcBuyer, btcSeller).escrowAddr.getHash160.slice(0, AESCipher.AES_IV_LEN))
 
   // unsigned open escrow tx
-  def unsignedOpenTx(seller: Seller, buyer: Buyer) =
-    OpenTx(BTCMoney.toCoin(btcToOpenEscrow), arbitrator, seller, buyer)
+  def unsignedOpenTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller) =
+    OpenTx(BTCMoney.toCoin(btcToOpenEscrow), arbitrator, btcBuyer, btcSeller)
 
   // unsigned fund escrow tx
-  def unsignedFundTx(seller: Seller, buyer: Buyer, deliveryDetailsKey: Array[Byte]) =
-    FundTx(BTCMoney.toCoin(btcToFundEscrow), arbitrator, seller, buyer, deliveryDetailsKey)
+  def unsignedFundTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller, paymentDetailsKey: Array[Byte]) =
+    FundTx(BTCMoney.toCoin(btcToFundEscrow), arbitrator, btcBuyer, btcSeller, paymentDetailsKey)
 
   // unsigned happy path payout escrow tx
-  def unsignedPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
-    PayoutTx(arbitrator, seller, buyer, BTCMoney.toCoin(Some(btcSellerPayout)), BTCMoney.toCoin(Some(btcBuyerPayout)),
+  def unsignedPayoutTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
+    PayoutTx(arbitrator, btcBuyer, btcSeller, BTCMoney.toCoin(Some(btcBuyerPayout)), BTCMoney.toCoin(Some(btcSellerPayout)),
       None, signedOpenTx, Some(signedFundTxOutputs))
 
   // unsigned cancel path payout escrow tx
-  def unsignedCancelPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx) =
-    PayoutTx(arbitrator, seller, buyer, BTCMoney.toCoin(Some(btcSellerCancelPayout)), BTCMoney.toCoin(Some(btcBuyerCancelPayout)),
+  def unsignedCancelPayoutTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller, signedOpenTx: OpenTx) =
+    PayoutTx(arbitrator, btcBuyer, btcSeller, BTCMoney.toCoin(Some(btcBuyerCancelPayout)), BTCMoney.toCoin(Some(btcSellerCancelPayout)),
       None, signedOpenTx, None)
 
-  // unsigned seller wins dispute path payout escrow tx
-  def unsignedFiatSentPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
-    PayoutTx(arbitrator, seller, buyer, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), None, BTCMoney.toCoin(Some(btcArbitratorFee)),
+  // unsigned btc buyer wins dispute path payout escrow tx
+  def unsignedFiatSentPayoutTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
+    PayoutTx(arbitrator, btcBuyer, btcSeller, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), None, BTCMoney.toCoin(Some(btcArbitratorFee)),
       signedOpenTx, Some(signedFundTxOutputs))
 
-  // unsigned buyer wins dispute path payout escrow tx
-  def unsignedFiatNotSentPayoutTx(seller: Seller, buyer: Buyer, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
-    PayoutTx(arbitrator, seller, buyer, None, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), BTCMoney.toCoin(Some(btcArbitratorFee)),
+  // unsigned btc seller wins dispute path payout escrow tx
+  def unsignedFiatNotSentPayoutTx(btcBuyer: BtcBuyer, btcSeller: BtcSeller, signedOpenTx: OpenTx, signedFundTxOutputs: Seq[TransactionOutput]) =
+    PayoutTx(arbitrator, btcBuyer, btcSeller, None, BTCMoney.toCoin(Some(btcDisputeWinnerPayout)), BTCMoney.toCoin(Some(btcArbitratorFee)),
       signedOpenTx, Some(signedFundTxOutputs))
 }
 

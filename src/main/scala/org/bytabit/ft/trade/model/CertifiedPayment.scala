@@ -23,30 +23,30 @@ import org.bytabit.ft.wallet.model.{PayoutTx, TxSig}
 import org.joda.money.Money
 import org.joda.time.DateTime
 
-case class CertifiedFiatDelivery(certifyFiatEvidence: CertifyFiatEvidence,
-                                 arbitratorPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
+case class CertifiedPayment(certifyPaymentEvidence: CertifyPaymentEvidence,
+                            arbitratorPayoutTxSigs: Seq[TxSig]) extends Template with TradeData {
 
-  override val id: UUID = certifyFiatEvidence.id
-  override val btcAmount: Money = certifyFiatEvidence.btcAmount
-  override val fiatAmount: Money = certifyFiatEvidence.fiatAmount
-  override val contract: Contract = certifyFiatEvidence.contract
+  override val id: UUID = certifyPaymentEvidence.id
+  override val btcAmount: Money = certifyPaymentEvidence.btcAmount
+  override val fiatAmount: Money = certifyPaymentEvidence.fiatAmount
+  override val contract: Contract = certifyPaymentEvidence.contract
 
-  override val text: String = certifyFiatEvidence.text
-  override val keyValues: Map[String, Option[String]] = certifyFiatEvidence.keyValues
+  override val text: String = certifyPaymentEvidence.text
+  override val keyValues: Map[String, Option[String]] = certifyPaymentEvidence.keyValues
 
-  val escrowAddress = certifyFiatEvidence.escrowAddress
+  val escrowAddress = certifyPaymentEvidence.escrowAddress
 
-  val seller = certifyFiatEvidence.seller
-  val buyer = certifyFiatEvidence.buyer
+  val btcBuyer = certifyPaymentEvidence.btcBuyer
+  val btcSeller = certifyPaymentEvidence.btcSeller
 
-  val sellOffer = certifyFiatEvidence.sellOffer
-  val fullySignedOpenTx = certifyFiatEvidence.fullySignedOpenTx
+  val btcBuyOffer = certifyPaymentEvidence.btcBuyOffer
+  val fullySignedOpenTx = certifyPaymentEvidence.fullySignedOpenTx
 
-  def unsignedFiatSentPayoutTx: PayoutTx = certifyFiatEvidence.unsignedFiatSentPayoutTx
+  def unsignedFiatSentPayoutTx: PayoutTx = certifyPaymentEvidence.unsignedFiatSentPayoutTx
 
   def arbitratorSignedFiatSentPayoutTx: PayoutTx = unsignedFiatSentPayoutTx.addInputSigs(arbitratorPayoutTxSigs)
 
-  def unsignedFiatNotSentPayoutTx: PayoutTx = certifyFiatEvidence.unsignedFiatNotSentPayoutTx
+  def unsignedFiatNotSentPayoutTx: PayoutTx = certifyPaymentEvidence.unsignedFiatNotSentPayoutTx
 
   def arbitratorSignedFiatNotSentPayoutTx: PayoutTx = unsignedFiatNotSentPayoutTx.addInputSigs(arbitratorPayoutTxSigs)
 

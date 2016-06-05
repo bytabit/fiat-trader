@@ -30,7 +30,7 @@ import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util.{CurrencyUnits, FiatDeliveryMethod, ListenerUpdater}
+import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater, PaymentMethod}
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
@@ -64,7 +64,7 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   val addCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
 
-  val addFiatDeliveryMethods: ObservableList[FiatDeliveryMethod] = FXCollections.observableArrayList[FiatDeliveryMethod]
+  val addPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
 
   override def start() {
     super.start()
@@ -72,8 +72,8 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
     addCurrencyUnits.setAll(CurrencyUnits.FIAT)
   }
 
-  def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod) = {
-    sendCmd(AddContractTemplate(new URL(arbitratorUrl.getValue), fiatCurrencyUnit, fiatDeliveryMethod))
+  def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) = {
+    sendCmd(AddContractTemplate(new URL(arbitratorUrl.getValue), fiatCurrencyUnit, paymentMethod))
   }
 
   def deleteContractTemplate(id: Sha256Hash) = {
@@ -89,7 +89,7 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
       arbitratorUrl.set(n.url.toString)
 
     case ContractAdded(u, c, _) =>
-      addUIContract(u, c.id, c.fiatCurrencyUnit, c.fiatDeliveryMethod)
+      addUIContract(u, c.id, c.fiatCurrencyUnit, c.paymentMethod)
 
     case ContractRemoved(_, id, _) =>
       removeUIContract(id)
@@ -107,15 +107,15 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   def setSelectedCurrencyUnit(selectedCurrencyUnit: CurrencyUnit) = {
 
-    updateDeliveryMethods(addFiatDeliveryMethods, selectedCurrencyUnit)
+    updatePaymentMethods(addPaymentMethods, selectedCurrencyUnit)
   }
 
-  def updateDeliveryMethods(fiatDeliveryMethods: ObservableList[FiatDeliveryMethod], currencyUnit: CurrencyUnit) = {
-    val addDms = FiatDeliveryMethod.forCurrencyUnit(currencyUnit)
-    fiatDeliveryMethods.setAll(addDms)
+  def updatePaymentMethods(paymentMethods: ObservableList[PaymentMethod], currencyUnit: CurrencyUnit) = {
+    val addDms = PaymentMethod.forCurrencyUnit(currencyUnit)
+    paymentMethods.setAll(addDms)
   }
 
-  def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: FiatDeliveryMethod) = {
+  def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: PaymentMethod) = {
     val newContractTempUI = ContractUIModel(arbitratorURL, id, fcu, fdm)
     contractTemplates.find(t => t.getId == newContractTempUI.getId) match {
       case Some(ct) => contractTemplates.set(contractTemplates.indexOf(ct), newContractTempUI)

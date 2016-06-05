@@ -19,98 +19,90 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorServerUI">
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorServerUI">
     <children>
         <VBox spacing="5.0">
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="5.0">
                     <children>
-                        <Label text="URL:"/>
-                        <Label fx:id="urlLabel" text="XXXXX"/>
+                        <Label text="URL:" />
+                        <Label fx:id="urlLabel" text="XXXXX" />
                         <Label layoutX="91.0" layoutY="10.0" text="XBT Bond %:">
                             <padding>
-                                <Insets left="20.0" right="5.0"/>
+                                <Insets left="20.0" right="5.0" />
                             </padding>
                         </Label>
-                        <Label fx:id="bondLabel" layoutX="204.0" layoutY="10.0" text="XXXXX"/>
+                        <Label fx:id="bondLabel" layoutX="204.0" layoutY="10.0" text="XXXXX" />
                         <Label text="Arbitrator Fee:">
                             <padding>
-                                <Insets left="20.0" right="5.0"/>
+                                <Insets left="20.0" right="5.0" />
                             </padding>
                             <HBox.margin>
-                                <Insets/>
+                                <Insets />
                             </HBox.margin>
                         </Label>
                         <Label fx:id="feeLabel" text="XXXXX">
                             <HBox.margin>
-                                <Insets/>
+                                <Insets />
                             </HBox.margin>
                         </Label>
                         <Label text="Public Key ID:">
                             <padding>
-                                <Insets left="20.0" right="5.0"/>
+                                <Insets left="20.0" right="5.0" />
                             </padding>
                         </Label>
-                        <Label fx:id="idLabel" text="XXXXX"/>
+                        <Label fx:id="idLabel" text="XXXXX" />
                     </children>
                     <VBox.margin>
-                        <Insets top="5.0"/>
+                        <Insets top="5.0" />
                     </VBox.margin>
                 </HBox>
             </children>
             <VBox.margin>
-                <Insets top="5.0"/>
+                <Insets top="5.0" />
             </VBox.margin>
             <padding>
-                <Insets left="5.0" top="5.0"/>
+                <Insets left="5.0" top="5.0" />
             </padding>
         </VBox>
         <TableView fx:id="contractTemplateTable" editable="true" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" resizable="false" text="Action"/>
-                <TableColumn fx:id="idColumn" editable="false" maxWidth="200.0" prefWidth="200.0" resizable="false"
-                             text="Contract Template ID"/>
-                <TableColumn fx:id="currencyUnitColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
-                             resizable="false" text="Fiat Currency"/>
-                <TableColumn fx:id="deliveryMethodColumn" editable="false" maxWidth="1.7976931348623157E308"
-                             prefWidth="200.0" resizable="false" text="Fiat Delivery Method"/>
+                <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" resizable="false" text="Action" />
+                <TableColumn fx:id="idColumn" editable="false" maxWidth="200.0" prefWidth="200.0" resizable="false" text="Contract Template ID" />
+                <TableColumn fx:id="currencyUnitColumn" editable="false" maxWidth="100.0" prefWidth="100.0" resizable="false" text="Fiat Currency" />
+                <TableColumn fx:id="paymentMethodColumn" editable="false" maxWidth="1.7976931348623157E308" prefWidth="200.0" resizable="false" text="Payment Method" />
             </columns>
             <padding>
-                <Insets left="1.0" top="5.0"/>
+                <Insets left="1.0" top="5.0" />
             </padding>
             <VBox.margin>
-                <Insets top="5.0"/>
+                <Insets top="5.0" />
             </VBox.margin>
         </TableView>
         <GridPane>
             <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="100.0" minWidth="10.0"
-                                   prefWidth="100.0"/>
-                <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="200.0" minWidth="10.0"
-                                   prefWidth="200.0"/>
-                <ColumnConstraints hgrow="NEVER" maxWidth="100.0" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints halignment="LEFT" hgrow="NEVER" maxWidth="1.7976931348623157E308" minWidth="10.0"
-                                   prefWidth="200.0"/>
+                <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="200.0" minWidth="10.0" prefWidth="200.0" />
+                <ColumnConstraints hgrow="NEVER" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
+                <ColumnConstraints halignment="LEFT" hgrow="NEVER" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="200.0" />
             </columnConstraints>
             <rowConstraints>
-                <RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
             </rowConstraints>
             <children>
-                <Button fx:id="addContractTemplateButton" mnemonicParsing="false" onAction="#handleAddContractTemplate"
-                        text="ADD"/>
-                <ChoiceBox fx:id="addFiatCurrencyChoiceBox" prefWidth="150.0" GridPane.columnIndex="2"/>
-                <ChoiceBox fx:id="addFiatDeliveryMethodChoiceBox" prefWidth="200.0" GridPane.columnIndex="3"/>
+                <Button fx:id="addContractTemplateButton" mnemonicParsing="false" onAction="#handleAddContractTemplate" text="ADD" />
+                <ChoiceBox fx:id="addFiatCurrencyChoiceBox" prefWidth="150.0" GridPane.columnIndex="2" />
+                <ChoiceBox fx:id="addPaymentMethodChoiceBox" prefWidth="200.0" GridPane.columnIndex="3" />
             </children>
             <padding>
-                <Insets top="5.0"/>
+                <Insets top="5.0" />
             </padding>
             <VBox.margin>
-                <Insets bottom="5.0" top="5.0"/>
+                <Insets bottom="5.0" top="5.0" />
             </VBox.margin>
         </GridPane>
     </children>
     <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0"/>
+        <Insets bottom="5.0" left="5.0" right="5.0" />
     </padding>
 </VBox>

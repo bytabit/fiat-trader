@@ -17,8 +17,8 @@
 package org.bytabit.ft.trade.model
 
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.util.{FiatDeliveryMethod, Monies}
-import org.bytabit.ft.wallet.model.{Arbitrator, Buyer, Seller}
+import org.bytabit.ft.util.{Monies, PaymentMethod}
+import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer, BtcSeller, BtcSeller$}
 import org.joda.money.{CurrencyUnit, Money}
 
 trait Template {
@@ -28,12 +28,12 @@ trait Template {
 
   override lazy val toString: String = replaceAll(text, keyValues)
 
-  def contractKeyValues(id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, fiatDeliveryMethod: FiatDeliveryMethod,
+  def contractKeyValues(id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod,
                         arbitrator: Arbitrator, btcNetworkName: String) =
     Map[String, Option[String]](
       "contractId" -> Some(id.toString),
       "fiatCurrencyUnit" -> Some(fiatCurrencyUnit.toString),
-      "fiatDeliveryMethod" -> Some(fiatDeliveryMethod.toString),
+      "paymentMethod" -> Some(paymentMethod.toString),
 
       "arbitratorId" -> Some(arbitrator.id.toString),
       "btcNetworkName" -> Some(btcNetworkName),
@@ -51,21 +51,21 @@ trait Template {
       "btcBondAmount" -> Some(btcAmount.multipliedBy(bondPercent, Monies.roundingMode).toString)
     )
 
-  def sellerKeyValues(seller: Seller) =
+  def btcBuyerKeyValues(btcBuyer: BtcBuyer) =
     Map[String, Option[String]](
-      "sellerId" -> Some(seller.id.toString),
-      "sellerPayoutAddress" -> Some(seller.payoutAddr.toString)
+      "btcBuyerId" -> Some(btcBuyer.id.toString),
+      "btcBuyerPayoutAddress" -> Some(btcBuyer.payoutAddr.toString)
     )
 
-  def buyerKeyValues(buyer: Buyer) =
+  def btcSellerKeyValues(btcSeller: BtcSeller) =
     Map[String, Option[String]](
-      "buyerId" -> Some(buyer.id.toString),
-      "buyerPayoutAddress" -> Some(buyer.payoutAddr.toString)
+      "btcSellerId" -> Some(btcSeller.id.toString),
+      "btcSellerPayoutAddress" -> Some(btcSeller.payoutAddr.toString)
     )
 
-  def fiatDeliveryDetailsKeyValues(fiatDeliveryDetails: Option[String]) =
+  def paymentDetailsKeyValues(paymentDetails: Option[String]) =
     Map[String, Option[String]](
-      "buyerFiatDeliveryDetails" -> fiatDeliveryDetails
+      "btcSellerPaymentDetails" -> paymentDetails
     )
 
   def replaceAll(text: String, keyValues: Map[String, Option[String]]): String = {

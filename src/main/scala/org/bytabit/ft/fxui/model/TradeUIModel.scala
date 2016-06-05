@@ -30,7 +30,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val id = trade.id
   val contract = trade.contract
   val fiatCurrencyUnit = contract.fiatCurrencyUnit
-  val deliveryMethod = contract.fiatDeliveryMethod
+  val paymentMethod = contract.paymentMethod
   val fiatAmount = trade.fiatAmount
   val btcAmount = trade.btcAmount
   val exchangeRate = fiatAmount.dividedBy(btcAmount.getAmount, Monies.roundingMode)
@@ -38,20 +38,20 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val arbitratorFee = contract.arbitrator.btcArbitratorFee
 
   val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
-  val roleProperty = new SimpleStringProperty(role.toString)
+  val roleProperty = new SimpleStringProperty(role.identifier)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)
   val fiatAmountProperty = new SimpleStringProperty(fiatAmount.toString)
   val btcAmountProperty = new SimpleStringProperty(btcAmount.toString)
   val exchangeRateProperty = new SimpleStringProperty(exchangeRate.toString)
-  val deliveryMethodProperty = new SimpleStringProperty(deliveryMethod.name)
+  val paymentMethodProperty = new SimpleStringProperty(paymentMethod.name)
 
   val bondPercentProperty = new SimpleStringProperty(f"${bondPercent * 100}%f")
   val arbitratorFeeProperty = new SimpleStringProperty(arbitratorFee.toString)
 
   val uncommitted = (role, state) match {
-    case (SELLER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
-    case (BUYER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BTCBUYER, s) if Seq(CREATED, TAKEN, SIGNED, OPENED).contains(s) => true
+    case (BTCSELLER, s) if Seq(TAKEN, SIGNED, OPENED).contains(s) => true
 
     case _ => false
   }
@@ -68,16 +68,16 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
       case (FUNDED, _) => "FUNDED"
       case (FIAT_SENT, _) => "FIAT SENT"
       case (FIAT_RCVD, _) => "FIAT RCVD"
-      case (TRADED, SELLER) => "SOLD"
-      case (TRADED, BUYER) => "BOUGHT"
+      case (TRADED, BTCBUYER) => "BOUGHT"
+      case (TRADED, BTCSELLER) => "SOLD"
       case (TRADED, ARBITRATOR) => "TRADED"
-      case (CERT_DELIVERY_REQD, _) => "CERT REQD"
+      case (CERT_PAYMENT_REQD, _) => "CERT REQD"
       case (FIAT_SENT_CERTD, _) => "FIAT SENT"
       case (FIAT_NOT_SENT_CERTD, _) => "FIAT NOT SENT"
-      case (BUYER_REFUNDED, _) => "*REFUNDED"
-      case (SELLER_FUNDED, SELLER) => "*SOLD"
-      case (SELLER_FUNDED, BUYER) => "*BOUGHT"
-      case (SELLER_FUNDED, ARBITRATOR) => "*TRADED"
+      case (BTCSELLER_REFUNDED, _) => "*REFUNDED"
+      case (BTCBUYER_FUNDED, BTCBUYER) => "*BOUGHT"
+      case (BTCBUYER_FUNDED, BTCSELLER) => "*SOLD"
+      case (BTCBUYER_FUNDED, ARBITRATOR) => "*TRADED"
 
       case _ => "ERROR!"
     }

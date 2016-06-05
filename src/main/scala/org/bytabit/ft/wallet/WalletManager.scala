@@ -74,15 +74,15 @@ object WalletManager {
 
   case class ArbitratorCreated(arbitrator: Arbitrator) extends Event
 
-  case class SellOfferCreated(sellOffer: SellOffer) extends Event
+  case class BtcBuyOfferCreated(btcBuyOffer: BtcBuyOffer) extends Event
 
-  case class SellOfferTaken(takenOffer: TakenOffer) extends Event
+  case class BtcBuyOfferTaken(takenOffer: TakenOffer) extends Event
 
   case class TakenOfferSigned(signedTakenOffer: SignedTakenOffer) extends Event
 
-  case class FiatSentCertified(certifiedFiatSent: CertifiedFiatDelivery) extends Event
+  case class FiatSentCertified(certifiedFiatSent: CertifiedPayment) extends Event
 
-  case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedFiatDelivery) extends Event
+  case class FiatNotSentCertified(certifiedFiatNotSent: CertifiedPayment) extends Event
 
   case class TxBroadcast(tx: Tx) extends Event
 
@@ -108,7 +108,9 @@ trait WalletManager extends FSM[State, Data] {
 
   val netParams = NetworkParameters.fromID(Config.walletNet)
   val btcContext = Context.getOrCreate(netParams)
+
   def kit: WalletAppKit
+
   def kitListener: Listener
 
   def txConfidenceEventListener = new TransactionConfidenceEventListener {
@@ -139,7 +141,7 @@ trait WalletManager extends FSM[State, Data] {
     }
   }
 
-  def startWallet(k: WalletAppKit, dpt: DownloadProgressTracker, autoSave: Boolean = true) = {
+  def startWallet(k: WalletAppKit, dpt: DownloadProgressTracker): WalletAppKit = {
     Context.propagate(btcContext)
     // setup wallet app kit
     k.setAutoSave(true)
@@ -147,11 +149,10 @@ trait WalletManager extends FSM[State, Data] {
     k.setUserAgent(Config.config, Config.version)
     k.setDownloadListener(dpt)
     k.addListener(kitListener, dispatcher)
-    k.setAutoSave(autoSave)
     if (netParams == RegTestParams.get) k.connectToLocalHost()
-
     // start wallet app kit
     k.startAsync()
+    k
   }
 
   def stopWallet(k: WalletAppKit): Unit = {

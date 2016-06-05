@@ -35,67 +35,67 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
   // arbitrator
   val arbitratorWallet = new Wallet(params)
 
-  // buyer
-  val buyerWallet = new Wallet(params)
+  // btc seller
+  val btcSellerWallet = new Wallet(params)
 
-  // seller
-  val sellerWallet = new Wallet(params)
+  // btc buyer
+  val btcBuyerWallet = new Wallet(params)
 
-  // delivery details key
-  val deliveryDetailsKey = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
+  // payment details key
+  val paymentDetailsKey = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
 
-  it should "create fully signed transactions from complete buy offer" in {
+  it should "create fully signed transactions from complete btc buy offer" in {
 
-    val deliveryDetails = "Bank Name: Citibank, Account Holder: Fred Flintstone, Account Number: 12345-678910"
+    val paymentDetails = "Bank Name: Citibank, Account Holder: Fred Flintstone, Account Number: 12345-678910"
 
     // create test offer
     val offer = createOffer(arbitratorWallet)
 
-    // add seller to new offer to create sell offer
-    val sellerInput1Key = sellerWallet.freshReceiveKey().dropParent.dropPrivateBytes
-    val sellerInput2Key = sellerWallet.freshReceiveKey().dropParent.dropPrivateBytes
-    val sellerOpenUtxo = Seq(unspentTx(None, offer.coinToOpenEscrow.divide(2), sellerInput1Key),
-      unspentTx(None, offer.coinToOpenEscrow.divide(2), sellerInput2Key)).map(_.getOutput(0))
-    val seller = Seller(offer.coinToOpenEscrow)(sellerWallet).copy(openTxUtxo = sellerOpenUtxo)
-    val sellOffer = offer.withSeller(seller)
-    //val uso = so.copy(seller = so.seller.copy(openTxUtxo = sellerOpenUtxo))
+    // add btcBuyer to new offer to create btc buy offer
+    val btcBuyerInput1Key = btcBuyerWallet.freshReceiveKey().dropParent.dropPrivateBytes
+    val btcBuyerInput2Key = btcBuyerWallet.freshReceiveKey().dropParent.dropPrivateBytes
+    val btcBuyerOpenUtxo = Seq(unspentTx(None, offer.coinToOpenEscrow.divide(2), btcBuyerInput1Key),
+      unspentTx(None, offer.coinToOpenEscrow.divide(2), btcBuyerInput2Key)).map(_.getOutput(0))
+    val btcBuyer = BtcBuyer(offer.coinToOpenEscrow)(btcBuyerWallet).copy(openTxUtxo = btcBuyerOpenUtxo)
+    val btcBuyOffer = offer.withBtcBuyer(btcBuyer)
+    //val uso = so.copy(btcBuyer = so.btcBuyer.copy(openTxUtxo = btcBuyerOpenUtxo))
 
-    // add buyer and buyer signed open tx sigs and tx output from signed fund tx
-    // to sell offer to create taken sell offer
-    val buyerInput1Key = buyerWallet.freshReceiveKey().dropParent.dropPrivateBytes
-    val buyerInput2Key = buyerWallet.freshReceiveKey().dropParent.dropPrivateBytes
-    val buyerOpenUtxo = Seq(unspentTx(None, sellOffer.coinToOpenEscrow, buyerInput1Key)).map(_.getOutput(0))
-    val buyerFundUtxo = Seq(unspentTx(None, sellOffer.coinToFundEscrow, buyerInput2Key)).map(_.getOutput(0))
-    val buyer = Buyer(sellOffer.coinToOpenEscrow, sellOffer.coinToFundEscrow)(buyerWallet)
-      .copy(openTxUtxo = buyerOpenUtxo, fundTxUtxo = buyerFundUtxo)
-    val buyerOpenTxSigs: Seq[TxSig] =
-      sellOffer.unsignedOpenTx(buyer).sign(buyerWallet).inputSigs
-    val buyerFundPayoutTxo: Seq[TransactionOutput] =
-      sellOffer.unsignedFundTx(buyer, deliveryDetailsKey).sign(buyerWallet).outputsToEscrow
+    // add btcSeller and btcSeller signed open tx sigs and tx output from signed fund tx
+    // to btc buy offer to create taken btc sell offer
+    val btcSellerInput1Key = btcSellerWallet.freshReceiveKey().dropParent.dropPrivateBytes
+    val btcSellerInput2Key = btcSellerWallet.freshReceiveKey().dropParent.dropPrivateBytes
+    val btcSellerOpenUtxo = Seq(unspentTx(None, btcBuyOffer.coinToOpenEscrow, btcSellerInput1Key)).map(_.getOutput(0))
+    val btcSellerFundUtxo = Seq(unspentTx(None, btcBuyOffer.coinToFundEscrow, btcSellerInput2Key)).map(_.getOutput(0))
+    val btcSeller = BtcSeller(btcBuyOffer.coinToOpenEscrow, btcBuyOffer.coinToFundEscrow)(btcSellerWallet)
+      .copy(openTxUtxo = btcSellerOpenUtxo, fundTxUtxo = btcSellerFundUtxo)
+    val btcSellerOpenTxSigs: Seq[TxSig] =
+      btcBuyOffer.unsignedOpenTx(btcSeller).sign(btcSellerWallet).inputSigs
+    val btcSellerFundPayoutTxo: Seq[TransactionOutput] =
+      btcBuyOffer.unsignedFundTx(btcSeller, paymentDetailsKey).sign(btcSellerWallet).outputsToEscrow
 
-    // cipher delivery details
-    val cipher = offer.cipher(deliveryDetailsKey, seller, buyer)
-    val cipherDeliveryDetails = cipher.encrypt(deliveryDetails.map(_.toByte).toArray)
-    val takenSellOffer = sellOffer.withBuyer(buyer, buyerOpenTxSigs, buyerFundPayoutTxo, cipherDeliveryDetails)
+    // cipher payment details
+    val cipher = offer.cipher(paymentDetailsKey, btcBuyer, btcSeller)
+    val cipherPaymentDetails = cipher.encrypt(paymentDetails.map(_.toByte).toArray)
+    val takenBtcBuyOffer = btcBuyOffer.withBtcSeller(btcSeller, btcSellerOpenTxSigs, btcSellerFundPayoutTxo, cipherPaymentDetails)
 
-    // add seller open tx sigs and payout tx sigs to taken sell offer to create
+    // add btcBuyer open tx sigs and payout tx sigs to taken btc buy offer to create
     // fully signed offer
-    val sellerOpenTxSigs: Seq[TxSig] =
-      takenSellOffer.unsignedOpenTx.sign(sellerWallet).inputSigs
+    val btcBuyerOpenTxSigs: Seq[TxSig] =
+      takenBtcBuyOffer.unsignedOpenTx.sign(btcBuyerWallet).inputSigs
     val fullySignedOpenTx =
-      takenSellOffer.buyerSignedOpenTx.addInputSigs(sellerOpenTxSigs)
-    val sellerPayoutTxSigs: Seq[TxSig] =
-      takenSellOffer.unsignedPayoutTx(fullySignedOpenTx).sign(seller.escrowPubKey)(sellerWallet).inputSigs
-    val sellerSignedOffer = takenSellOffer.withSellerSigs(sellerOpenTxSigs, sellerPayoutTxSigs) //.withFiatDeliveryDetailsKey(deliveryDetailsKey)
+      takenBtcBuyOffer.btcSellerSignedOpenTx.addInputSigs(btcBuyerOpenTxSigs)
+    val btcBuyerPayoutTxSigs: Seq[TxSig] =
+      takenBtcBuyOffer.unsignedPayoutTx(fullySignedOpenTx).sign(btcBuyer.escrowPubKey)(btcBuyerWallet).inputSigs
+    val btcBuyerSignedOffer = takenBtcBuyOffer.withBtcBuyerSigs(btcBuyerOpenTxSigs, btcBuyerPayoutTxSigs)
 
-    // add buyer signed open tx, fund tx and payout tx to get fully signed offer
-    val buyerSignedOpenTx = sellerSignedOffer.fullySignedOpenTx
-    val buyerSignedFundTx = sellerSignedOffer.unsignedFundTx.sign(buyerWallet)
-    val buyerSignedPayoutTx = sellerSignedOffer.sellerSignedPayoutTx.sign(buyer.escrowPubKey)(buyerWallet)
+    // add btcSeller signed open tx, fund tx and payout tx to get fully signed offer
+    val btcSellerSignedOpenTx = btcBuyerSignedOffer.fullySignedOpenTx
+    val btcSellerSignedFundTx = btcBuyerSignedOffer.unsignedFundTx.sign(btcSellerWallet)
+    val btcSellerSignedPayoutTx = btcBuyerSignedOffer.btcBuyerSignedPayoutTx.sign(btcSeller.escrowPubKey)(btcSellerWallet)
 
-    buyerSignedOpenTx shouldBe 'fullySigned
-    buyerSignedFundTx shouldBe 'fullySigned
-    buyerSignedPayoutTx shouldBe 'fullySigned
+    btcSellerSignedOpenTx shouldBe 'fullySigned
+    btcSellerSignedFundTx shouldBe 'fullySigned
+    btcSellerSignedPayoutTx shouldBe 'fullySigned
   }
 
   def createOffer(arbitratorWallet: Wallet): Offer = {
@@ -105,12 +105,12 @@ class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
     val arbitratorFee = BTCMoney(0.10)
     val arbitrator = Arbitrator(arbitratorUrl, bondPercent, arbitratorFee)(arbitratorWallet)
 
-    val deliveryMethod = FiatDeliveryMethod.swish
+    val paymentMethod = PaymentMethod.swish
     val fiatCurrencyUnit = CurrencyUnits.USD
     val fiatAmount = FiatMoney(fiatCurrencyUnit, "100.00")
     val btcAmount = BTCMoney(0, 20)
 
-    val contract = Contract(arbitrator, fiatCurrencyUnit, deliveryMethod)
+    val contract = Contract(arbitrator, fiatCurrencyUnit, paymentMethod)
 
     Offer(UUID.randomUUID(), contract, fiatAmount, btcAmount)
   }
