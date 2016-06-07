@@ -26,6 +26,7 @@ import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
 import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{Config, ListenerUpdater}
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
 
 object ClientManager {
 
@@ -157,6 +158,9 @@ class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) e
 
     case evt: TradeProcess.Event =>
       sendToListeners(evt)
+
+    case we: InsufficentBtc =>
+      sendToListeners(we)
 
     case "snap" => saveSnapshot(data)
 

@@ -27,7 +27,7 @@ import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model.{BtcBuyOffer, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchAddress, RemoveWatchAddress}
 import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
-import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, TxBroadcast}
+import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficentBtc, TxBroadcast}
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
@@ -86,6 +86,10 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
       goto(CREATED) applying sco andThen { case uso: BtcBuyOffer =>
         context.parent ! LocalBtcBuyerCreatedOffer(uso.id, uso, sco.posted)
       }
+
+    case Event(we: InsufficentBtc, o: Offer) =>
+      context.parent ! we
+      stay()
   }
 
   override def startCreate(so: BtcBuyOffer) = {
@@ -98,16 +102,16 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
       startCreate(so)
       stay()
 
-    case Event(cso: CancelBtcBuyOffer, so: BtcBuyOffer) =>
-      postTradeEvent(so.url, BtcBuyerCanceledOffer(so.id), self)
+    case Event(cso: CancelBtcBuyOffer, bo: BtcBuyOffer) =>
+      postTradeEvent(bo.url, BtcBuyerCanceledOffer(bo.id), self)
       stay()
 
-    case Event(soc: BtcBuyerCanceledOffer, so: BtcBuyOffer) if soc.posted.isDefined =>
+    case Event(soc: BtcBuyerCanceledOffer, bo: BtcBuyOffer) if soc.posted.isDefined =>
       goto(CANCELED) andThen { uso =>
         context.parent ! soc
       }
 
-    case Event(bto: BtcSellerTookOffer, so: BtcBuyOffer) if bto.posted.isDefined =>
+    case Event(bto: BtcSellerTookOffer, bo: BtcBuyOffer) if bto.posted.isDefined =>
       goto(TAKEN) applying bto andThen {
         case to: TakenOffer =>
           context.parent ! bto

@@ -30,6 +30,7 @@ import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, Monies}
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 
@@ -98,6 +99,9 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
     case e: TradeProcess.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
+
+    case we: InsufficentBtc =>
+    // Do Nothing
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
