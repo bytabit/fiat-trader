@@ -21,9 +21,10 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
+import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.client.ClientManager.{Start, _}
-import org.bytabit.ft.client.EventClient._
+import org.bytabit.ft.client.ClientManager._
+import org.bytabit.ft.client.EventClient.{ADDED, _}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
@@ -59,7 +60,11 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
   override def start() {
     super.start()
-    sendCmd(Start)
+    system.eventStream.subscribe(inbox.getRef(), classOf[ClientManager.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[EventClient.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
+    sendCmd(ClientManager.Start)
   }
 
   def addArbitrator(url: URL) =

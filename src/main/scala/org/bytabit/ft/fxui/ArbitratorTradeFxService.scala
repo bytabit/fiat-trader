@@ -27,7 +27,6 @@ import org.bytabit.ft.fxui.util.TradeFxService
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.ARBITRATOR
-import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util._
 
 import scala.concurrent.duration.FiniteDuration
@@ -46,7 +45,8 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
   override def start() {
     if (Config.arbitratorEnabled) {
       super.start()
-      sendCmd(AddListener(inbox.getRef()))
+      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
     }
   }
 
@@ -146,8 +146,4 @@ class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends
   }
 
   def sendCmd(cmd: ArbitrateProcess.Command) = sendMsg(arbitratorMgrRef, cmd)
-
-  def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(arbitratorMgrRef, cmd)
-  }
 }

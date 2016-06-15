@@ -31,7 +31,6 @@ import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
-import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, _}
 import org.joda.money.{CurrencyUnit, Money}
 
@@ -60,7 +59,8 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   override def start() {
     if (!Config.arbitratorEnabled) {
       super.start()
-      sendCmd(AddListener(inbox.getRef()))
+      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
     }
   }
 
@@ -310,8 +310,4 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   def sendCmd(cmd: BtcBuyProcess.Command) = sendMsg(clientMgrRef, cmd)
 
   def sendCmd(cmd: BtcSellProcess.Command) = sendMsg(clientMgrRef, cmd)
-
-  def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(clientMgrRef, cmd)
-  }
 }
