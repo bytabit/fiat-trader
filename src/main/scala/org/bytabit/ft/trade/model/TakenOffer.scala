@@ -45,7 +45,7 @@ case class TakenOffer(btcBuyOffer: BtcBuyOffer, btcSeller: BtcSeller, btcSellerO
 
   val openAmountOK = Tx.coinTotalOutputValue(btcSeller.openTxUtxo).compareTo(BTCMoney.toCoin(btcToOpenEscrow)) >= 0
   val fundAmountOK = Tx.coinTotalOutputValue(btcSeller.fundTxUtxo).compareTo(BTCMoney.toCoin(btcToFundEscrow)) >= 0
-  val amountOk = openAmountOK && fundAmountOK
+  val amountOK = openAmountOK && fundAmountOK
 
   def unsignedOpenTx: OpenTx = unsignedOpenTx(btcBuyOffer.btcBuyer, btcSeller)
 

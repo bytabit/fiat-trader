@@ -31,6 +31,7 @@ import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
+import org.joda.money.Money
 import org.joda.time.{DateTime, LocalDateTime}
 
 object WalletManager {
@@ -57,6 +58,8 @@ object WalletManager {
   }
 
   // wallet events
+
+  trait Error
 
   sealed trait Event
 
@@ -89,6 +92,8 @@ object WalletManager {
   case class BackupCodeGenerated(code: List[String], seedCreationTime: DateTime) extends Event
 
   case class WalletRestored() extends Event
+
+  case class InsufficentBtc(c: TradeWalletManager.Command, required: Money, available: Money) extends Event with Error
 
   // block chain events
 

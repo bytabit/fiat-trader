@@ -26,7 +26,7 @@ import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, RequestCertifyPayment, 
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
-import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, TxBroadcast}
+import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficentBtc, TxBroadcast}
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
@@ -83,7 +83,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
 
     case Event(WalletManager.BtcBuyOfferTaken(to), so: BtcBuyOffer) if to.paymentDetailsKey.isDefined =>
 
-      if (to.amountOk) {
+      if (to.amountOK) {
         val sto = BtcSellerTookOffer(to.id, to.btcSeller, to.btcSellerOpenTxSigs, to.btcSellerFundPayoutTxo, to.cipherPaymentDetails)
         val ssk = BtcSellerSetPaymentDetailsKey(to.id, to.paymentDetailsKey.get)
         stay applying sto applying ssk andThen {
@@ -113,14 +113,18 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       }
 
     // someone else took the offer
-    case Event(bto: BtcSellerTookOffer, so: BtcBuyOffer) if bto.posted.isDefined =>
+    case Event(bto: BtcSellerTookOffer, bo: BtcBuyOffer) if bto.posted.isDefined =>
       stay()
 
     // btcBuyer signed someone else's take, cancel for us
-    case Event(sso: BtcBuyerSignedOffer, so: BtcBuyOffer) if sso.posted.isDefined =>
+    case Event(sso: BtcBuyerSignedOffer, bo: BtcBuyOffer) if sso.posted.isDefined =>
       goto(CANCELED) andThen { case uso: BtcBuyOffer =>
         context.parent ! BtcBuyerCanceledOffer(uso.id, sso.posted)
       }
+
+    case Event(we: InsufficentBtc, bo: BtcBuyOffer) =>
+      context.parent ! we
+      stay()
   }
 
   when(TAKEN) {
