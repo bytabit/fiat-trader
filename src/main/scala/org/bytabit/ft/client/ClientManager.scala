@@ -25,6 +25,7 @@ import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
 import org.bytabit.ft.util.Config
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
 
 import scala.reflect._
 
@@ -157,6 +158,10 @@ class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef)
       stay()
 
     case Event(evt: TradeProcess.Event, d: ClientManagerData) =>
+      system.eventStream.publish(evt)
+      stay()
+
+    case Event(evt: InsufficentBtc, d: ClientManagerData) =>
       system.eventStream.publish(evt)
       stay()
 
