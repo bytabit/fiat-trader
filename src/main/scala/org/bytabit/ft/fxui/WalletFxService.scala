@@ -39,7 +39,7 @@ import org.bitcoinj.uri.BitcoinURI
 import org.bitcoinj.wallet.KeyChain
 import org.bytabit.ft.fxui.model.TransactionUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.util.{BTCMoney, Config, ListenerUpdater}
+import org.bytabit.ft.util.{BTCMoney, Config}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager}
@@ -76,7 +76,6 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override def start() {
     super.start()
-    //sendCmd(AddListener(inbox.getRef()))
     sendCmd(TradeWalletManager.Start)
     sendCmd(EscrowWalletManager.Start)
   }
@@ -315,6 +314,4 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
   def sendCmd(cmd: TradeWalletManager.Command) = sendMsg(tradeWalletMgrRef, cmd)
 
   def sendCmd(cmd: EscrowWalletManager.Command) = sendMsg(escrowWalletMgrRef, cmd)
-
-  def sendCmd(cmd: ListenerUpdater.Command) = sendMsg(tradeWalletMgrRef, cmd)
 }

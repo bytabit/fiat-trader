@@ -19,13 +19,15 @@ package org.bytabit.ft.client
 import java.net.URL
 
 import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.event.Logging
-import akka.persistence.{PersistentActor, SnapshotOffer}
+import akka.persistence.fsm.PersistentFSM
+import akka.persistence.fsm.PersistentFSM.FSMState
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
-import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util.{Config, ListenerUpdater}
+import org.bytabit.ft.util.Config
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
+
+import scala.reflect._
 
 object ClientManager {
 
@@ -58,110 +60,114 @@ object ClientManager {
 
   case class ClientRemoved(url: URL) extends Event
 
+  // states
+
+  sealed trait ClientManagerState extends FSMState
+
+  case object ADDED extends ClientManagerState {
+    override def identifier: String = "ADDED"
+  }
+
   // data
 
-  case class Data(clients: Set[URL] = Set()) {
-    def clientAdded(url: URL): Data = {
+  case class ClientManagerData(clients: Set[URL] = Set()) {
+
+    def clientAdded(url: URL): ClientManagerData = {
       this.copy(clients = clients + url)
     }
 
-    def clientRemoved(url: URL): Data = {
+    def clientRemoved(url: URL): ClientManagerData = {
       this.copy(clients = clients.filterNot(_ == url))
     }
   }
 
 }
 
-class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) extends PersistentActor with ListenerUpdater {
+class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef)
+  extends PersistentFSM[ClientManagerState, ClientManagerData, ClientManager.Event] {
 
   // implicits
 
   implicit val system = context.system
 
-  // logging
-
-  val log = Logging(context.system, this)
-
   // persistence
 
   override def persistenceId: String = ClientManager.persistenceId
 
-  private var data = Data()
+  override def domainEventClassTag: ClassTag[ClientManager.Event] = classTag[ClientManager.Event]
 
-  // apply commands to data
+  // apply event to state and data
 
-  def applyEvent(evt: Event, data: Data): Data = evt match {
+  def applyEvent(evt: ClientManager.Event, data: ClientManagerData): ClientManagerData = evt match {
     case ClientAdded(url) => data.clientAdded(url)
     case ClientRemoved(url) => data.clientRemoved(url)
   }
 
-  def updateData(evt: Event) = {
-    data = applyEvent(evt, data)
-  }
+  startWith(ADDED, ClientManagerData())
 
-  override val receiveRecover: Receive = {
+  when(ADDED) {
 
-    case evt: Event =>
-      updateData(evt)
-
-    case SnapshotOffer(_, snapshot: Data) =>
-      data = snapshot
-  }
-
-  override val receiveCommand: Receive = {
-
-    // handlers for listener registration
-
-    case c: ListenerUpdater.Command => handleListenerCommand(c)
-
-    case Start =>
-      self ! AddListener(context.sender())
-
-      data.clients.foreach { u =>
-        startClient(u)
-        context.sender ! ClientAdded(u)
+    case Event(ClientManager.Start, d: ClientManagerData) =>
+      goto(ADDED) andThen { ud: ClientManagerData =>
+        ud.clients.foreach { u =>
+          startClient(u)
+          system.eventStream.publish(ClientAdded(u))
+        }
       }
 
-    case AddClient(url) if !data.clients.contains(url) =>
-      startClient(url)
-      val ca = ClientAdded(url)
-      persist(ca)(updateData)
-      context.sender ! ca
+    case Event(ac: AddClient, d: ClientManagerData) if !d.clients.contains(ac.url) =>
+      val ca = ClientAdded(ac.url)
+      goto(ADDED) applying ca andThen { ud: ClientManagerData =>
+        startClient(ca.url)
+        context.sender ! ca
+      }
 
-    case RemoveClient(u: URL) =>
+    case Event(rc: RemoveClient, d: ClientManagerData) =>
       // TODO FT-24: return errors if client in use for active trades
-      if (data.clients.contains(u)) {
-        val cr = ClientRemoved(u)
-        persist(cr)(updateData)
-        context.sender ! cr
-        stopClient(u)
-      }
+      if (d.clients.contains(rc.url)) {
+        val cr = ClientRemoved(rc.url)
+        goto(ADDED) applying cr andThen { ud: ClientManagerData =>
+          context.sender ! cr
+          stopClient(cr.url)
+        }
+      } else
+        stay()
 
-    case ac: ArbitratorManager.Command =>
+    case Event(ac: ArbitratorManager.Command, d: ClientManagerData) =>
       client(ac.url).foreach(_ ! ac)
+      stay()
 
-    case apc: ArbitrateProcess.Command =>
+    case Event(apc: ArbitrateProcess.Command, d: ClientManagerData) =>
       client(apc.url).foreach(_ ! apc)
+      stay()
 
-    case spc: BtcSellProcess.Command =>
+    case Event(spc: BtcSellProcess.Command, d: ClientManagerData) =>
       client(spc.url).foreach(_ ! spc)
+      stay()
 
-    case bpc: BtcBuyProcess.Command =>
+    case Event(bpc: BtcBuyProcess.Command, d: ClientManagerData) =>
       client(bpc.url).foreach(_ ! bpc)
+      stay()
 
-    case evt: EventClient.Event =>
-      sendToListeners(evt)
+    case Event(evt: EventClient.Event, d: ClientManagerData) =>
+      system.eventStream.publish(evt)
+      stay()
 
-    case evt: ArbitratorManager.Event =>
-      sendToListeners(evt)
+    case Event(evt: ArbitratorManager.Event, d: ClientManagerData) =>
+      system.eventStream.publish(evt)
+      stay()
 
-    case evt: TradeProcess.Event =>
-      sendToListeners(evt)
+    case Event(evt: TradeProcess.Event, d: ClientManagerData) =>
+      system.eventStream.publish(evt)
+      stay()
 
-    case "snap" => saveSnapshot(data)
+    case Event(evt: InsufficentBtc, d: ClientManagerData) =>
+      system.eventStream.publish(evt)
+      stay()
 
-    case e =>
+    case Event(e, d: ClientManagerData) =>
       log.error(s"Unexpected event from ${context.sender()}: $e.toString")
+      stay()
   }
 
   // start/stop clients

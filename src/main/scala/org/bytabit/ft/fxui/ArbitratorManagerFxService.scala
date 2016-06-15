@@ -29,8 +29,7 @@ import org.bytabit.ft.client.{ClientManager, EventClient}
 import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
-import org.bytabit.ft.util.ListenerUpdater.AddListener
-import org.bytabit.ft.util.{CurrencyUnits, ListenerUpdater, PaymentMethod}
+import org.bytabit.ft.util.{CurrencyUnits, PaymentMethod}
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
@@ -68,7 +67,7 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   override def start() {
     super.start()
-    sendCmd(AddListener(inbox.getRef()))
+    system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
     addCurrencyUnits.setAll(CurrencyUnits.FIAT)
   }
 
@@ -134,8 +133,4 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
   def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)
 
   def sendCmd(cmd: ArbitratorManager.Command) = sendMsg(clientMgrRef, cmd)
-
-  def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(clientMgrRef, cmd)
-  }
 }

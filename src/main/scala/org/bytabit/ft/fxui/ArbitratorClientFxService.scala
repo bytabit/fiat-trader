@@ -21,15 +21,17 @@ import java.util.function.Predicate
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
+import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
-import org.bytabit.ft.client.ClientManager.{Start, _}
-import org.bytabit.ft.client.EventClient._
+import org.bytabit.ft.client.ClientManager._
+import org.bytabit.ft.client.EventClient.{ADDED, _}
 import org.bytabit.ft.client._
 import org.bytabit.ft.fxui.model.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, Monies}
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 
@@ -59,7 +61,11 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
   override def start() {
     super.start()
-    sendCmd(Start)
+    system.eventStream.subscribe(inbox.getRef(), classOf[ClientManager.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[EventClient.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+    system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
+    sendCmd(ClientManager.Start)
   }
 
   def addArbitrator(url: URL) =
@@ -98,6 +104,9 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
     case e: TradeProcess.Event =>
       log.debug(s"unhandled tradeFSM event: $e")
+
+    case we: InsufficentBtc =>
+    // Do Nothing
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")

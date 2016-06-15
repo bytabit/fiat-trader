@@ -23,8 +23,8 @@ import akka.actor.{ActorSystem, Props}
 import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
-import org.bitcoinj.wallet.{DeterministicSeed, KeyChain, SendRequest}
-import org.bytabit.ft.trade.model.{CertifyPaymentEvidence, Offer, BtcBuyOffer, TakenOffer}
+import org.bitcoinj.wallet.{DeterministicSeed, KeyChain, SendRequest, Wallet}
+import org.bytabit.ft.trade.model.{BtcBuyOffer, CertifyPaymentEvidence, Offer, TakenOffer}
 import org.bytabit.ft.util.{AESCipher, BTCMoney, Config, Monies}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
@@ -147,14 +147,30 @@ class TradeWalletManager extends WalletManager {
     case Event(CreateBtcBuyOffer(offer: Offer), Data(k, wl, al)) =>
       Context.propagate(btcContext)
       val w = k.wallet
-      sender ! BtcBuyOfferCreated(offer.withBtcBuyer(w))
+      val available = BTCMoney(w.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE))
+      val required = offer.btcToOpenEscrow
+      if (available.compareTo(required) < 0) {
+        sender ! InsufficentBtc(CreateBtcBuyOffer(offer: Offer), required, available)
+      }
+      else {
+        val bo = offer.withBtcBuyer(w)
+        sender ! BtcBuyOfferCreated(bo)
+      }
       stay()
 
     case Event(TakeBtcBuyOffer(btcBuyOffer: BtcBuyOffer, paymentDetails: String), Data(k, wl, al)) =>
       Context.propagate(btcContext)
       val w = k.wallet
-      val key = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
-      sender ! BtcBuyOfferTaken(btcBuyOffer.take(paymentDetails, key)(w))
+      val available = BTCMoney(w.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE))
+      val required = btcBuyOffer.btcToOpenEscrow.plus(btcBuyOffer.btcToFundEscrow)
+      if (available.compareTo(required) < 0) {
+        sender ! InsufficentBtc(TakeBtcBuyOffer(btcBuyOffer, paymentDetails), required, available)
+      }
+      else {
+        val key = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
+        val to = btcBuyOffer.take(paymentDetails, key)(w)
+        sender ! BtcBuyOfferTaken(to)
+      }
       stay()
 
     case Event(SignTakenOffer(takenOffer: TakenOffer), Data(k, wl, al)) =>

@@ -20,6 +20,8 @@ import java.net.URL
 import java.util.UUID
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
+import javafx.scene.control.Alert
+import javafx.scene.control.Alert.AlertType
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
@@ -31,8 +33,9 @@ import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
-import org.bytabit.ft.util.ListenerUpdater.AddListener
 import org.bytabit.ft.util.{BTCMoney, _}
+import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
+import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
 import org.joda.money.{CurrencyUnit, Money}
 
 import scala.collection.JavaConversions._
@@ -60,7 +63,9 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
   override def start() {
     if (!Config.arbitratorEnabled) {
       super.start()
-      sendCmd(AddListener(inbox.getRef()))
+      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
+      system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.Event])
     }
   }
 
@@ -118,6 +123,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     case bfe: BtcSellerFundedEscrow =>
       fundEscrow(bfe)
       updateUncommitted()
+
+    case InsufficentBtc(cbo: TradeWalletManager.CreateBtcBuyOffer, r, a) =>
+      dialogError("Insufficient BTC", s"Insufficient wallet balance to create buy offer.\n\nTrade requires: $r\nAvailable balance: $a")
+
+    case InsufficentBtc(tbo: TradeWalletManager.TakeBtcBuyOffer, r, a) =>
+      dialogError("Insufficient BTC", s"Insufficient wallet balance to create buy offer.\n\nTrade requires: $r\nAvailable balance: $a")
 
     // happy path
 
@@ -311,7 +322,11 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
 
   def sendCmd(cmd: BtcSellProcess.Command) = sendMsg(clientMgrRef, cmd)
 
-  def sendCmd(cmd: ListenerUpdater.Command) = {
-    sendMsg(clientMgrRef, cmd)
+  def dialogError(title: String, reason: String): Unit = {
+    val alert = new Alert(AlertType.ERROR)
+    alert.setTitle(title)
+    alert.setHeaderText(title)
+    alert.setContentText(reason)
+    alert.showAndWait()
   }
 }
