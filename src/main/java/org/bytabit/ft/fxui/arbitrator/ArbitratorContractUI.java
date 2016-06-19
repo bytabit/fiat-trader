@@ -33,7 +33,7 @@ import org.joda.money.CurrencyUnit;
 
 import java.util.ResourceBundle;
 
-public class ArbitratorServerUI implements ActorController {
+public class ArbitratorContractUI implements ActorController {
 
     private ArbitratorManagerFxService arbitratorServerFxService;
 
@@ -85,7 +85,7 @@ public class ArbitratorServerUI implements ActorController {
 
     final private ActorSystem sys;
 
-    public ArbitratorServerUI(ActorSystem system) {
+    public ArbitratorContractUI(ActorSystem system) {
         sys = system;
         arbitratorServerFxService = new ArbitratorManagerFxService(system);
     }

@@ -42,13 +42,19 @@ public class MainUI implements ActorController {
     private Tab traderTradesTab;
 
     @FXML
-    private Tab arbitratorsTab;
-
-    @FXML
     private Tab arbitratorTradesTab;
 
     @FXML
-    private Tab arbitratorServerTab;
+    private Tab walletTab;
+
+    @FXML
+    private Tab eventClientServersTab;
+
+    @FXML
+    private Tab eventClientProfileTab;
+
+    @FXML
+    private Tab arbitratorContractsTab;
 
     @FXML
     private TabPane tabPane;
@@ -58,7 +64,7 @@ public class MainUI implements ActorController {
 
         // remove arbitrator server tab if arbitrator is not enabled
         arbitratorTradesTab.setDisable(!Config.arbitratorEnabled());
-        arbitratorServerTab.setDisable(!Config.arbitratorEnabled());
+        arbitratorContractsTab.setDisable(!Config.arbitratorEnabled());
 
         // remove trader trades tab if arbitrator is enabled
         traderTradesTab.setDisable(Config.arbitratorEnabled());

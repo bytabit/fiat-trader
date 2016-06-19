@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.arbitrator;
+package org.bytabit.ft.fxui.client;
 
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
@@ -31,7 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class ArbitratorClientUI implements ActorController {
+public class EventClientUI implements ActorController {
 
     private ArbitratorClientFxService arbitratorClientFxService;
 
@@ -40,7 +40,7 @@ public class ArbitratorClientUI implements ActorController {
 
 
     @FXML
-    private TableView<ArbitratorUIModel> arbitratorsTable;
+    private TableView<ArbitratorUIModel> eventClientTable;
 
     @FXML
     private TableColumn<ArbitratorUIModel, String> actionColumn;
@@ -68,7 +68,7 @@ public class ArbitratorClientUI implements ActorController {
 
     private ActorSystem sys;
 
-    public ArbitratorClientUI(ActorSystem system) {
+    public EventClientUI(ActorSystem system) {
         sys = system;
         arbitratorClientFxService = new ArbitratorClientFxService(system);
         arbitratorClientFxService.start();
@@ -87,7 +87,7 @@ public class ArbitratorClientUI implements ActorController {
         feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
         idColumn.setCellValueFactory(a -> a.getValue().idProperty());
 
-        arbitratorsTable.setItems(arbitratorClientFxService.arbitrators());
+        eventClientTable.setItems(arbitratorClientFxService.arbitrators());
     }
 
     @FXML

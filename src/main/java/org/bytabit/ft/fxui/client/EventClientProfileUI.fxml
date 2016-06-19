@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright 2016 Steven Myers
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <GridPane>
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="350.0" minWidth="10.0" prefWidth="350.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0" prefWidth="200.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="SOMETIMES"/>
+                <RowConstraints vgrow="SOMETIMES"/>
+            </rowConstraints>
+            <children>
+                <Label alignment="CENTER" contentDisplay="RIGHT" text="Full Name"/>
+                <Label alignment="CENTER" contentDisplay="RIGHT" text="Email" GridPane.rowIndex="1"/>
+                <TextField prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <TextField prefWidth="200.0" GridPane.columnIndex="1"/>
+            </children>
+            <padding>
+                <Insets top="5.0"/>
+            </padding>
+        </GridPane>
+        <VBox alignment="CENTER">
+            <children>
+                <TableView fx:id="escrowDetailsTable">
+                    <columns>
+                        <TableColumn fx:id="actionColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
+                                     sortable="false" text="Action"/>
+                        <TableColumn fx:id="fiatCurrencyColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
+                                     sortable="false" text="Fiat Currency"/>
+                        <TableColumn fx:id="paymentMethodColumn" editable="false" maxWidth="200.0" prefWidth="200.0"
+                                     sortable="false" text="Payment Method"/>
+                        <TableColumn fx:id="paymentDetailsColumn" editable="false" maxWidth="300.0" prefWidth="300.0"
+                                     sortable="false" text="Payment Details"/>
+                    </columns>
+                </TableView>
+                <GridPane>
+                    <columnConstraints>
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0"
+                                           prefWidth="100.0"/>
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0"
+                                           prefWidth="100.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0" prefWidth="200.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="300.0" minWidth="10.0" prefWidth="300.0"/>
+                    </columnConstraints>
+                    <rowConstraints>
+                        <RowConstraints vgrow="SOMETIMES"/>
+                    </rowConstraints>
+                    <children>
+                        <Button fx:id="addButton" mnemonicParsing="false" text="ADD"/>
+                        <ChoiceBox fx:id="addFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="1"/>
+                        <ChoiceBox fx:id="addPaymentMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="2"/>
+                        <TextField fx:id="addPaymentDetails" promptText="Payment Details" GridPane.columnIndex="3"/>
+                    </children>
+                    <VBox.margin>
+                        <Insets bottom="5.0" top="5.0"/>
+                    </VBox.margin>
+                    <padding>
+                        <Insets top="5.0"/>
+                    </padding>
+                </GridPane>
+            </children>
+            <padding>
+                <Insets top="5.0"/>
+            </padding>
+        </VBox>
+    </children>
+    <opaqueInsets>
+        <Insets/>
+    </opaqueInsets>
+    <padding>
+        <Insets bottom="5.0" left="5.0" right="5.0"/>
+    </padding>
+</VBox>
