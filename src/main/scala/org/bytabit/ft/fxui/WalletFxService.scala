@@ -22,19 +22,18 @@ import java.net.URI
 import java.time.ZoneId
 import javafx.beans.property.{SimpleDoubleProperty, SimpleStringProperty}
 import javafx.collections.{FXCollections, ObservableList}
-import javafx.event.EventHandler
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control.ButtonBar.ButtonData
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
-import javafx.scene.input.{Clipboard, ClipboardContent, MouseEvent}
+import javafx.scene.input.{Clipboard, ClipboardContent}
 import javafx.scene.layout.GridPane
 import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import net.glxn.qrgen.QRCode
 import net.glxn.qrgen.image.ImageType
-import org.bitcoinj.core.{Address, NetworkParameters}
+import org.bitcoinj.core.Address
 import org.bitcoinj.uri.BitcoinURI
 import org.bitcoinj.wallet.KeyChain
 import org.bytabit.ft.fxui.model.TransactionUIModel
@@ -136,17 +135,25 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     alert.setTitle(null)
     alert.setHeaderText("Deposit XBT Address")
     alert.setGraphic(new ImageView(qrCode(a)))
-    alert.setContentText(s"${a.toString}\n\nClick Anywhere to Copy")
-    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
-      override def handle(event: MouseEvent): Unit = {
-        copyAddress(a)
-        if (Config.walletNet == NetworkParameters.ID_MAINNET)
-        // TODO FT-22: warn user bitcoin wallet will be launched
-          requestMoney(a)
-      }
-    })
 
-    alert.showAndWait
+    val buttonTypeCopy = new ButtonType("Copy")
+    val buttonTypeOK = new ButtonType("OK", ButtonData.OK_DONE)
+    alert.getButtonTypes.setAll(buttonTypeCopy, buttonTypeOK)
+
+    alert.setContentText(s"${a.getParameters.getId.split('.').last.toUpperCase}: ${a.toString}")
+    //    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
+    //      override def handle(event: MouseEvent): Unit = {
+    //        copyAddress(a)
+    //        if (Config.walletNet == NetworkParameters.ID_MAINNET)
+    //        // TODO FT-22: warn user bitcoin wallet will be launched
+    //          requestMoney(a)
+    //      }
+    //    })
+
+    val result = alert.showAndWait
+    if (result.get() == buttonTypeCopy) {
+      copyAddress(a)
+    }
   }
 
   def dialogWithdrawBtc(): Unit = {
@@ -224,13 +231,20 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     grid.add(creationDateTextField, 2, 2)
     alert.getDialogPane.setContent(grid)
 
-    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
-      override def handle(event: MouseEvent): Unit = {
-        copySeedCode(c)
-      }
-    })
+    val buttonTypeCopy = new ButtonType("Copy")
+    val buttonTypeOK = new ButtonType("OK", ButtonData.OK_DONE)
+    alert.getButtonTypes.setAll(buttonTypeCopy, buttonTypeOK)
 
-    alert.showAndWait
+    //    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
+    //      override def handle(event: MouseEvent): Unit = {
+    //        copySeedCode(c)
+    //      }
+    //    })
+
+    val result = alert.showAndWait
+    if (result.get() == buttonTypeCopy) {
+      copySeedCode(c)
+    }
   }
 
   def dialogRestoreWallet(): Unit = {
