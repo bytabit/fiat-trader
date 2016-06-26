@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.trade
 
 import java.net.URL
 import java.util.UUID

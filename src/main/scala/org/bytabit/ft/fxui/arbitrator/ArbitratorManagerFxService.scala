@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.arbitrator
 
 import java.net.URL
 import java.util.function.Predicate
-import javafx.beans.property.SimpleStringProperty
 import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
@@ -26,13 +25,14 @@ import org.bitcoinj.core.Sha256Hash
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager._
 import org.bytabit.ft.client.{ClientManager, EventClient}
-import org.bytabit.ft.fxui.model.ContractUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.util.{CurrencyUnits, PaymentMethod}
+import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.CurrencyUnit
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.concurrent.duration.FiniteDuration
 
 object ArbitratorManagerFxService {
@@ -51,15 +51,8 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   // UI Data
 
-  val arbitratorId: SimpleStringProperty = new SimpleStringProperty("Unknown")
-
-  val bondPercent: SimpleStringProperty = new SimpleStringProperty("Unknown")
-
-  val arbitratorFee: SimpleStringProperty = new SimpleStringProperty("Unknown")
-
-  val arbitratorUrl: SimpleStringProperty = new SimpleStringProperty("Unknown")
-
-  val contractTemplates: ObservableList[ContractUIModel] = FXCollections.observableArrayList[ContractUIModel]
+  //val contractTemplates: ObservableList[ContractUIModel] = FXCollections.observableArrayList[ContractUIModel]
+  val contractTemplates = mutable.HashMap[URL, ObservableList[ContractUIModel]]()
 
   val addCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
 
@@ -71,27 +64,24 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
     addCurrencyUnits.setAll(CurrencyUnits.FIAT)
   }
 
-  def addContractTemplate(fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) = {
-    sendCmd(AddContractTemplate(new URL(arbitratorUrl.getValue), fiatCurrencyUnit, paymentMethod))
+  def addContractTemplate(arbitrator: Arbitrator, fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) = {
+    sendCmd(AddContractTemplate(arbitrator.url, fiatCurrencyUnit, paymentMethod))
   }
 
-  def deleteContractTemplate(id: Sha256Hash) = {
-    sendCmd(RemoveContractTemplate(new URL(arbitratorUrl.getValue), id))
+  def deleteContractTemplate(arbitrator: Arbitrator, id: Sha256Hash) = {
+    sendCmd(RemoveContractTemplate(arbitrator.url, id))
   }
 
   @Override
   def handler = {
-    case ArbitratorCreated(u, n, p) =>
-      arbitratorId.set(n.id.toString)
-      bondPercent.set(f"${n.bondPercent * 100}%f")
-      arbitratorFee.set(n.btcArbitratorFee.toString)
-      arbitratorUrl.set(n.url.toString)
+    case ArbitratorCreated(u, a, p) =>
+      contractTemplates.put(u, FXCollections.observableArrayList[ContractUIModel]())
 
     case ContractAdded(u, c, _) =>
       addUIContract(u, c.id, c.fiatCurrencyUnit, c.paymentMethod)
 
-    case ContractRemoved(_, id, _) =>
-      removeUIContract(id)
+    case ContractRemoved(u, id, _) =>
+      removeUIContract(u, id)
 
     case ec: EventClient.Event =>
     //log.info(s"Event client event")
@@ -116,18 +106,22 @@ class ArbitratorManagerFxService(actorSystem: ActorSystem) extends ActorFxServic
 
   def addUIContract(arbitratorURL: URL, id: Sha256Hash, fcu: CurrencyUnit, fdm: PaymentMethod) = {
     val newContractTempUI = ContractUIModel(arbitratorURL, id, fcu, fdm)
-    contractTemplates.find(t => t.getId == newContractTempUI.getId) match {
-      case Some(ct) => contractTemplates.set(contractTemplates.indexOf(ct), newContractTempUI)
-      case None => contractTemplates.add(newContractTempUI)
+    contractTemplates.get(arbitratorURL).map { ol =>
+      ol.find(t => t.getId == newContractTempUI.getId) match {
+        case Some(ct) => ol.set(ol.indexOf(ct), newContractTempUI)
+        case None => ol.add(newContractTempUI)
+      }
     }
   }
 
-  def removeUIContract(id: Sha256Hash) = {
-    contractTemplates.removeIf(new Predicate[ContractUIModel] {
-      override def test(t: ContractUIModel): Boolean = {
-        t.getId == id.toString
-      }
-    })
+  def removeUIContract(arbitratorURL: URL, id: Sha256Hash) = {
+    contractTemplates.get(arbitratorURL).map { ol =>
+      ol.removeIf(new Predicate[ContractUIModel] {
+        override def test(t: ContractUIModel): Boolean = {
+          t.arbitratorUrl == arbitratorURL && t.getId == id.toString
+        }
+      })
+    }
   }
 
   def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)

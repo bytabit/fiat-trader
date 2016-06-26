@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.util
 
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.control.{Button, TableCell}
 
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TradeUIModel
 
 trait ActionTableCell extends TableCell[TradeUIModel, TradeOriginState] {
 

@@ -22,7 +22,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.{FXCollections, ObservableList}
 
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.fxui.model.TradeUIModel
+import org.bytabit.ft.fxui.trade.TradeUIModel
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.PaymentMethod

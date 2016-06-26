@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.arbitrator
 
 import java.net.URL
 import javafx.beans.property.SimpleStringProperty

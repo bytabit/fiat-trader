@@ -23,8 +23,9 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.bytabit.ft.fxui.ArbitratorClientFxService;
-import org.bytabit.ft.fxui.model.ArbitratorUIModel;
+import org.bytabit.ft.fxui.arbitrator.ArbitratorContractDialog;
+import org.bytabit.ft.fxui.arbitrator.ArbitratorManagerFxService;
+import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 
 import java.net.MalformedURLException;
@@ -34,6 +35,7 @@ import java.util.ResourceBundle;
 public class EventClientUI implements ActorController {
 
     private ArbitratorClientFxService arbitratorClientFxService;
+    private ArbitratorManagerFxService arbitratorManagerFxService;
 
     @FXML
     private ResourceBundle resources;
@@ -72,12 +74,29 @@ public class EventClientUI implements ActorController {
         sys = system;
         arbitratorClientFxService = new ArbitratorClientFxService(system);
         arbitratorClientFxService.start();
+
+        arbitratorManagerFxService = new ArbitratorManagerFxService(system);
+        arbitratorManagerFxService.start();
     }
 
     @FXML
     void initialize() {
 
-        // setup arbitrator table
+        eventClientTable.setRowFactory(tv -> {
+            TableRow row = new TableRow<ArbitratorUIModel>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && ((ArbitratorUIModel) row.getItem()).arbitrator().isDefined()) {
+                    ArbitratorUIModel rowData = (ArbitratorUIModel) row.getItem();
+
+                    ArbitratorContractDialog dialog = new ArbitratorContractDialog(arbitratorManagerFxService, rowData.arbitrator().get());
+                    dialog.showAndWait();
+                }
+            });
+            return row;
+        });
+
+        // setup event client table
+
         actionColumn.setCellValueFactory(a -> a.getValue().urlProperty());
         actionColumn.setCellFactory(column -> newTableCell());
 

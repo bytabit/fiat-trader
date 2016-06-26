@@ -18,8 +18,6 @@ package org.bytabit.ft.fxui.arbitrator;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import org.bytabit.ft.fxui.ArbitratorTradeFxService;
-import org.bytabit.ft.fxui.model.ArbitratorUIActionTableCell;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.Config;
 

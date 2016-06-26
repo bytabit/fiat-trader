@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.wallet
 
 import java.awt.Desktop
 import java.io.ByteArrayInputStream
@@ -36,7 +36,7 @@ import net.glxn.qrgen.image.ImageType
 import org.bitcoinj.core.Address
 import org.bitcoinj.uri.BitcoinURI
 import org.bitcoinj.wallet.KeyChain
-import org.bytabit.ft.fxui.model.TransactionUIModel
+import org.bytabit.ft.fxui.trade.TransactionUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{BTCMoney, Config}
 import org.bytabit.ft.wallet.TradeWalletManager._

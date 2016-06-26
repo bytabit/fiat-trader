@@ -22,9 +22,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
-import org.bytabit.ft.fxui.TradeInfoDialog;
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
-import org.bytabit.ft.fxui.model.TradeUIModel;
+import org.bytabit.ft.fxui.trade.TradeInfoDialog;
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell;
+import org.bytabit.ft.fxui.trade.TradeUIModel;
 
 import java.util.ResourceBundle;
 

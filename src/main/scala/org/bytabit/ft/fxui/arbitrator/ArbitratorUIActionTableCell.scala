@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.arbitrator
 
 import java.net.URL
 import java.util.UUID
@@ -22,8 +22,8 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.ArbitratorTradeFxService
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.util.ActionTableCell
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.CERT_PAYMENT_REQD
 import org.bytabit.ft.trade.model.{ARBITRATOR, Role}

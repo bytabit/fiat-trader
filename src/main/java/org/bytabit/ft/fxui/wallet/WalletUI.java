@@ -23,8 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import org.bytabit.ft.fxui.WalletFxService;
-import org.bytabit.ft.fxui.model.TransactionUIModel;
+import org.bytabit.ft.fxui.trade.TransactionUIModel;
 import org.bytabit.ft.fxui.util.ActorController;
 
 import java.util.ResourceBundle;

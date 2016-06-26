@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.trade
 
 import javafx.beans.property._
 
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._

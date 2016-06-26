@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.trade
 
 import javafx.beans.property.{SimpleIntegerProperty, SimpleStringProperty}
 

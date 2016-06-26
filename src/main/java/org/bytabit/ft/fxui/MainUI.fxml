@@ -51,11 +51,6 @@
                     </content>
                 </Tab>
 
-                <Tab fx:id="arbitratorContractsTab" closable="false" text="Contracts">
-                    <content>
-                        <fx:include source="arbitrator/ArbitratorContractUI.fxml"/>
-                    </content>
-                </Tab>
                 <Tab fx:id="eventClientProfileTab" closable="false" text="Profile">
                     <content>
                         <fx:include source="client/EventClientProfileUI.fxml"/>

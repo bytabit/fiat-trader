@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.client
 
 import java.net.URL
 import java.util.function.Predicate
@@ -26,7 +26,7 @@ import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractA
 import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.client.EventClient.{ADDED, _}
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.model.ArbitratorUIModel
+import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
