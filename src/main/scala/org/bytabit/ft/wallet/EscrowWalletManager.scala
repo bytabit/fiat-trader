@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
 import org.bytabit.ft.util.Config
-import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchAddress, BroadcastSignedTx, RemoveWatchAddress, Start}
+import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchAddress, BroadcastSignedTx, RemoveWatchAddress}
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
 import org.joda.time.DateTime
@@ -41,8 +41,6 @@ object EscrowWalletManager {
   def actorOf(system: ActorSystem) = system.actorOf(props, name)
 
   sealed trait Command
-
-  case object Start extends Command
 
   case class AddWatchAddress(escrowAddress: Address, creationTime: DateTime) extends Command
 
@@ -66,44 +64,15 @@ class EscrowWalletManager extends WalletManager {
     }
   }
 
-  startWith(STARTING, Data(kit))
+  startWith(STARTING, Data(startWallet(kit, downloadProgressTracker)))
 
   when(STARTING) {
 
-    case Event(Start, Data(k, _, _)) =>
-      startWallet(k, downloadProgressTracker)
-      stay()
-
-    case Event(EscrowWalletRunning, Data(k, wl, al)) =>
+    case Event(EscrowWalletRunning, Data(k)) =>
       Context.propagate(btcContext)
-      //      k.wallet.reset()
-      //      k.peerGroup().setFastCatchupTimeSecs(0)
       k.wallet.addTransactionConfidenceEventListener(txConfidenceEventListener)
-      // al.keys.foreach(ea => k.wallet.addWatchedAddress(ea))
-      // TODO replay tx arbitrator may have missed
-      // k.wallet.clearTransactions(0)
-      sendToListeners(EscrowWalletRunning, wl.toSeq)
-      goto(RUNNING) using Data(k, wl, al)
-
-    case Event(AddWatchAddress(address, creationTime), Data(k, wl, al)) =>
-      Context.propagate(btcContext)
-      if (k.wallet.addWatchedAddress(address, creationTime.getMillis / 1000)) {
-        // stop wallet, delete chainFile and restart wallet
-        k.stopAsync().awaitTerminated()
-        val chainFile: File = new File(directory, filePrefix + ".spvchain")
-        val success = chainFile.delete()
-        val newKit = startWallet(kit, downloadProgressTracker)
-        log.info(s"ADDED event listener for address: $address listener: $sender")
-        goto(STARTING) using Data(newKit, wl, al + (address -> sender))
-      }
-      else stay()
-
-    case Event(RemoveWatchAddress(address: Address), Data(k, wl, al)) =>
-      Context.propagate(btcContext)
-      if (al.contains(address)) {
-        goto(STARTING) using Data(k, wl, al - address)
-      }
-      else stay()
+      context.system.eventStream.publish(EscrowWalletRunning)
+      goto(RUNNING) using Data(k)
 
     // handle block chain events
     case Event(e: WalletManager.BlockChainEvent, d: WalletManager.Data) =>
@@ -112,7 +81,8 @@ class EscrowWalletManager extends WalletManager {
 
   when(RUNNING) {
 
-    case Event(AddWatchAddress(address, creationTime), Data(k, wl, al)) =>
+    case Event(AddWatchAddress(address, creationTime), Data(k)) =>
+      context.system.eventStream.subscribe(context.sender(), classOf[EscrowTransactionUpdated])
       Context.propagate(btcContext)
       if (k.wallet.addWatchedAddress(address, creationTime.getMillis / 1000)) {
         // stop wallet, delete chainFile and restart wallet
@@ -120,42 +90,27 @@ class EscrowWalletManager extends WalletManager {
         val chainFile: File = new File(directory, filePrefix + ".spvchain")
         val success = chainFile.delete()
         val newKit = startWallet(kit, downloadProgressTracker)
-        //log.info(s"ADDED event listener for address: $address listener: $sender")
-        goto(STARTING) using Data(newKit, wl, al + (address -> sender))
+        goto(STARTING) using Data(newKit)
       }
       else stay()
 
-    case Event(RemoveWatchAddress(escrowAddress: Address), Data(k, wl, al)) =>
+    case Event(RemoveWatchAddress(escrowAddress: Address), Data(k)) =>
+      context.system.eventStream.unsubscribe(context.sender(), classOf[EscrowTransactionUpdated])
       Context.propagate(btcContext)
       assert(escrowAddress.isP2SHAddress)
-      if (al.contains(escrowAddress)) {
-        k.wallet.removeWatchedAddress(escrowAddress)
-        goto(RUNNING) using Data(k, wl, al - escrowAddress)
-        //log.info(s"REMOVED event listener for address: $escrowAddress listener: $ar")
-      } else {
-        stay()
-      }
+      k.wallet.removeWatchedAddress(escrowAddress)
+      goto(RUNNING) using Data(k)
 
-    case Event(BroadcastSignedTx(tx: Tx), Data(k, wl, al)) =>
+    case Event(BroadcastSignedTx(tx: Tx), Data(k)) =>
       broadcastSignedTx(k, tx)
       stay()
 
-    case Event(TransactionUpdated(tx, amt, ct, bd), Data(w, wl, al)) =>
+    case Event(TransactionUpdated(tx, amt, ct, bd), Data(w)) =>
       Context.propagate(btcContext)
       // find P2SH addresses in inputs and outputs
-      val foundAddrs: List[Address] = (tx.getInputs.toList.map(i => p2shAddress(i.getConnectedOutput))
+      val p2shAddresses: List[Address] = (tx.getInputs.toList.map(i => p2shAddress(i.getConnectedOutput))
         ++ tx.getOutputs.toList.map(o => p2shAddress(o))).flatten
-
-      // send TX to actor ref listening for that P2SH address
-      foundAddrs.foreach { a =>
-        al.get(a) match {
-          case Some(ar) =>
-            ar ! EscrowTransactionUpdated(tx, tx.getConfidence.getConfidenceType)
-          //log.info(s"EscrowTransactionUpdated for $a sent to $ar")
-          case _ =>
-          // do nothing
-        }
-      }
+      context.system.eventStream.publish(EscrowTransactionUpdated(p2shAddresses, tx, tx.getConfidence.getConfidenceType))
       stay()
 
     // handle block chain events
@@ -172,28 +127,4 @@ class EscrowWalletManager extends WalletManager {
     }
     else false
   }
-
-  //  def replayWallet(k: WalletAppKit, replayDateTime: Option[DateTime], useFastCatchup: Boolean, clearMemPool: Boolean): Unit = {
-  //
-  //    // Stop the peer group if it is running
-  //    stopPeerGroup(k)
-  //
-  //    // Reset the mem pool - this will ensure transactions will be re-downloaded
-  //    if (clearMemPool) {
-  //      val memPool: TxConfidenceTable = Context.get.getConfidenceTable
-  //      memPool.
-  //    }
-  //
-  //  }
-  //
-  //  def stopPeerGroup(k: WalletAppKit): Unit = {
-  //    if (k.peerGroup != null) {
-  //      log.debug("Stopping peerGroup service...")
-  //      k.peerGroup.removeWallet(k.wallet())
-  //      log.debug("Service peerGroup stopped")
-  //    }
-  //    else {
-  //      log.debug("Peer group was not present")
-  //    }
-  //  }
 }

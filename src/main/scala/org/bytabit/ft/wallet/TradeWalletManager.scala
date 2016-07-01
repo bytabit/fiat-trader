@@ -46,13 +46,13 @@ object TradeWalletManager {
 
   sealed trait Command
 
-  case object Start extends Command
-
   case object FindTransactions extends Command
 
   case object FindBalance extends Command
 
   case class FindCurrentAddress(purpose: KeyChain.KeyPurpose) extends Command
+
+  case object CreateClientProfileId extends Command
 
   case class CreateArbitrator(url: URL, bondPercent: Double, btcNotaryFee: Money) extends Command
 
@@ -78,7 +78,7 @@ object TradeWalletManager {
 
 }
 
-class TradeWalletManager extends WalletManager {
+class TradeWalletManager extends WalletManager with WalletTools {
 
   def kit: WalletAppKit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
 
@@ -89,48 +89,48 @@ class TradeWalletManager extends WalletManager {
     }
   }
 
-  startWith(STARTING, Data(kit))
+  startWith(STARTING, Data(startWallet(kit, downloadProgressTracker)))
 
   when(STARTING) {
 
-    case Event(Start, Data(k, wl, _)) =>
-      startWallet(k, downloadProgressTracker)
-      goto(STARTING) using Data(k, wl + sender)
-
-    case Event(TradeWalletRunning, Data(k, wl, _)) =>
+    case Event(TradeWalletRunning, Data(k)) =>
       Context.propagate(btcContext)
       k.wallet().addTransactionConfidenceEventListener(txConfidenceEventListener)
-      sendToListeners(TradeWalletRunning, wl.toSeq)
-      goto(RUNNING) using Data(k, wl)
+      context.system.eventStream.publish(TradeWalletRunning)
+      goto(RUNNING) using Data(k)
 
-    case Event(e: TransactionUpdated, Data(k, wl, al)) =>
-      sendToListeners(e, wl.toSeq)
+    case Event(e: TransactionUpdated, Data(k)) =>
       stay()
 
-    // handle block chain events
+    // publish block chain events
     case Event(e: WalletManager.BlockChainEvent, d: WalletManager.Data) =>
-      handleBlockChainEvents(e, d)
+      context.system.eventStream.publish(e)
+      stay()
+
+    // ignore any commands
+    case Event(e: TradeWalletManager.Command, d) =>
+      stay()
   }
 
   when(RUNNING) {
 
-    case Event(FindBalance, Data(k, wl, al)) =>
+    case Event(FindBalance, Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val c = w.getBalance
       sender ! BalanceFound(c)
-      goto(RUNNING) using Data(k, wl + sender, al)
+      stay()
 
-    case Event(FindTransactions, Data(k, wl, al)) =>
+    case Event(FindTransactions, Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val txs = w.getTransactions(false)
       txs.foreach(tx => sender ! TransactionUpdated(tx, tx.getValue(w),
         tx.getConfidence.getConfidenceType,
         tx.getConfidence.getDepthInBlocks))
-      goto(RUNNING) using Data(k, wl + sender, al)
+      stay()
 
-    case Event(FindCurrentAddress(p), Data(k, wl, al)) =>
+    case Event(FindCurrentAddress(p), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val a = w.currentAddress(p)
@@ -138,19 +138,25 @@ class TradeWalletManager extends WalletManager {
       sender ! CurrentAddressFound(a)
       stay()
 
-    case Event(CreateArbitrator(u, bp, nf), Data(k, wl, al)) =>
+    case Event(CreateClientProfileId, Data(k)) =>
+      Context.propagate(btcContext)
+      val w = k.wallet
+      sender ! ClientProfileIdCreated(freshAuthKey(w))
+      stay()
+
+    case Event(CreateArbitrator(u, bp, nf), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       sender ! ArbitratorCreated(Arbitrator(u, bp, nf)(w))
       stay()
 
-    case Event(CreateBtcBuyOffer(offer: Offer), Data(k, wl, al)) =>
+    case Event(CreateBtcBuyOffer(offer: Offer), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val available = BTCMoney(w.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE))
       val required = offer.btcToOpenEscrow
       if (available.compareTo(required) < 0) {
-        sender ! InsufficentBtc(CreateBtcBuyOffer(offer: Offer), required, available)
+        sender ! InsufficientBtc(CreateBtcBuyOffer(offer: Offer), required, available)
       }
       else {
         val bo = offer.withBtcBuyer(w)
@@ -158,13 +164,13 @@ class TradeWalletManager extends WalletManager {
       }
       stay()
 
-    case Event(TakeBtcBuyOffer(btcBuyOffer: BtcBuyOffer, paymentDetails: String), Data(k, wl, al)) =>
+    case Event(TakeBtcBuyOffer(btcBuyOffer: BtcBuyOffer, paymentDetails: String), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       val available = BTCMoney(w.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE))
       val required = btcBuyOffer.btcToOpenEscrow.plus(btcBuyOffer.btcToFundEscrow)
       if (available.compareTo(required) < 0) {
-        sender ! InsufficentBtc(TakeBtcBuyOffer(btcBuyOffer, paymentDetails), required, available)
+        sender ! InsufficientBtc(TakeBtcBuyOffer(btcBuyOffer, paymentDetails), required, available)
       }
       else {
         val key = AESCipher.genRanData(AESCipher.AES_KEY_LEN)
@@ -173,44 +179,44 @@ class TradeWalletManager extends WalletManager {
       }
       stay()
 
-    case Event(SignTakenOffer(takenOffer: TakenOffer), Data(k, wl, al)) =>
+    case Event(SignTakenOffer(takenOffer: TakenOffer), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       sender ! TakenOfferSigned(takenOffer.sign(w))
       stay()
 
-    case Event(CertifyFiatSent(fiatEvidence), Data(k, wl, al)) =>
+    case Event(CertifyFiatSent(fiatEvidence), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       sender ! FiatSentCertified(fiatEvidence.certifyFiatSent(w))
       stay()
 
-    case Event(CertifyFiatNotSent(fiatEvidence), Data(k, wl, al)) =>
+    case Event(CertifyFiatNotSent(fiatEvidence), Data(k)) =>
       Context.propagate(btcContext)
       val w = k.wallet
       sender ! FiatNotSentCertified(fiatEvidence.certifyFiatNotSent(w))
       stay()
 
-    case Event(tu: TransactionUpdated, Data(w, wl, al)) =>
-      sendToListeners(tu, wl.toSeq)
+    case Event(tu: TransactionUpdated, Data(w)) =>
+      context.system.eventStream.publish(tu)
       stay()
 
-    case Event(BroadcastTx(ot: OpenTx, None), Data(k, wl, al)) =>
+    case Event(BroadcastTx(ot: OpenTx, None), Data(k)) =>
       val bcTx = broadcastOpenTx(k, ot)
-      sendToListeners(TxBroadcast(bcTx), wl.toSeq)
+      context.system.eventStream.publish(TxBroadcast(bcTx))
       stay()
 
-    case Event(BroadcastTx(ft: FundTx, None), Data(k, wl, al)) =>
+    case Event(BroadcastTx(ft: FundTx, None), Data(k)) =>
       val bcTx = broadcastFundTx(k, ft)
-      sendToListeners(TxBroadcast(bcTx), wl.toSeq)
+      context.system.eventStream.publish(TxBroadcast(bcTx))
       stay()
 
-    case Event(BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)), Data(k, wl, al)) =>
+    case Event(BroadcastTx(pt: PayoutTx, Some(pk: PubECKey)), Data(k)) =>
       val bcTx = broadcastPayoutTx(k, pt, pk)
-      sendToListeners(TxBroadcast(bcTx), wl.toSeq)
+      context.system.eventStream.publish(TxBroadcast(bcTx))
       stay()
 
-    case Event(WithdrawXBT(withdrawAddress, withdrawAmount), Data(k, wl, al)) =>
+    case Event(WithdrawXBT(withdrawAddress, withdrawAmount), Data(k)) =>
       val w = k.wallet
       Context.propagate(btcContext)
       assert(Monies.isBTC(withdrawAmount))
@@ -224,42 +230,30 @@ class TradeWalletManager extends WalletManager {
       }.foreach(w.sendCoins)
       stay()
 
-    case Event(GenerateBackupCode(), Data(k, wl, al)) =>
+    case Event(GenerateBackupCode(), Data(k)) =>
+      Context.propagate(btcContext)
       val w = k.wallet
       val code = w.getKeyChainSeed.getMnemonicCode
       sender ! BackupCodeGenerated(code.toList, new DateTime(w.getEarliestKeyCreationTime * 1000))
       stay()
 
-    case Event(RestoreWallet(c, dt), Data(k, wl, al)) =>
+    case Event(RestoreWallet(c, dt), Data(k)) =>
+      Context.propagate(btcContext)
       k.stopAsync().awaitTerminated()
       val seed = new DeterministicSeed(c, null, "", dt.getMillis / 1000)
       val newKit = kit.restoreWalletFromSeed(seed)
       startWallet(newKit, downloadProgressTracker)
       sender ! WalletRestored
-      goto(STARTING) using Data(newKit, wl, al)
+      goto(STARTING) using Data(newKit)
 
-    case Event(SetTransactionMemo(h, m), Data(k, wl, al)) =>
+    case Event(SetTransactionMemo(h, m), Data(k)) =>
+      Context.propagate(btcContext)
       k.wallet().getTransaction(h).setMemo(m)
       stay()
 
-    // handle block chain events
+    // publish block chain events
     case Event(e: WalletManager.BlockChainEvent, d: WalletManager.Data) =>
-      handleBlockChainEvents(e, d)
-
-  }
-
-  def handleBlockChainEvents(e: WalletManager.BlockChainEvent, d: WalletManager.Data): State = Event(e, d) match {
-
-    case Event(e: BlockDownloaded, Data(k, wl, al)) =>
-      //sendToListeners(e, wl.toSeq)
-      stay()
-
-    case Event(e: DownloadProgress, Data(k, wl, al)) =>
-      sendToListeners(e, wl.toSeq)
-      stay()
-
-    case Event(DownloadDone, Data(k, wl, al)) =>
-      sendToListeners(DownloadDone, wl.toSeq)
+      context.system.eventStream.publish(e)
       stay()
   }
 

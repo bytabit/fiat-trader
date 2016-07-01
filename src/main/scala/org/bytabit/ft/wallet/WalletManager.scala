@@ -50,9 +50,7 @@ object WalletManager {
 
   // data
 
-  case class Data(kit: WalletAppKit,
-                  walletListeners: Set[ActorRef] = Set(),
-                  addressListeners: Map[Address, ActorRef] = Map()) {
+  case class Data(kit: WalletAppKit) {
 
     def wallet = kit.wallet()
   }
@@ -69,11 +67,13 @@ object WalletManager {
 
   case class TransactionUpdated(tx: Transaction, amt: Coin, confidenceType: ConfidenceType, blockDepth: Int) extends Event
 
-  case class EscrowTransactionUpdated(tx: Transaction, confidenceType: ConfidenceType) extends Event
+  case class EscrowTransactionUpdated(p2shAddresses: List[Address], tx: Transaction, confidenceType: ConfidenceType) extends Event
 
   case class BalanceFound(balance: Coin) extends Event
 
   case class CurrentAddressFound(a: Address) extends Event
+
+  case class ClientProfileIdCreated(clientProfileId: PubECKey) extends Event
 
   case class ArbitratorCreated(arbitrator: Arbitrator) extends Event
 
@@ -93,7 +93,7 @@ object WalletManager {
 
   case class WalletRestored() extends Event
 
-  case class InsufficentBtc(c: TradeWalletManager.Command, required: Money, available: Money) extends Event with Error
+  case class InsufficientBtc(c: TradeWalletManager.Command, required: Money, available: Money) extends Event with Error
 
   // block chain events
 
@@ -164,12 +164,6 @@ trait WalletManager extends FSM[State, Data] {
     Context.propagate(btcContext)
     k.stopAsync()
   }
-
-  def sendToListeners(event: Any, listeners: Seq[ActorRef]) =
-    listeners foreach { l =>
-      log.debug("send event: {} to listener: {}", event, l)
-      l ! event
-    }
 
   def broadcastOpenTx(k: WalletAppKit, ot: OpenTx): OpenTx = {
     Context.propagate(btcContext)

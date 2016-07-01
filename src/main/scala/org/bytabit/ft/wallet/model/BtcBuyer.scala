@@ -30,7 +30,7 @@ object BtcBuyer extends WalletTools {
 
   def apply(coinToOpenEscrow: Coin, openTxUtxo: List[TransactionOutput])(implicit w: Wallet): BtcBuyer =
 
-    new BtcBuyer(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo)
+    new BtcBuyer(w.getParams, freshAuthKey, freshChangeAddress, freshPayoutAddress, openTxUtxo)
 
 }
 

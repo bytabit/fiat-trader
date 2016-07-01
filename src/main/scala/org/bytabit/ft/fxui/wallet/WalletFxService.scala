@@ -41,7 +41,7 @@ import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{BTCMoney, Config}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
-import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager}
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.money.Money
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -75,8 +75,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override def start() {
     super.start()
-    sendCmd(TradeWalletManager.Start)
-    sendCmd(EscrowWalletManager.Start)
+    system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.Event])
+
+    sendCmd(TradeWalletManager.FindBalance)
+    sendCmd(TradeWalletManager.FindTransactions)
   }
 
   def findNewReceiveAddress(): Unit = {
@@ -91,7 +93,11 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
   def handler = {
 
     case TradeWalletRunning =>
+      sendCmd(TradeWalletManager.FindBalance)
       sendCmd(FindTransactions)
+
+    case EscrowWalletRunning =>
+    // do nothing
 
     case DownloadProgress(pct, blocksSoFar, date) =>
       downloadProgress.set(pct)
@@ -125,7 +131,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     case WalletRestored =>
       log.info(s"Wallet restored.")
 
-    case _ => log.error("Unexpected message")
+    case e => log.error(s"Unexpected event: $e")
   }
 
   def alertInfoNewReceiveAddress(a: Address): Unit = {
@@ -202,7 +208,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     }
   }
 
-  def alertInfoBackupCode(c: List[String], dt:DateTime): Unit = {
+  def alertInfoBackupCode(c: List[String], dt: DateTime): Unit = {
 
     // popup info
     val alert = new Alert(AlertType.INFORMATION)

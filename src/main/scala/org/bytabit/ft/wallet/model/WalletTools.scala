@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
 
 trait WalletTools {
 
-  def freshEscrowKey(implicit w: Wallet) = PubECKey(w.freshKey(KeyChain.KeyPurpose.AUTHENTICATION))
+  def freshAuthKey(implicit w: Wallet) = PubECKey(w.freshKey(KeyChain.KeyPurpose.AUTHENTICATION))
 
   def freshChangeAddress(implicit w: Wallet) = w.freshAddress(KeyChain.KeyPurpose.CHANGE)
 
