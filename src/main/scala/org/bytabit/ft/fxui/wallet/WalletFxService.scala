@@ -96,9 +96,6 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
       sendCmd(TradeWalletManager.FindBalance)
       sendCmd(FindTransactions)
 
-    case EscrowWalletRunning =>
-    // do nothing
-
     case DownloadProgress(pct, blocksSoFar, date) =>
       downloadProgress.set(pct)
 
@@ -125,11 +122,17 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
       log.info(s"Backup code: ${c.mkString(" ")}\nOldest Key Date Time: $dt")
       alertInfoBackupCode(c, dt)
 
-    case TxBroadcast(_) =>
-    // do nothing
-
     case WalletRestored =>
       log.info(s"Wallet restored.")
+
+    case EscrowWalletRunning =>
+    // do nothing
+
+    case e: TxBroadcast =>
+    // do nothing
+
+    case e: BlockDownloaded =>
+    // do noting
 
     case e => log.error(s"Unexpected event: $e")
   }
