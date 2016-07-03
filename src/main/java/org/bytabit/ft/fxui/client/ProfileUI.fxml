@@ -15,7 +15,6 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -26,7 +25,7 @@
             <children>
                 <Label alignment="CENTER" contentDisplay="RIGHT" text="Id: ">
                     <graphic>
-                        <Label fx:id="profileId" minHeight="27.0" prefHeight="27.0" text="XXXXXXXX"/>
+                        <Label fx:id="profileIdLabel" minHeight="27.0" prefHeight="27.0" text="XXXXXXXX"/>
                     </graphic>
                 </Label>
             </children>
@@ -35,12 +34,12 @@
             <children>
                 <Label alignment="CENTER" contentDisplay="RIGHT" text="Name: ">
                     <graphic>
-                        <TextField fx:id="profileName" prefWidth="200.0"/>
+                        <TextField fx:id="profileNameTextField" prefWidth="200.0"/>
                     </graphic>
                 </Label>
                 <Label alignment="CENTER" contentDisplay="RIGHT" text="Email: ">
                     <graphic>
-                        <TextField fx:id="profileEmail" prefWidth="200.0"/>
+                        <TextField fx:id="profileEmailTextField" prefWidth="200.0"/>
                     </graphic>
                 </Label>
             </children>
@@ -75,7 +74,8 @@
                         <Button fx:id="addButton" mnemonicParsing="false" text="ADD"/>
                         <ChoiceBox fx:id="addDetailsFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="1"/>
                         <ChoiceBox fx:id="addDetailsPaymentMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="2"/>
-                        <TextField fx:id="addPaymentDetails" promptText="Payment Details" GridPane.columnIndex="3"/>
+                        <TextField fx:id="addPaymentDetailsTextField" promptText="Payment Details"
+                                   GridPane.columnIndex="3"/>
                     </children>
                     <VBox.margin>
                         <Insets bottom="5.0" top="5.0"/>

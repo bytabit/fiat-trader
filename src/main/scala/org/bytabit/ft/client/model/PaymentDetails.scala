@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bytabit.ft.client.model
 
-import org.bytabit.ft.wallet.model.PubECKey
+import org.bytabit.ft.util.PaymentMethod
+import org.joda.money.CurrencyUnit
 
-case class ClientProfile(id: PubECKey, name: Option[String] = None, email: Option[String] = None)
+case class PaymentDetails(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String)

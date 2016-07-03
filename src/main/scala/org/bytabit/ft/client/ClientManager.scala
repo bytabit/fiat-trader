@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.client
 
 import java.net.URL
@@ -22,12 +21,13 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import org.bytabit.ft.arbitrator.ArbitratorManager
-import org.bytabit.ft.client.ClientManager._
-import org.bytabit.ft.client.model.ClientProfile
+import org.bytabit.ft.client.ClientManager.{ProfileNameUpdated, _}
+import org.bytabit.ft.client.model.{ClientProfile, PaymentDetails}
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
-import org.bytabit.ft.util.Config
+import org.bytabit.ft.util.{Config, PaymentMethod}
 import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
+import org.joda.money.CurrencyUnit
 
 import scala.reflect._
 
@@ -55,6 +55,14 @@ object ClientManager {
 
   case object FindClientProfile extends Command
 
+  case class UpdateProfileName(name: String) extends Command
+
+  case class UpdateProfileEmail(email: String) extends Command
+
+  case class AddPaymentDetails(paymentDetails: PaymentDetails) extends Command
+
+  case class RemovePaymentDetails(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) extends Command
+
   // events
 
   sealed trait Event
@@ -68,6 +76,10 @@ object ClientManager {
   case class FoundServers(urls: Set[URL]) extends Event
 
   case class FoundClientProfile(profile: ClientProfile) extends Event
+
+  case class ProfileNameUpdated(name: String) extends Event
+
+  case class ProfileEmailUpdated(email: String) extends Event
 
   // states
 
@@ -101,6 +113,14 @@ object ClientManager {
     def clientRemoved(url: URL): CreatedClientManager = {
       this.copy(servers = servers.filterNot(_ == url))
     }
+
+    def nameUpdated(name: String): CreatedClientManager = {
+      this.copy(clientProfile = this.clientProfile.copy(name = Some(name)))
+    }
+
+    def emailUpdated(email: String): CreatedClientManager = {
+      this.copy(clientProfile = this.clientProfile.copy(email = Some(email)))
+    }
   }
 
 }
@@ -120,9 +140,11 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
   // apply event to state and data
 
   def applyEvent(evt: ClientManager.Event, data: Data): Data = (evt, data) match {
-    case (ClientCreated(profile), data: AddedClientManager) => data.profileCreated(profile)
-    case (ServerAdded(url), data: CreatedClientManager) => data.clientAdded(url)
-    case (ServerRemoved(url), data: CreatedClientManager) => data.clientRemoved(url)
+    case (ClientCreated(p), data: AddedClientManager) => data.profileCreated(p)
+    case (ServerAdded(u), data: CreatedClientManager) => data.clientAdded(u)
+    case (ServerRemoved(u), data: CreatedClientManager) => data.clientRemoved(u)
+    case (ProfileNameUpdated(n), data: CreatedClientManager) => data.nameUpdated(n)
+    case (ProfileEmailUpdated(e), data: CreatedClientManager) => data.emailUpdated(e)
     case _ =>
       log.warning(s"unexpected event: $evt, data: $data")
       data
@@ -158,6 +180,18 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
         startClient(u)
       }
       stay()
+
+    case Event(UpdateProfileName(n), d: CreatedClientManager) =>
+      val pnu = ProfileNameUpdated(n)
+      goto(CREATED) applying pnu andThen { u =>
+        sender ! pnu
+      }
+
+    case Event(UpdateProfileEmail(e), d: CreatedClientManager) =>
+      val peu = ProfileEmailUpdated(e)
+      goto(CREATED) applying peu andThen { u =>
+        sender ! peu
+      }
 
     case Event(ac: AddServer, d: CreatedClientManager) if !d.servers.contains(ac.url) =>
       val ca = ServerAdded(ac.url)

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui.client
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.{FXCollections, ObservableList}
+import javax.mail.internet.{AddressException, InternetAddress}
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ContractAdded, ContractRemoved}
 import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.client._
+import org.bytabit.ft.client.model.PaymentDetails
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.PaymentMethod
@@ -45,8 +46,12 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   // UI Data
 
-  //  val arbitrators: ObservableList[ArbitratorUIModel] = FXCollections.observableArrayList[ArbitratorUIModel]
+  val paymentDetails: ObservableList[PaymentDetailsUIModel] = FXCollections.observableArrayList[PaymentDetailsUIModel]
+
   val profileId: SimpleStringProperty = new SimpleStringProperty("")
+  val profileName: SimpleStringProperty = new SimpleStringProperty("")
+  val profileEmail: SimpleStringProperty = new SimpleStringProperty("")
+
   val addDetailsCurrencyUnits: ObservableList[CurrencyUnit] = FXCollections.observableArrayList[CurrencyUnit]
   val addDetailsPaymentMethods: ObservableList[PaymentMethod] = FXCollections.observableArrayList[PaymentMethod]
 
@@ -64,16 +69,26 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
     sendCmd(FindClientProfile)
   }
 
-  //  def addPaymentDetail(paymentDetail: PaymentDetail) =
-  //    sendCmd(AddPaymentDetail(paymentDetail))
-  //
-  //  def removePaymentDetail(paymentDetail: PaymentDetail) =
-  //    sendCmd(RemovePaymentDetail(paymentDetail))
+  def addPaymentDetail(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String) =
+    sendCmd(AddPaymentDetails(PaymentDetails(currencyUnit, paymentMethod, paymentDetails)))
+
+  def removePaymentDetail(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) =
+    sendCmd(RemovePaymentDetails(currencyUnit, paymentMethod))
 
   @Override
   def handler = {
     case FoundClientProfile(p) =>
       profileId.set(p.id.toString)
+      profileName.set(p.name.getOrElse(""))
+      profileEmail.set(p.email.getOrElse(""))
+
+    case ProfileNameUpdated(n) =>
+      profileName.set(n)
+    // TODO update UI to indicate name updated
+
+    case ProfileEmailUpdated(e) =>
+      profileEmail.set(e)
+    // TODO update UI to indicate email updated
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c
@@ -90,6 +105,18 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
       log.error(s"Unexpected message: ${u.toString}")
   }
 
+  def updateProfileName(name: String) = {
+    sendCmd(UpdateProfileName(name))
+  }
+
+  def updateProfileEmail(email: String) = {
+    if (isValidEmailAddress(email)) {
+      sendCmd(UpdateProfileEmail(email))
+    }
+    else {
+      // TODO alert user invalid email
+    }
+  }
 
   def setSelectedAddCurrencyUnit(sacu: CurrencyUnit) = {
     addDetailsCurrencyUnitSelected = Some(sacu)
@@ -118,6 +145,21 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
     val rmDms = existingPms.filterNot(foundDms.contains)
     addDetailsPaymentMethods.addAll(addDms)
     addDetailsPaymentMethods.removeAll(rmDms)
+  }
+
+  def isValidEmailAddress(email: String): Boolean = {
+    try {
+      val emailAddr = new InternetAddress(email)
+      emailAddr.validate()
+    } catch {
+      case ex: AddressException =>
+        log.info(s"Invalid email address: '$email' ")
+        return false
+      case t: Throwable =>
+        log.error(s"Unexpected validation exception: ${t.getMessage}")
+        throw t
+    }
+    true
   }
 
   private def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.client
 
-import org.bytabit.ft.client.ClientManager.{ClientCreated, ServerAdded, ServerRemoved}
+import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.client.model.ClientProfile
 import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
@@ -31,9 +30,14 @@ trait ClientManagerJsonProtocol extends WalletJsonProtocol {
 
   implicit def serverRemovedJsonFormat = jsonFormat(ServerRemoved.apply(_), "url")
 
+  implicit def profileNameUpdatedFormat = jsonFormat(ProfileNameUpdated.apply(_), "name")
+
+  implicit def profileEmailUpdatedFormat = jsonFormat(ProfileEmailUpdated.apply(_), "email")
+
   implicit def clientManagerEventJsonFormat = new EventJsonFormat[ClientManager.Event](
     Map(simpleName(classOf[ClientCreated]) -> clientCreatedFormat,
       simpleName(classOf[ServerAdded]) -> serverAddedJsonFormat,
-      simpleName(classOf[ServerRemoved]) -> serverRemovedJsonFormat)
-  )
+      simpleName(classOf[ServerRemoved]) -> serverRemovedJsonFormat,
+      simpleName(classOf[ProfileNameUpdated]) -> profileNameUpdatedFormat,
+      simpleName(classOf[ProfileEmailUpdated]) -> profileEmailUpdatedFormat))
 }

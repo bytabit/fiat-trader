@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui.client;
 
 import akka.actor.ActorSystem;
@@ -35,13 +34,13 @@ public class ProfileUI implements ActorController {
     private ResourceBundle resources;
 
     @FXML
-    private Label profileId;
+    private Label profileIdLabel;
 
     @FXML
-    private TextField profileName;
+    private TextField profileNameTextField;
 
     @FXML
-    private TextField profileEmail;
+    private TextField profileEmailTextField;
 
     @FXML
     private TableColumn<?, ?> actionColumn;
@@ -68,7 +67,7 @@ public class ProfileUI implements ActorController {
     private ChoiceBox<PaymentMethod> addDetailsPaymentMethodChoiceBox;
 
     @FXML
-    private TextField addPaymentDetails;
+    private TextField addPaymentDetailsTextField;
 
     private ActorSystem sys;
 
@@ -80,13 +79,31 @@ public class ProfileUI implements ActorController {
     @FXML
     void initialize() {
 
-        profileId.textProperty().bind(profileFxService.profileId());
         profileFxService.start();
 
         // bind data to controls
 
+        profileIdLabel.textProperty().bind(profileFxService.profileId());
         addDetailsFiatCurrencyChoiceBox.setItems(profileFxService.addDetailsCurrencyUnits());
         addDetailsPaymentMethodChoiceBox.setItems(profileFxService.addDetailsPaymentMethods());
+
+        // profile name and email controls
+
+        profileNameTextField.textProperty().bindBidirectional(profileFxService.profileName());
+
+        profileNameTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue && !newValue) {
+                profileFxService.updateProfileName(profileNameTextField.textProperty().get());
+            }
+        });
+
+        profileEmailTextField.textProperty().bindBidirectional(profileFxService.profileEmail());
+
+        profileEmailTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue && !newValue) {
+                profileFxService.updateProfileEmail(profileEmailTextField.textProperty().get());
+            }
+        });
 
         // choice box setup
 
