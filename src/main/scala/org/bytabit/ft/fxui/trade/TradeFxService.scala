@@ -27,25 +27,25 @@ import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.util.TradeFxService
+import org.bytabit.ft.fxui.util.TradeDataFxService
 import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, SendFiat}
 import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
 import org.bytabit.ft.util.{BTCMoney, _}
-import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
+import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
 import org.joda.money.{CurrencyUnit, Money}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object TraderTradeFxService {
-  def apply(system: ActorSystem) = new TraderTradeFxService(system)
+object TradeFxService {
+  def apply(system: ActorSystem) = new TradeFxService(system)
 }
 
-class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
+class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
 
   override val system = actorSystem
 
@@ -65,7 +65,7 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       super.start()
       system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
       system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
-      system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.Event])
+      system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.InsufficientBtc])
     }
   }
 
@@ -124,10 +124,10 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
       fundEscrow(bfe)
       updateUncommitted()
 
-    case InsufficentBtc(cbo: TradeWalletManager.CreateBtcBuyOffer, r, a) =>
+    case InsufficientBtc(cbo: TradeWalletManager.CreateBtcBuyOffer, r, a) =>
       dialogError("Insufficient BTC", s"Insufficient wallet balance to create buy offer.\n\nTrade requires: $r\nAvailable balance: $a")
 
-    case InsufficentBtc(tbo: TradeWalletManager.TakeBtcBuyOffer, r, a) =>
+    case InsufficientBtc(tbo: TradeWalletManager.TakeBtcBuyOffer, r, a) =>
       dialogError("Insufficient BTC", s"Insufficient wallet balance to create buy offer.\n\nTrade requires: $r\nAvailable balance: $a")
 
     // happy path
@@ -218,12 +218,12 @@ class TraderTradeFxService(actorSystem: ActorSystem) extends TradeFxService {
     //acu.sort(Ordering.String)
   }
 
-  def updatePaymentMethods(cts: Seq[Contract], adm: ObservableList[PaymentMethod], cuf: Option[CurrencyUnit]) = {
-    val existingDms = btcBuyPaymentMethods.toList
+  def updatePaymentMethods(cts: Seq[Contract], apm: ObservableList[PaymentMethod], cuf: Option[CurrencyUnit]) = {
+    val existingPms = btcBuyPaymentMethods.toList
     val filteredCts = cuf.map(cu => cts.filter(ct => ct.fiatCurrencyUnit.equals(cu))).getOrElse(cts)
     val foundDms = filteredCts.map(ct => ct.paymentMethod).distinct
-    val addDms = foundDms.filterNot(existingDms.contains(_))
-    val rmDms = existingDms.filterNot(foundDms.contains)
+    val addDms = foundDms.filterNot(existingPms.contains(_))
+    val rmDms = existingPms.filterNot(foundDms.contains)
     btcBuyPaymentMethods.addAll(addDms)
     btcBuyPaymentMethods.removeAll(rmDms)
   }

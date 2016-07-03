@@ -136,7 +136,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
   val escrowDetails: ObservableList[EscrowDetailUIModel] = FXCollections.observableArrayList[EscrowDetailUIModel]
 
   val fxmlLoader = new FXMLLoader()
-  fxmlLoader.setLocation(classOf[FiatTrader].getResource("/org/bytabit/ft/fxui/trade/TradeInfoDialog.fxml"))
+  fxmlLoader.setLocation(classOf[FiatTrader].getResource("/org/bytabit/ft/fxui/trade/TradeDialog.fxml"))
   fxmlLoader.setController(this)
 
   getDialogPane.setContent(fxmlLoader.load())

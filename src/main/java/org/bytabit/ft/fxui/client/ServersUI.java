@@ -23,23 +23,22 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.bytabit.ft.fxui.arbitrator.ArbitratorContractDialog;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorManagerFxService;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel;
+import org.bytabit.ft.fxui.arbitrator.ContractsDialog;
 import org.bytabit.ft.fxui.util.ActorController;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class EventClientUI implements ActorController {
+public class ServersUI implements ActorController {
 
-    private ArbitratorClientFxService arbitratorClientFxService;
+    private ServerManagerFxService ServerManagerFxService;
     private ArbitratorManagerFxService arbitratorManagerFxService;
 
     @FXML
     private ResourceBundle resources;
-
 
     @FXML
     private TableView<ArbitratorUIModel> eventClientTable;
@@ -70,10 +69,10 @@ public class EventClientUI implements ActorController {
 
     private ActorSystem sys;
 
-    public EventClientUI(ActorSystem system) {
+    public ServersUI(ActorSystem system) {
         sys = system;
-        arbitratorClientFxService = new ArbitratorClientFxService(system);
-        arbitratorClientFxService.start();
+        ServerManagerFxService = new ServerManagerFxService(system);
+        ServerManagerFxService.start();
 
         arbitratorManagerFxService = new ArbitratorManagerFxService(system);
         arbitratorManagerFxService.start();
@@ -88,7 +87,7 @@ public class EventClientUI implements ActorController {
                 if (event.getClickCount() == 2 && ((ArbitratorUIModel) row.getItem()).arbitrator().isDefined()) {
                     ArbitratorUIModel rowData = (ArbitratorUIModel) row.getItem();
 
-                    ArbitratorContractDialog dialog = new ArbitratorContractDialog(arbitratorManagerFxService, rowData.arbitrator().get());
+                    ContractsDialog dialog = new ContractsDialog(arbitratorManagerFxService, rowData.arbitrator().get());
                     dialog.showAndWait();
                 }
             });
@@ -106,7 +105,7 @@ public class EventClientUI implements ActorController {
         feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
         idColumn.setCellValueFactory(a -> a.getValue().idProperty());
 
-        eventClientTable.setItems(arbitratorClientFxService.arbitrators());
+        eventClientTable.setItems(ServerManagerFxService.arbitrators());
     }
 
     @FXML
@@ -118,7 +117,7 @@ public class EventClientUI implements ActorController {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if (url != null) arbitratorClientFxService.addArbitrator(url);
+        if (url != null) ServerManagerFxService.addArbitrator(url);
     }
 
     private TableCell<ArbitratorUIModel, String> newTableCell() {
@@ -140,7 +139,7 @@ public class EventClientUI implements ActorController {
                     deleteButton.setText("DELETE");
                     deleteButton.setOnAction(evt -> {
                         try {
-                            arbitratorClientFxService.removeArbitrator(new URL(item));
+                            ServerManagerFxService.removeArbitrator(new URL(item));
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
                         }

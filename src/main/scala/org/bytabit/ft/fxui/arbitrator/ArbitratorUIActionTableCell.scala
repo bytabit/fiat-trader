@@ -36,7 +36,7 @@ object ArbitratorUIActionTableCell {
 
 }
 
-class ArbitratorUIActionTableCell(tradefxService: ArbitratorTradeFxService) extends ActionTableCell {
+class ArbitratorUIActionTableCell(tradefxService: ArbitrateFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)

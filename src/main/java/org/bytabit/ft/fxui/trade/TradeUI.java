@@ -30,9 +30,9 @@ import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
-public class TraderTradeUI extends AbstractTradeUI {
+public class TradeUI extends AbstractTradeUI {
 
-    private TraderTradeFxService tradeFxService;
+    private TradeFxService tradeFxService;
 
     @FXML
     protected TableColumn<TradeUIModel, String> roleColumn;
@@ -60,10 +60,10 @@ public class TraderTradeUI extends AbstractTradeUI {
     @FXML
     private ChoiceBox<PaymentMethod> btcBuyPaymentMethodChoiceBox;
 
-    public TraderTradeUI(ActorSystem system) {
+    public TradeUI(ActorSystem system) {
 
         super(system);
-        tradeFxService = new TraderTradeFxService(system);
+        tradeFxService = new TradeFxService(system);
         tradeFxService.start();
     }
 
@@ -90,6 +90,8 @@ public class TraderTradeUI extends AbstractTradeUI {
         tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
             btcBuyButton.disableProperty().setValue(newValue1);
         });
+
+        // choice box setup
 
         btcBuyFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
             @Override

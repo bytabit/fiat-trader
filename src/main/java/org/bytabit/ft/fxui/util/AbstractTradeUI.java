@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 
 public abstract class AbstractTradeUI implements ActorController {
 
-    protected TradeFxService tradeFxService;
+    protected TradeDataFxService tradeFxService;
 
     @FXML
     protected ResourceBundle resources;

@@ -25,7 +25,7 @@ import org.bytabit.ft.trade.BtcBuyProcess.AddBtcBuyOffer
 import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
 import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER}
 import org.bytabit.ft.trade.{BtcBuyProcess, BtcSellProcess, TradeProcess}
-import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
+import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -196,7 +196,7 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
       stay()
 
     // send error events to parent
-    case Event(we: InsufficentBtc, ActiveServer(lp, a, at)) =>
+    case Event(we: InsufficientBtc, ActiveServer(lp, a, at)) =>
       context.parent ! we
       stay()
   }

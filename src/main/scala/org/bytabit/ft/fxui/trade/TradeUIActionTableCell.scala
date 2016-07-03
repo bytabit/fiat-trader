@@ -36,7 +36,7 @@ object TradeUIActionTableCell {
 
 }
 
-class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends ActionTableCell {
+class TradeUIActionTableCell(tradefxService: TradeFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)

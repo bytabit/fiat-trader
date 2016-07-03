@@ -27,7 +27,7 @@ import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model.{BtcBuyOffer, SignedTakenOffer, TakenOffer, _}
 import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchAddress, RemoveWatchAddress}
 import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
-import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficentBtc, TxBroadcast}
+import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficientBtc, TxBroadcast}
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
@@ -87,7 +87,7 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
         context.parent ! LocalBtcBuyerCreatedOffer(uso.id, uso, sco.posted)
       }
 
-    case Event(we: InsufficentBtc, o: Offer) =>
+    case Event(we: InsufficientBtc, o: Offer) =>
       context.parent ! we
       stay()
   }

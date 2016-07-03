@@ -21,14 +21,14 @@ import javafx.fxml.FXML;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.Config;
 
-public class ArbitratorTradeUI extends AbstractTradeUI {
+public class ArbitrateUI extends AbstractTradeUI {
 
-    private ArbitratorTradeFxService tradeFxService;
+    private ArbitrateFxService tradeFxService;
 
-    public ArbitratorTradeUI(ActorSystem system) {
+    public ArbitrateUI(ActorSystem system) {
 
         super(system);
-        tradeFxService = new ArbitratorTradeFxService(Config.publicUrl(), system);
+        tradeFxService = new ArbitrateFxService(Config.publicUrl(), system);
         tradeFxService.start();
     }
 

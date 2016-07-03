@@ -23,9 +23,11 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager._
+import org.bytabit.ft.client.model.ClientProfile
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
 import org.bytabit.ft.util.Config
-import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
+import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 
 import scala.reflect._
 
@@ -33,58 +35,77 @@ object ClientManager {
 
   // actor setup
 
-  def props(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) =
-    Props(new ClientManager(tradeWalletMgrRef, escrowWalletMgrRef))
+  def props = Props(new ClientManager())
 
   val name = ClientManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(system: ActorSystem, tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef) =
-    system.actorOf(props(tradeWalletMgrRef, escrowWalletMgrRef), name)
+  def actorOf(system: ActorSystem) =
+    system.actorOf(props, name)
 
   // client manager commands
 
   sealed trait Command
 
-  case object Start extends Command
+  final case class AddServer(url: URL) extends Command
 
-  final case class AddClient(url: URL) extends Command
+  final case class RemoveServer(url: URL) extends Command
 
-  final case class RemoveClient(url: URL) extends Command
+  case object FindServers extends Command
+
+  case object FindClientProfile extends Command
 
   // events
 
   sealed trait Event
 
-  case class ClientAdded(url: URL) extends Event
+  case class ClientCreated(profile: ClientProfile) extends Event
 
-  case class ClientRemoved(url: URL) extends Event
+  case class ServerAdded(url: URL) extends Event
+
+  case class ServerRemoved(url: URL) extends Event
+
+  case class FoundServers(urls: Set[URL]) extends Event
+
+  case class FoundClientProfile(profile: ClientProfile) extends Event
 
   // states
 
-  sealed trait ClientManagerState extends FSMState
+  sealed trait State extends FSMState
 
-  case object ADDED extends ClientManagerState {
+  case object ADDED extends State {
     override def identifier: String = "ADDED"
+  }
+
+  case object CREATED extends State {
+    override def identifier: String = "CREATED"
   }
 
   // data
 
-  case class ClientManagerData(clients: Set[URL] = Set()) {
+  sealed trait Data
 
-    def clientAdded(url: URL): ClientManagerData = {
-      this.copy(clients = clients + url)
+  case class AddedClientManager() extends Data {
+    def profileCreated(profile: ClientProfile): CreatedClientManager = {
+      CreatedClientManager(profile)
+    }
+  }
+
+  case class CreatedClientManager(clientProfile: ClientProfile, servers: Set[URL] = Set())
+    extends Data {
+
+    def clientAdded(url: URL): CreatedClientManager = {
+      this.copy(servers = servers + url)
     }
 
-    def clientRemoved(url: URL): ClientManagerData = {
-      this.copy(clients = clients.filterNot(_ == url))
+    def clientRemoved(url: URL): CreatedClientManager = {
+      this.copy(servers = servers.filterNot(_ == url))
     }
   }
 
 }
 
-class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef)
-  extends PersistentFSM[ClientManagerState, ClientManagerData, ClientManager.Event] {
+class ClientManager() extends PersistentFSM[State, Data, Event] {
 
   // implicits
 
@@ -98,74 +119,111 @@ class ClientManager(tradeWalletMgrRef: ActorRef, escrowWalletMgrRef: ActorRef)
 
   // apply event to state and data
 
-  def applyEvent(evt: ClientManager.Event, data: ClientManagerData): ClientManagerData = evt match {
-    case ClientAdded(url) => data.clientAdded(url)
-    case ClientRemoved(url) => data.clientRemoved(url)
+  def applyEvent(evt: ClientManager.Event, data: Data): Data = (evt, data) match {
+    case (ClientCreated(profile), data: AddedClientManager) => data.profileCreated(profile)
+    case (ServerAdded(url), data: CreatedClientManager) => data.clientAdded(url)
+    case (ServerRemoved(url), data: CreatedClientManager) => data.clientRemoved(url)
+    case _ =>
+      log.warning(s"unexpected event: $evt, data: $data")
+      data
   }
 
-  startWith(ADDED, ClientManagerData())
+  // Listen for wallet manager events
+  system.eventStream.subscribe(context.self, WalletManager.TradeWalletRunning.getClass)
+  system.eventStream.subscribe(context.self, classOf[WalletManager.ClientProfileIdCreated])
+
+  // Create wallets
+  val tradeWalletMgrRef: ActorRef = context.actorOf(TradeWalletManager.props, TradeWalletManager.name)
+  val escrowWalletMgrRef: ActorRef = context.actorOf(EscrowWalletManager.props, EscrowWalletManager.name)
+
+  startWith(ADDED, AddedClientManager())
 
   when(ADDED) {
+    case Event(WalletManager.TradeWalletRunning, d: AddedClientManager) =>
+      tradeWalletMgrRef ! TradeWalletManager.CreateClientProfileId
+      stay()
 
-    case Event(ClientManager.Start, d: ClientManagerData) =>
-      goto(ADDED) andThen { ud: ClientManagerData =>
-        ud.clients.foreach { u =>
-          startClient(u)
-          system.eventStream.publish(ClientAdded(u))
-        }
+    case Event(WalletManager.ClientProfileIdCreated(clientProfileId), d: AddedClientManager) =>
+      val cpc = ClientCreated(ClientProfile(clientProfileId))
+      goto(CREATED) applying cpc
+
+    case Event(FindServers, d: AddedClientManager) =>
+      stay()
+  }
+
+  when(CREATED) {
+
+    case Event(WalletManager.TradeWalletRunning, d: CreatedClientManager) =>
+      d.servers.foreach { u =>
+        startClient(u)
+      }
+      stay()
+
+    case Event(ac: AddServer, d: CreatedClientManager) if !d.servers.contains(ac.url) =>
+      val ca = ServerAdded(ac.url)
+      goto(CREATED) applying ca andThen {
+        case ud: CreatedClientManager =>
+          startClient(ca.url)
+          context.sender ! ca
+        case ud =>
+          log.warning(s"unexpected updated data: $ud")
       }
 
-    case Event(ac: AddClient, d: ClientManagerData) if !d.clients.contains(ac.url) =>
-      val ca = ClientAdded(ac.url)
-      goto(ADDED) applying ca andThen { ud: ClientManagerData =>
-        startClient(ca.url)
-        context.sender ! ca
-      }
-
-    case Event(rc: RemoveClient, d: ClientManagerData) =>
+    case Event(rc: RemoveServer, d: CreatedClientManager) =>
       // TODO FT-24: return errors if client in use for active trades
-      if (d.clients.contains(rc.url)) {
-        val cr = ClientRemoved(rc.url)
-        goto(ADDED) applying cr andThen { ud: ClientManagerData =>
-          context.sender ! cr
-          stopClient(cr.url)
+      if (d.servers.contains(rc.url)) {
+        val cr = ServerRemoved(rc.url)
+        goto(CREATED) applying cr andThen {
+          case ud: CreatedClientManager =>
+            context.sender ! cr
+            stopClient(cr.url)
+          case ud =>
+            log.warning(s"unexpected updated data: $ud")
         }
       } else
         stay()
 
-    case Event(ac: ArbitratorManager.Command, d: ClientManagerData) =>
+    case Event(FindServers, d: CreatedClientManager) =>
+      sender() ! FoundServers(d.servers)
+      stay()
+
+    case Event(FindClientProfile, d: CreatedClientManager) =>
+      sender() ! FoundClientProfile(d.clientProfile)
+      stay()
+
+    case Event(ac: ArbitratorManager.Command, d: CreatedClientManager) =>
       client(ac.url).foreach(_ ! ac)
       stay()
 
-    case Event(apc: ArbitrateProcess.Command, d: ClientManagerData) =>
+    case Event(apc: ArbitrateProcess.Command, d: CreatedClientManager) =>
       client(apc.url).foreach(_ ! apc)
       stay()
 
-    case Event(spc: BtcSellProcess.Command, d: ClientManagerData) =>
+    case Event(spc: BtcSellProcess.Command, d: CreatedClientManager) =>
       client(spc.url).foreach(_ ! spc)
       stay()
 
-    case Event(bpc: BtcBuyProcess.Command, d: ClientManagerData) =>
+    case Event(bpc: BtcBuyProcess.Command, d: CreatedClientManager) =>
       client(bpc.url).foreach(_ ! bpc)
       stay()
 
-    case Event(evt: EventClient.Event, d: ClientManagerData) =>
+    case Event(evt: EventClient.Event, d: CreatedClientManager) =>
       system.eventStream.publish(evt)
       stay()
 
-    case Event(evt: ArbitratorManager.Event, d: ClientManagerData) =>
+    case Event(evt: ArbitratorManager.Event, d: CreatedClientManager) =>
       system.eventStream.publish(evt)
       stay()
 
-    case Event(evt: TradeProcess.Event, d: ClientManagerData) =>
+    case Event(evt: TradeProcess.Event, d: CreatedClientManager) =>
       system.eventStream.publish(evt)
       stay()
 
-    case Event(evt: InsufficentBtc, d: ClientManagerData) =>
+    case Event(evt: InsufficientBtc, d: CreatedClientManager) =>
       system.eventStream.publish(evt)
       stay()
 
-    case Event(e, d: ClientManagerData) =>
+    case Event(e, d: Data) =>
       log.error(s"Unexpected event from ${context.sender()}: $e.toString")
       stay()
   }

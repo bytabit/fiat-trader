@@ -19,31 +19,35 @@
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.bytabit.ft.fxui.client.ProfileUI">
     <children>
-        <GridPane>
-            <columnConstraints>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="100.0" minWidth="10.0" prefWidth="100.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="350.0" minWidth="10.0" prefWidth="350.0"/>
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0" prefWidth="200.0"/>
-            </columnConstraints>
-            <rowConstraints>
-                <RowConstraints vgrow="SOMETIMES"/>
-                <RowConstraints vgrow="SOMETIMES"/>
-            </rowConstraints>
+        <HBox spacing="5.0">
             <children>
-                <Label alignment="CENTER" contentDisplay="RIGHT" text="Full Name"/>
-                <Label alignment="CENTER" contentDisplay="RIGHT" text="Email" GridPane.rowIndex="1"/>
-                <TextField prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                <TextField prefWidth="200.0" GridPane.columnIndex="1"/>
+                <Label alignment="CENTER" contentDisplay="RIGHT" text="Id: ">
+                    <graphic>
+                        <Label fx:id="profileId" minHeight="27.0" prefHeight="27.0" text="XXXXXXXX"/>
+                    </graphic>
+                </Label>
             </children>
-            <padding>
-                <Insets top="5.0"/>
-            </padding>
-        </GridPane>
+        </HBox>
+        <HBox spacing="5.0">
+            <children>
+                <Label alignment="CENTER" contentDisplay="RIGHT" text="Name: ">
+                    <graphic>
+                        <TextField fx:id="profileName" prefWidth="200.0"/>
+                    </graphic>
+                </Label>
+                <Label alignment="CENTER" contentDisplay="RIGHT" text="Email: ">
+                    <graphic>
+                        <TextField fx:id="profileEmail" prefWidth="200.0"/>
+                    </graphic>
+                </Label>
+            </children>
+        </HBox>
         <VBox alignment="CENTER">
             <children>
-                <TableView fx:id="escrowDetailsTable">
+                <TableView fx:id="paymentDetailsTable">
                     <columns>
                         <TableColumn fx:id="actionColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
                                      sortable="false" text="Action"/>
@@ -69,8 +73,8 @@
                     </rowConstraints>
                     <children>
                         <Button fx:id="addButton" mnemonicParsing="false" text="ADD"/>
-                        <ChoiceBox fx:id="addFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="1"/>
-                        <ChoiceBox fx:id="addPaymentMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="2"/>
+                        <ChoiceBox fx:id="addDetailsFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="1"/>
+                        <ChoiceBox fx:id="addDetailsPaymentMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="2"/>
                         <TextField fx:id="addPaymentDetails" promptText="Payment Details" GridPane.columnIndex="3"/>
                     </children>
                     <VBox.margin>

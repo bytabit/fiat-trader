@@ -36,6 +36,7 @@ import net.glxn.qrgen.image.ImageType
 import org.bitcoinj.core.Address
 import org.bitcoinj.uri.BitcoinURI
 import org.bitcoinj.wallet.KeyChain
+import org.bytabit.ft.client.ClientManager
 import org.bytabit.ft.fxui.trade.TransactionUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{BTCMoney, Config}
@@ -59,10 +60,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val tradeWalletMgrSel = system.actorSelection(s"/user/${TradeWalletManager.name}")
+  val tradeWalletMgrSel = system.actorSelection(s"/user/${ClientManager.name}/${TradeWalletManager.name}")
   lazy val tradeWalletMgrRef = tradeWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  val escrowWalletMgrSel = system.actorSelection(s"/user/${EscrowWalletManager.name}")
+  val escrowWalletMgrSel = system.actorSelection(s"/user/${ClientManager.name}/${EscrowWalletManager.name}")
   lazy val escrowWalletMgrRef = escrowWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data

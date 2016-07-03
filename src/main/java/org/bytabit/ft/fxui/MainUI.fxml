@@ -29,13 +29,13 @@
             <tabs>
                 <Tab fx:id="traderTradesTab" closable="false" text="Trade">
                     <content>
-                        <fx:include source="trade/TraderTradeUI.fxml"/>
+                        <fx:include source="trade/TradeUI.fxml"/>
                     </content>
                 </Tab>
 
                 <Tab fx:id="arbitratorTradesTab" closable="false" text="Arbitrate">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorTradeUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitrateUI.fxml"/>
                     </content>
                 </Tab>
 
@@ -47,13 +47,13 @@
 
                 <Tab fx:id="eventClientServersTab" closable="false" text="Servers">
                     <content>
-                        <fx:include source="client/EventClientUI.fxml"/>
+                        <fx:include source="client/ServersUI.fxml"/>
                     </content>
                 </Tab>
 
                 <Tab fx:id="eventClientProfileTab" closable="false" text="Profile">
                     <content>
-                        <fx:include source="client/EventClientProfileUI.fxml"/>
+                        <fx:include source="client/ProfileUI.fxml"/>
                     </content>
                 </Tab>
             </tabs>

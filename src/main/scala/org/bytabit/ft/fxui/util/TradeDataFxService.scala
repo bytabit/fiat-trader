@@ -31,7 +31,7 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 
-trait TradeFxService extends ActorFxService {
+trait TradeDataFxService extends ActorFxService {
 
   // UI Data
 

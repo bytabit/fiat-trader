@@ -19,7 +19,7 @@ package org.bytabit.ft.wallet
 import java.io.File
 import java.net.URL
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.Props
 import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
@@ -40,7 +40,7 @@ object TradeWalletManager {
   val props = Props(new TradeWalletManager)
   val name = s"tradeWalletManager"
 
-  def actorOf(system: ActorSystem) = system.actorOf(props, name)
+  // def actorOf(system: ActorSystem) = system.actorOf(props, name)
 
   // wallet commands
 

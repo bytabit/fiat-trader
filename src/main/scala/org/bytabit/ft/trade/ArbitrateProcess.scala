@@ -102,7 +102,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, sto: SignedTakenOffer) =>
-      if (outputsEqual(sto.unsignedOpenTx, etu.tx) &&
+      if (etu.p2shAddresses.contains(sto.escrowAddress) && outputsEqual(sto.unsignedOpenTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val boe = BtcSellerOpenedEscrow(sto.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(OPENED) applying boe andThen {
@@ -120,7 +120,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, ot: OpenedTrade) =>
-      if (outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
+      if (etu.p2shAddresses.contains(ot.escrowAddress) && outputsEqual(ot.signedTakenOffer.unsignedFundTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val bfe = BtcSellerFundedEscrow(ot.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime),
           paymentDetailsKey(etu.tx))
@@ -145,7 +145,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       }
 
     case Event(etu: WalletManager.EscrowTransactionUpdated, ft: FundedTrade) =>
-      if (outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
+      if (etu.p2shAddresses.contains(ft.escrowAddress) && outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val brp = BtcSellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(TRADED) applying brp andThen {
@@ -219,7 +219,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedPayment) =>
-      if (outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
+      if (etu.p2shAddresses.contains(cfd.escrowAddress) && outputsEqual(cfd.unsignedFiatSentPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val sf = BtcBuyerFunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(BTCBUYER_FUNDED) applying sf andThen {
@@ -243,7 +243,7 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       stay()
 
     case Event(etu: EscrowTransactionUpdated, cfd: CertifiedPayment) =>
-      if (outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
+      if (etu.p2shAddresses.contains(cfd.escrowAddress) && outputsEqual(cfd.unsignedFiatNotSentPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
         val br = BtcSellerRefunded(cfd.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
         goto(BTCSELLER_REFUNDED) applying br andThen {

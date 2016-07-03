@@ -20,7 +20,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.client.EventClientUI">
+      fx:controller="org.bytabit.ft.fxui.client.ServersUI">
     <children>
         <TableView fx:id="eventClientTable" VBox.vgrow="ALWAYS">
             <columns>

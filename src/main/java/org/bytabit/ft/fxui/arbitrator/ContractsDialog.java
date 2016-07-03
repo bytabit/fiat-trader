@@ -34,7 +34,7 @@ import org.joda.money.CurrencyUnit;
 import java.io.IOException;
 import java.util.ResourceBundle;
 
-public class ArbitratorContractDialog extends Alert {
+public class ContractsDialog extends Alert {
 
     private LoggingAdapter log;
 
@@ -91,14 +91,14 @@ public class ArbitratorContractDialog extends Alert {
     @FXML
     private GridPane gridPane;
 
-    public ArbitratorContractDialog(ArbitratorManagerFxService arbitratorManagerFxService, Arbitrator a) {
+    public ContractsDialog(ArbitratorManagerFxService arbitratorManagerFxService, Arbitrator a) {
         super(AlertType.INFORMATION);
         arbitrator = a;
         log = arbitratorManagerFxService.system().log();
         this.arbitratorManagerFxService = arbitratorManagerFxService;
 
         FXMLLoader fxmlLoader = new FXMLLoader();
-        fxmlLoader.setLocation(FiatTrader.class.getResource("/org/bytabit/ft/fxui/arbitrator/ArbitratorContractDialog.fxml"));
+        fxmlLoader.setLocation(FiatTrader.class.getResource("/org/bytabit/ft/fxui/arbitrator/ContractsDialog.fxml"));
         fxmlLoader.setController(this);
 
         Boolean isArbitratorServer = Config.arbitratorEnabled() && Config.publicUrl().equals(arbitrator.url());

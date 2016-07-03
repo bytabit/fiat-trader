@@ -16,17 +16,24 @@
 
 package org.bytabit.ft.client
 
-import org.bytabit.ft.client.ClientManager.{ClientAdded, ClientRemoved}
-import org.bytabit.ft.util.{EventJsonFormat, UtilJsonProtocol}
+import org.bytabit.ft.client.ClientManager.{ClientCreated, ServerAdded, ServerRemoved}
+import org.bytabit.ft.client.model.ClientProfile
+import org.bytabit.ft.util.EventJsonFormat
+import org.bytabit.ft.wallet.WalletJsonProtocol
 
-trait ClientManagerJsonProtocol extends UtilJsonProtocol {
+trait ClientManagerJsonProtocol extends WalletJsonProtocol {
 
-  implicit def clientAddedJsonFormat = jsonFormat(ClientAdded.apply(_), "url")
+  implicit def clientProfile = jsonFormat3(ClientProfile)
 
-  implicit def clientRemovedJsonFormat = jsonFormat(ClientRemoved.apply(_), "url")
+  implicit def clientCreatedFormat = jsonFormat(ClientCreated.apply(_), "profile")
+
+  implicit def serverAddedJsonFormat = jsonFormat(ServerAdded.apply(_), "url")
+
+  implicit def serverRemovedJsonFormat = jsonFormat(ServerRemoved.apply(_), "url")
 
   implicit def clientManagerEventJsonFormat = new EventJsonFormat[ClientManager.Event](
-    Map(simpleName(classOf[ClientAdded]) -> clientAddedJsonFormat,
-      simpleName(classOf[ClientRemoved]) -> clientRemovedJsonFormat)
+    Map(simpleName(classOf[ClientCreated]) -> clientCreatedFormat,
+      simpleName(classOf[ServerAdded]) -> serverAddedJsonFormat,
+      simpleName(classOf[ServerRemoved]) -> serverRemovedJsonFormat)
   )
 }

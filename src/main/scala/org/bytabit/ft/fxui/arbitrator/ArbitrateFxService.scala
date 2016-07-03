@@ -23,7 +23,7 @@ import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.util.TradeFxService
+import org.bytabit.ft.fxui.util.TradeDataFxService
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
 import org.bytabit.ft.trade.model.ARBITRATOR
@@ -31,11 +31,11 @@ import org.bytabit.ft.util._
 
 import scala.concurrent.duration.FiniteDuration
 
-object ArbitratorTradeFxService {
-  def apply(serverUrl: URL, system: ActorSystem) = new ArbitratorTradeFxService(serverUrl, system)
+object ArbitrateFxService {
+  def apply(serverUrl: URL, system: ActorSystem) = new ArbitrateFxService(serverUrl, system)
 }
 
-class ArbitratorTradeFxService(serverUrl: URL, actorSystem: ActorSystem) extends TradeFxService {
+class ArbitrateFxService(serverUrl: URL, actorSystem: ActorSystem) extends TradeDataFxService {
 
   override val system = actorSystem
 
