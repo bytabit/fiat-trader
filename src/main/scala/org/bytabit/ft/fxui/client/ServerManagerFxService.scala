@@ -78,6 +78,9 @@ class ServerManagerFxService(actorSystem: ActorSystem) extends ActorFxService {
         updateArbitratorUIModel(ADDED, u, None)
       }
 
+    case ClientCreated(p) =>
+    // do nothing for now
+
     case ServerAdded(u) =>
       updateArbitratorUIModel(ADDED, u, None)
 

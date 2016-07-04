@@ -166,8 +166,13 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
       stay()
 
     case Event(WalletManager.ClientProfileIdCreated(clientProfileId), d: AddedClientManager) =>
-      val cpc = ClientCreated(ClientProfile(clientProfileId))
-      goto(CREATED) applying cpc
+      val cc = ClientCreated(ClientProfile(clientProfileId))
+      goto(CREATED) applying cc andThen { u =>
+        system.eventStream.publish(cc)
+      }
+
+    case Event(FindClientProfile, d: AddedClientManager) =>
+      stay()
 
     case Event(FindServers, d: AddedClientManager) =>
       stay()

@@ -82,6 +82,11 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
       profileName.set(p.name.getOrElse(""))
       profileEmail.set(p.email.getOrElse(""))
 
+    case ClientCreated(p) =>
+      profileId.set(p.id.toString)
+      profileName.set(p.name.getOrElse(""))
+      profileEmail.set(p.email.getOrElse(""))
+
     case ProfileNameUpdated(n) =>
       profileName.set(n)
     // TODO update UI to indicate name updated

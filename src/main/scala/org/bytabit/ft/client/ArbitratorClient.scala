@@ -62,7 +62,7 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
     // new arbitrator created
 
     case Event(ac: WalletManager.ArbitratorCreated, d) =>
-      createArbitratorManager(ac.arbitrator) //! ArbitratorManager.Start
+      createArbitratorManager(ac.arbitrator) ! ArbitratorManager.Start
       stay()
 
     case Event(ac: ArbitratorManager.ArbitratorCreated, d) =>
