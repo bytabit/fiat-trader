@@ -27,7 +27,7 @@ import org.joda.money.Money
 object Arbitrator extends WalletTools with Serializable {
 
   def apply(url: URL, bondPercent: Double, btcNotaryFee: Money)(implicit w: Wallet): Arbitrator =
-    new Arbitrator(url, w.getParams, freshEscrowKey, freshPayoutAddress, bondPercent, btcNotaryFee)
+    new Arbitrator(url, w.getParams, freshAuthKey, freshPayoutAddress, bondPercent, btcNotaryFee)
 }
 
 case class Arbitrator(url: URL, netParams: NetworkParameters, escrowPubKey: PubECKey, feesAddr: Address,

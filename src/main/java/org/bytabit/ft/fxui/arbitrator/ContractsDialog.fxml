@@ -15,11 +15,10 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorServerUI">
+<VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <children>
         <VBox spacing="5.0">
             <children>
@@ -46,16 +45,20 @@
                                 <Insets />
                             </HBox.margin>
                         </Label>
-                        <Label text="Public Key ID:">
-                            <padding>
-                                <Insets left="20.0" right="5.0" />
-                            </padding>
-                        </Label>
-                        <Label fx:id="idLabel" text="XXXXX" />
                     </children>
                     <VBox.margin>
                         <Insets top="5.0" />
                     </VBox.margin>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" layoutX="15.0" layoutY="20.0" spacing="5.0">
+                    <children>
+                        <Label text="Public Key ID:">
+                            <padding>
+                                <Insets right="5.0"/>
+                            </padding>
+                        </Label>
+                        <Label fx:id="idLabel" text="XXXXX"/>
+                    </children>
                 </HBox>
             </children>
             <VBox.margin>
@@ -65,7 +68,7 @@
                 <Insets left="5.0" top="5.0" />
             </padding>
         </VBox>
-        <TableView fx:id="contractTemplateTable" editable="true" VBox.vgrow="ALWAYS">
+        <TableView fx:id="contractTemplateTable" editable="true" prefHeight="300.0" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" resizable="false" text="Action" />
                 <TableColumn fx:id="idColumn" editable="false" maxWidth="200.0" prefWidth="200.0" resizable="false" text="Contract Template ID" />
@@ -79,7 +82,7 @@
                 <Insets top="5.0" />
             </VBox.margin>
         </TableView>
-        <GridPane>
+        <GridPane fx:id="gridPane">
             <columnConstraints>
                 <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="100.0" minWidth="10.0" prefWidth="100.0" />
                 <ColumnConstraints halignment="CENTER" hgrow="NEVER" maxWidth="200.0" minWidth="10.0" prefWidth="200.0" />

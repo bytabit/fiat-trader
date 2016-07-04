@@ -35,7 +35,7 @@ object BtcSeller extends WalletTools {
   def apply(coinToOpenEscrow: Coin, coinToFundEscrow: Coin, openTxUtxo: List[TransactionOutput],
             fundTxUtxo: List[TransactionOutput])(implicit w: Wallet): BtcSeller =
 
-    new BtcSeller(w.getParams, freshEscrowKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo)
+    new BtcSeller(w.getParams, freshAuthKey, freshChangeAddress, freshPayoutAddress, openTxUtxo, fundTxUtxo)
 }
 
 case class BtcSeller(netParams: NetworkParameters, escrowPubKey: PubECKey,

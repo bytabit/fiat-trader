@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui;
 
-import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
 import javafx.application.Application;
@@ -28,8 +26,6 @@ import org.bytabit.ft.client.ClientManager;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
 import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
-import org.bytabit.ft.wallet.EscrowWalletManager;
-import org.bytabit.ft.wallet.TradeWalletManager;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
@@ -56,11 +52,7 @@ public class FiatTrader extends Application {
             log.error("Unable to create wallet directory.");
         }
 
-        // Create actors
-        ActorRef tradeWalletMgrRef = TradeWalletManager.actorOf(system);
-        ActorRef escrowWalletMgrRef = EscrowWalletManager.actorOf(system);
-
-        ClientManager.actorOf(system, tradeWalletMgrRef, escrowWalletMgrRef);
+        ClientManager.actorOf(system);
 
         if (Config.serverEnabled()) {
             EventServer.actorOf(system);

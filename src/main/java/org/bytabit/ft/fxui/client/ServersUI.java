@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bytabit.ft.fxui.arbitrator;
+package org.bytabit.ft.fxui.client;
 
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
@@ -23,24 +22,25 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import org.bytabit.ft.fxui.ArbitratorClientFxService;
-import org.bytabit.ft.fxui.model.ArbitratorUIModel;
+import org.bytabit.ft.fxui.arbitrator.ArbitratorManagerFxService;
+import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel;
+import org.bytabit.ft.fxui.arbitrator.ContractsDialog;
 import org.bytabit.ft.fxui.util.ActorController;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class ArbitratorClientUI implements ActorController {
+public class ServersUI implements ActorController {
 
-    private ArbitratorClientFxService arbitratorClientFxService;
+    private ServerManagerFxService ServerManagerFxService;
+    private ArbitratorManagerFxService arbitratorManagerFxService;
 
     @FXML
     private ResourceBundle resources;
 
-
     @FXML
-    private TableView<ArbitratorUIModel> arbitratorsTable;
+    private TableView<ArbitratorUIModel> eventClientTable;
 
     @FXML
     private TableColumn<ArbitratorUIModel, String> actionColumn;
@@ -68,16 +68,33 @@ public class ArbitratorClientUI implements ActorController {
 
     private ActorSystem sys;
 
-    public ArbitratorClientUI(ActorSystem system) {
+    public ServersUI(ActorSystem system) {
         sys = system;
-        arbitratorClientFxService = new ArbitratorClientFxService(system);
-        arbitratorClientFxService.start();
+        ServerManagerFxService = new ServerManagerFxService(system);
+        ServerManagerFxService.start();
+
+        arbitratorManagerFxService = new ArbitratorManagerFxService(system);
+        arbitratorManagerFxService.start();
     }
 
     @FXML
     void initialize() {
 
-        // setup arbitrator table
+        eventClientTable.setRowFactory(tv -> {
+            TableRow row = new TableRow<ArbitratorUIModel>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && ((ArbitratorUIModel) row.getItem()).arbitrator().isDefined()) {
+                    ArbitratorUIModel rowData = (ArbitratorUIModel) row.getItem();
+
+                    ContractsDialog dialog = new ContractsDialog(arbitratorManagerFxService, rowData.arbitrator().get());
+                    dialog.showAndWait();
+                }
+            });
+            return row;
+        });
+
+        // setup event client table
+
         actionColumn.setCellValueFactory(a -> a.getValue().urlProperty());
         actionColumn.setCellFactory(column -> newTableCell());
 
@@ -87,7 +104,7 @@ public class ArbitratorClientUI implements ActorController {
         feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
         idColumn.setCellValueFactory(a -> a.getValue().idProperty());
 
-        arbitratorsTable.setItems(arbitratorClientFxService.arbitrators());
+        eventClientTable.setItems(ServerManagerFxService.arbitrators());
     }
 
     @FXML
@@ -99,7 +116,7 @@ public class ArbitratorClientUI implements ActorController {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        if (url != null) arbitratorClientFxService.addArbitrator(url);
+        if (url != null) ServerManagerFxService.addArbitrator(url);
     }
 
     private TableCell<ArbitratorUIModel, String> newTableCell() {
@@ -121,7 +138,7 @@ public class ArbitratorClientUI implements ActorController {
                     deleteButton.setText("DELETE");
                     deleteButton.setOnAction(evt -> {
                         try {
-                            arbitratorClientFxService.removeArbitrator(new URL(item));
+                            ServerManagerFxService.removeArbitrator(new URL(item));
                         } catch (MalformedURLException e) {
                             e.printStackTrace();
                         }

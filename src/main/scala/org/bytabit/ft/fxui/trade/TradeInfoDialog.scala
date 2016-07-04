@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.trade
 
 import java.util.ResourceBundle
 import javafx.beans.property.SimpleStringProperty
@@ -29,8 +28,7 @@ import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.fxui.model.TradeUIModel
-import org.bytabit.ft.fxui.util.ActorController
+import org.bytabit.ft.fxui.FiatTrader
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.{BTCBUYER_FUNDED, BTCSELLER_REFUNDED}
 import org.bytabit.ft.trade.model._
@@ -78,7 +76,7 @@ object FxTableHelper {
     }
 }
 
-case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(AlertType.INFORMATION) with ActorController {
+case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(AlertType.INFORMATION) {
 
   @FXML
   private var resources: ResourceBundle = null
@@ -137,7 +135,7 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
   val escrowDetails: ObservableList[EscrowDetailUIModel] = FXCollections.observableArrayList[EscrowDetailUIModel]
 
   val fxmlLoader = new FXMLLoader()
-  fxmlLoader.setLocation(classOf[FiatTrader].getResource("/org/bytabit/ft/fxui/trade/TradeInfoDialog.fxml"))
+  fxmlLoader.setLocation(classOf[FiatTrader].getResource("/org/bytabit/ft/fxui/trade/TradeDialog.fxml"))
   fxmlLoader.setController(this)
 
   getDialogPane.setContent(fxmlLoader.load())
@@ -297,6 +295,4 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
   def okButtonAction(event: ActionEvent): Unit = {
     close()
   }
-
-  override def log = system.log
 }

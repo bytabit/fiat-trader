@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.client
 
 import akka.actor.ExtendedActorSystem
@@ -26,7 +25,7 @@ class ClientManagerJsonSerializer(override val system: ExtendedActorSystem)
 
   override val identifier = hashId(this.getClass.getSimpleName)
 
-  def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
+  override def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = manifest match {
     case Some(clazz: Class[_]) ⇒
       bytesToString(bytes).parseJson.convertTo[ClientManager.Event]
     case _ ⇒

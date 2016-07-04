@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.trade
 
 import java.net.URL
@@ -26,7 +25,7 @@ import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, RequestCertifyPayment, 
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.wallet.TradeWalletManager.SetTransactionMemo
-import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficentBtc, TxBroadcast}
+import org.bytabit.ft.wallet.WalletManager.{EscrowTransactionUpdated, InsufficientBtc, TxBroadcast}
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.time.DateTime
 
@@ -122,7 +121,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
         context.parent ! BtcBuyerCanceledOffer(uso.id, sso.posted)
       }
 
-    case Event(we: InsufficentBtc, bo: BtcBuyOffer) =>
+    case Event(we: InsufficientBtc, bo: BtcBuyOffer) =>
       context.parent ! we
       stay()
   }

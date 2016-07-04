@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.wallet
 
 import java.awt.Desktop
 import java.io.ByteArrayInputStream
@@ -22,27 +21,27 @@ import java.net.URI
 import java.time.ZoneId
 import javafx.beans.property.{SimpleDoubleProperty, SimpleStringProperty}
 import javafx.collections.{FXCollections, ObservableList}
-import javafx.event.EventHandler
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control.ButtonBar.ButtonData
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
-import javafx.scene.input.{Clipboard, ClipboardContent, MouseEvent}
+import javafx.scene.input.{Clipboard, ClipboardContent}
 import javafx.scene.layout.GridPane
 import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import net.glxn.qrgen.QRCode
 import net.glxn.qrgen.image.ImageType
-import org.bitcoinj.core.{Address, NetworkParameters}
+import org.bitcoinj.core.Address
 import org.bitcoinj.uri.BitcoinURI
 import org.bitcoinj.wallet.KeyChain
-import org.bytabit.ft.fxui.model.TransactionUIModel
+import org.bytabit.ft.client.ClientManager
+import org.bytabit.ft.fxui.trade.TransactionUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
 import org.bytabit.ft.util.{BTCMoney, Config}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
-import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager}
+import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.money.Money
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -60,10 +59,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val tradeWalletMgrSel = system.actorSelection(s"/user/${TradeWalletManager.name}")
+  val tradeWalletMgrSel = system.actorSelection(s"/user/${ClientManager.name}/${TradeWalletManager.name}")
   lazy val tradeWalletMgrRef = tradeWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
-  val escrowWalletMgrSel = system.actorSelection(s"/user/${EscrowWalletManager.name}")
+  val escrowWalletMgrSel = system.actorSelection(s"/user/${ClientManager.name}/${EscrowWalletManager.name}")
   lazy val escrowWalletMgrRef = escrowWalletMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
@@ -76,8 +75,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override def start() {
     super.start()
-    sendCmd(TradeWalletManager.Start)
-    sendCmd(EscrowWalletManager.Start)
+    system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.Event])
+
+    sendCmd(TradeWalletManager.FindBalance)
+    sendCmd(TradeWalletManager.FindTransactions)
   }
 
   def findNewReceiveAddress(): Unit = {
@@ -92,6 +93,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
   def handler = {
 
     case TradeWalletRunning =>
+      sendCmd(TradeWalletManager.FindBalance)
       sendCmd(FindTransactions)
 
     case DownloadProgress(pct, blocksSoFar, date) =>
@@ -120,13 +122,19 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
       log.info(s"Backup code: ${c.mkString(" ")}\nOldest Key Date Time: $dt")
       alertInfoBackupCode(c, dt)
 
-    case TxBroadcast(_) =>
-    // do nothing
-
     case WalletRestored =>
       log.info(s"Wallet restored.")
 
-    case _ => log.error("Unexpected message")
+    case EscrowWalletRunning =>
+    // do nothing
+
+    case e: TxBroadcast =>
+    // do nothing
+
+    case e: BlockDownloaded =>
+    // do noting
+
+    case e => log.error(s"Unexpected event: $e")
   }
 
   def alertInfoNewReceiveAddress(a: Address): Unit = {
@@ -136,17 +144,25 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     alert.setTitle(null)
     alert.setHeaderText("Deposit XBT Address")
     alert.setGraphic(new ImageView(qrCode(a)))
-    alert.setContentText(s"${a.toString}\n\nClick Anywhere to Copy")
-    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
-      override def handle(event: MouseEvent): Unit = {
-        copyAddress(a)
-        if (Config.walletNet == NetworkParameters.ID_MAINNET)
-        // TODO FT-22: warn user bitcoin wallet will be launched
-          requestMoney(a)
-      }
-    })
 
-    alert.showAndWait
+    val buttonTypeCopy = new ButtonType("Copy")
+    val buttonTypeOK = new ButtonType("OK", ButtonData.OK_DONE)
+    alert.getButtonTypes.setAll(buttonTypeCopy, buttonTypeOK)
+
+    alert.setContentText(s"${a.getParameters.getId.split('.').last.toUpperCase}: ${a.toString}")
+    //    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
+    //      override def handle(event: MouseEvent): Unit = {
+    //        copyAddress(a)
+    //        if (Config.walletNet == NetworkParameters.ID_MAINNET)
+    //        // TODO FT-22: warn user bitcoin wallet will be launched
+    //          requestMoney(a)
+    //      }
+    //    })
+
+    val result = alert.showAndWait
+    if (result.get() == buttonTypeCopy) {
+      copyAddress(a)
+    }
   }
 
   def dialogWithdrawBtc(): Unit = {
@@ -195,7 +211,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     }
   }
 
-  def alertInfoBackupCode(c: List[String], dt:DateTime): Unit = {
+  def alertInfoBackupCode(c: List[String], dt: DateTime): Unit = {
 
     // popup info
     val alert = new Alert(AlertType.INFORMATION)
@@ -224,13 +240,20 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     grid.add(creationDateTextField, 2, 2)
     alert.getDialogPane.setContent(grid)
 
-    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
-      override def handle(event: MouseEvent): Unit = {
-        copySeedCode(c)
-      }
-    })
+    val buttonTypeCopy = new ButtonType("Copy")
+    val buttonTypeOK = new ButtonType("OK", ButtonData.OK_DONE)
+    alert.getButtonTypes.setAll(buttonTypeCopy, buttonTypeOK)
 
-    alert.showAndWait
+    //    alert.getDialogPane.setOnMouseClicked(new EventHandler[MouseEvent]() {
+    //      override def handle(event: MouseEvent): Unit = {
+    //        copySeedCode(c)
+    //      }
+    //    })
+
+    val result = alert.showAndWait
+    if (result.get() == buttonTypeCopy) {
+      copySeedCode(c)
+    }
   }
 
   def dialogRestoreWallet(): Unit = {

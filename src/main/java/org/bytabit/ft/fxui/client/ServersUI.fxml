@@ -15,14 +15,13 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <VBox xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="org.bytabit.ft.fxui.arbitrator.ArbitratorClientUI">
+      fx:controller="org.bytabit.ft.fxui.client.ServersUI">
     <children>
-        <TableView fx:id="arbitratorsTable" VBox.vgrow="ALWAYS">
+        <TableView fx:id="eventClientTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="actionColumn" maxWidth="100.0" prefWidth="100.0" text="Action"/>
                 <TableColumn fx:id="statusColumn" maxWidth="100.0" prefWidth="100.0" text="Status"/>

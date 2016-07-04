@@ -15,7 +15,6 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
@@ -27,33 +26,33 @@
     <center>
         <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
             <tabs>
-                <Tab fx:id="traderTradesTab" text="Trades">
+                <Tab fx:id="traderTradesTab" closable="false" text="Trade">
                     <content>
-                        <fx:include source="trade/TraderTradeUI.fxml"/>
+                        <fx:include source="trade/TradeUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab fx:id="arbitratorTradesTab" text="Trades">
+                <Tab fx:id="arbitratorTradesTab" closable="false" text="Arbitrate">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorTradeUI.fxml"/>
+                        <fx:include source="arbitrator/ArbitrateUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab fx:id="walletTab" text="Wallet">
+                <Tab fx:id="walletTab" closable="false" text="Wallet">
                     <content>
                         <fx:include source="wallet/WalletUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab fx:id="arbitratorsTab" text="Arbitrators">
+                <Tab fx:id="eventClientServersTab" closable="false" text="Servers">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorClientUI.fxml"/>
+                        <fx:include source="client/ServersUI.fxml"/>
                     </content>
                 </Tab>
 
-                <Tab fx:id="arbitratorServerTab" text="Trade Server">
+                <Tab fx:id="eventClientProfileTab" closable="false" text="Profile">
                     <content>
-                        <fx:include source="arbitrator/ArbitratorServerUI.fxml"/>
+                        <fx:include source="client/ProfileUI.fxml"/>
                     </content>
                 </Tab>
             </tabs>
@@ -77,7 +76,6 @@
                                 <Font name="System Bold" size="14.0"/>
                             </font>
                         </Label>
-                        <Button mnemonicParsing="false" text="Profile"/>
                         <Button mnemonicParsing="false" nodeOrientation="LEFT_TO_RIGHT" text="About"/>
                     </children>
                 </HBox>

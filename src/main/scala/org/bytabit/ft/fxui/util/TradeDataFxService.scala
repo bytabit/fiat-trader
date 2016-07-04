@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui.util
 
 import java.util.UUID
@@ -22,7 +21,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.{FXCollections, ObservableList}
 
 import org.bitcoinj.core.Sha256Hash
-import org.bytabit.ft.fxui.model.TradeUIModel
+import org.bytabit.ft.fxui.trade.TradeUIModel
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.PaymentMethod
@@ -31,7 +30,7 @@ import org.joda.time.DateTime
 
 import scala.collection.JavaConversions._
 
-trait TradeFxService extends ActorFxService {
+trait TradeDataFxService extends ActorFxService {
 
   // UI Data
 

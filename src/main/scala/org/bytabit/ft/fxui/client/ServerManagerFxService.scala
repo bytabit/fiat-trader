@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bytabit.ft.fxui
+package org.bytabit.ft.fxui.client
 
 import java.net.URL
 import java.util.function.Predicate
@@ -22,32 +21,30 @@ import javafx.collections.{FXCollections, ObservableList}
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
-import org.bytabit.ft.arbitrator.ArbitratorManager.{ArbitratorCreated, ContractAdded, ContractRemoved}
+import org.bytabit.ft.arbitrator.ArbitratorManager.ArbitratorCreated
 import org.bytabit.ft.client.ClientManager._
 import org.bytabit.ft.client.EventClient.{ADDED, _}
 import org.bytabit.ft.client._
-import org.bytabit.ft.fxui.model.ArbitratorUIModel
+import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel
 import org.bytabit.ft.fxui.util.ActorFxService
-import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.model.Contract
 import org.bytabit.ft.util.{BTCMoney, FiatMoney, Monies}
-import org.bytabit.ft.wallet.WalletManager.InsufficentBtc
 import org.bytabit.ft.wallet.model.Arbitrator
 import org.joda.money.{CurrencyUnit, IllegalCurrencyException, Money}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-object ArbitratorClientFxService {
-  def apply(system: ActorSystem) = new ArbitratorClientFxService(system)
+object ServerManagerFxService {
+  def apply(system: ActorSystem) = new ServerManagerFxService(system)
 }
 
-class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService {
+class ServerManagerFxService(actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
-  val arbitratorClientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
-  lazy val arbitratorClientMgrRef = arbitratorClientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
+  val clientMgrSel = system.actorSelection(s"/user/${ClientManager.name}")
+  lazy val clientMgrRef = clientMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   // UI Data
 
@@ -62,35 +59,35 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
   override def start() {
     super.start()
     system.eventStream.subscribe(inbox.getRef(), classOf[ClientManager.Event])
-    system.eventStream.subscribe(inbox.getRef(), classOf[EventClient.Event])
-    system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
-    system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
-    sendCmd(ClientManager.Start)
+    system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.ArbitratorCreated])
+    system.eventStream.subscribe(inbox.getRef(), classOf[EventClient.ServerOnline])
+    system.eventStream.subscribe(inbox.getRef(), classOf[EventClient.ServerOffline])
+    sendCmd(FindServers)
   }
 
   def addArbitrator(url: URL) =
-    sendCmd(AddClient(url))
+    sendCmd(AddServer(url))
 
   def removeArbitrator(url: URL) =
-    sendCmd(RemoveClient(url))
+    sendCmd(RemoveServer(url))
 
   @Override
   def handler = {
-    case ClientAdded(u) =>
+    case FoundServers(us) =>
+      us.foreach { u =>
+        updateArbitratorUIModel(ADDED, u, None)
+      }
+
+    case ClientCreated(p) =>
+    // do nothing for now
+
+    case ServerAdded(u) =>
       updateArbitratorUIModel(ADDED, u, None)
 
     case ArbitratorCreated(u, n, _) =>
       updateArbitratorUIModel(ONLINE, u, Some(n))
 
-    // handle arbitrator events
-
-    case ContractAdded(u, c, _) =>
-    //log.info(s"ContractAdded at URL: ${u}")
-
-    case ContractRemoved(url, id, _) =>
-    //log.info(s"ContractRemoved at URL: ${u}")
-
-    case ClientRemoved(u) =>
+    case ServerRemoved(u) =>
       removeArbitratorUIModel(u)
 
     case ServerOnline(u) =>
@@ -98,15 +95,6 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
 
     case ServerOffline(u) =>
       updateArbitratorUIModel(OFFLINE, u, None)
-
-    case e: EventClient.Event =>
-      log.debug(s"unhandled ArbitratorFSM event: $e")
-
-    case e: TradeProcess.Event =>
-      log.debug(s"unhandled tradeFSM event: $e")
-
-    case we: InsufficentBtc =>
-    // Do Nothing
 
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
@@ -199,5 +187,5 @@ class ArbitratorClientFxService(actorSystem: ActorSystem) extends ActorFxService
     }
   }
 
-  private def sendCmd(cmd: ClientManager.Command) = sendMsg(arbitratorClientMgrRef, cmd)
+  private def sendCmd(cmd: ClientManager.Command) = sendMsg(clientMgrRef, cmd)
 }

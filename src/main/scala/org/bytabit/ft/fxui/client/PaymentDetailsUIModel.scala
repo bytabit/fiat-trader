@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.client
 
-import java.net.URL
 import javafx.beans.property.SimpleStringProperty
 
-import org.bitcoinj.core.Sha256Hash
+import org.bytabit.ft.client.model.PaymentDetails
 import org.bytabit.ft.util.PaymentMethod
 import org.joda.money.CurrencyUnit
 
-case class ContractUIModel(arbitratorUrl: URL, id: Sha256Hash, fiatCurrencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) {
+object PaymentDetailsUIModel {
+  def apply(pd: PaymentDetails) = new PaymentDetailsUIModel(pd.currencyUnit, pd.paymentMethod, pd.paymentDetails)
+}
 
-  val urlProperty = new SimpleStringProperty(arbitratorUrl.toString)
-  val idProperty = new SimpleStringProperty(id.toString)
-  val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)
+case class PaymentDetailsUIModel(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String) {
+
+  val currencyUnitProperty = new SimpleStringProperty(currencyUnit.getCode)
   val paymentMethodProperty = new SimpleStringProperty(paymentMethod.name)
-
-  def getId = idProperty.get
+  val paymentDetailsProperty = new SimpleStringProperty(paymentDetails)
 }

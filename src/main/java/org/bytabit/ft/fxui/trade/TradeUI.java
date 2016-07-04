@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui.trade;
 
 import akka.actor.ActorSystem;
@@ -23,9 +22,6 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
-import org.bytabit.ft.fxui.TraderTradeFxService;
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
-import org.bytabit.ft.fxui.model.TradeUIModel;
 import org.bytabit.ft.fxui.util.AbstractTradeUI;
 import org.bytabit.ft.util.BTCMoney;
 import org.bytabit.ft.util.FiatMoney;
@@ -33,9 +29,9 @@ import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
-public class TraderTradeUI extends AbstractTradeUI {
+public class TradeUI extends AbstractTradeUI {
 
-    private TraderTradeFxService tradeFxService;
+    private TradeFxService tradeFxService;
 
     @FXML
     protected TableColumn<TradeUIModel, String> roleColumn;
@@ -63,10 +59,10 @@ public class TraderTradeUI extends AbstractTradeUI {
     @FXML
     private ChoiceBox<PaymentMethod> btcBuyPaymentMethodChoiceBox;
 
-    public TraderTradeUI(ActorSystem system) {
+    public TradeUI(ActorSystem system) {
 
         super(system);
-        tradeFxService = new TraderTradeFxService(system);
+        tradeFxService = new TradeFxService(system);
         tradeFxService.start();
     }
 
@@ -93,6 +89,8 @@ public class TraderTradeUI extends AbstractTradeUI {
         tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
             btcBuyButton.disableProperty().setValue(newValue1);
         });
+
+        // choice box setup
 
         btcBuyFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
             @Override

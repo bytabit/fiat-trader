@@ -158,10 +158,8 @@ class ArbitratorManager(arbitrator: Arbitrator) extends PersistentFSM[Arbitrator
   when(CREATED) {
 
     case Event(Start, Data(a, cm)) =>
-
       // notify parent of created arbitrator
       context.parent ! ArbitratorManager.ArbitratorCreated(a.url, a)
-
       // notify parent of arbitrator contracts
       cm.values.foreach(c => context.parent ! ContractAdded(a.url, c))
       stay()
@@ -185,6 +183,10 @@ class ArbitratorManager(arbitrator: Arbitrator) extends PersistentFSM[Arbitrator
       stay() applying cr andThen { ud =>
         context.parent ! cr
       }
+
+    case Event(e, d) =>
+      log.error(s"unexpected event $e from ${context.sender()}")
+      stay()
   }
 
   // http flow

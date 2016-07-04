@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
@@ -22,15 +21,15 @@ import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
-import org.bytabit.ft.fxui.TradeInfoDialog;
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell;
-import org.bytabit.ft.fxui.model.TradeUIModel;
+import org.bytabit.ft.fxui.trade.TradeInfoDialog;
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell;
+import org.bytabit.ft.fxui.trade.TradeUIModel;
 
 import java.util.ResourceBundle;
 
 public abstract class AbstractTradeUI implements ActorController {
 
-    protected TradeFxService tradeFxService;
+    protected TradeDataFxService tradeFxService;
 
     @FXML
     protected ResourceBundle resources;

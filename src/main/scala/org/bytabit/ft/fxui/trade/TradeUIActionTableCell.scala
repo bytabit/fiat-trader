@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.bytabit.ft.fxui.model
+package org.bytabit.ft.fxui.trade
 
 import java.net.URL
 import java.util.UUID
@@ -22,11 +21,11 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.TraderTradeFxService
-import org.bytabit.ft.fxui.model.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.util.ActionTableCell
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.{CREATED, FIAT_SENT, FUNDED}
-import org.bytabit.ft.trade.model.{BTCSELLER, Role, BTCBUYER}
+import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Role}
 
 import scala.collection.JavaConversions._
 
@@ -36,7 +35,7 @@ object TradeUIActionTableCell {
 
 }
 
-class TradeUIActionTableCell(tradefxService: TraderTradeFxService) extends ActionTableCell {
+class TradeUIActionTableCell(tradefxService: TradeFxService) extends ActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)
