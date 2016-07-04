@@ -21,8 +21,8 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.util.ActionTableCell
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.util.TradeActionTableCell
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.CERT_PAYMENT_REQD
 import org.bytabit.ft.trade.model.{ARBITRATOR, Role}
@@ -35,7 +35,7 @@ object ArbitratorUIActionTableCell {
 
 }
 
-class ArbitratorUIActionTableCell(tradefxService: ArbitrateFxService) extends ActionTableCell {
+class ArbitratorUIActionTableCell(tradefxService: ArbitrateFxService) extends TradeActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)

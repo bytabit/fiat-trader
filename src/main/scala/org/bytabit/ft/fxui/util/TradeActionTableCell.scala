@@ -19,10 +19,10 @@ package org.bytabit.ft.fxui.util
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.control.{Button, TableCell}
 
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
 import org.bytabit.ft.fxui.trade.TradeUIModel
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
 
-trait ActionTableCell extends TableCell[TradeUIModel, TradeOriginState] {
+trait TradeActionTableCell extends TableCell[TradeUIModel, TradeOriginState] {
 
   def actionButton(text: String, handler: ActionEvent => Unit): Button = {
     val actionButton: Button = new Button

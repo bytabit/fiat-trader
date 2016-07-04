@@ -22,8 +22,8 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import org.bytabit.ft.fxui.trade.TradeInfoDialog;
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell;
 import org.bytabit.ft.fxui.trade.TradeUIModel;
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell;
 
 import java.util.ResourceBundle;
 
@@ -40,7 +40,7 @@ public abstract class AbstractTradeUI implements ActorController {
     protected TableView<TradeUIModel> tradeTable;
 
     @FXML
-    protected TableColumn<TradeUIModel, TradeUIActionTableCell.TradeOriginState> actionColumn;
+    protected TableColumn<TradeUIModel, TraderUIActionTableCell.TradeOriginState> actionColumn;
 
     @FXML
     protected TableColumn<TradeUIModel, String> statusColumn;

@@ -18,7 +18,7 @@ package org.bytabit.ft.fxui.trade
 
 import javafx.beans.property._
 
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._

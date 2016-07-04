@@ -43,19 +43,19 @@ public class ProfileUI implements ActorController {
     private TextField profileEmailTextField;
 
     @FXML
-    private TableColumn<?, ?> actionColumn;
+    private TableColumn<PaymentDetailsUIModel, ?> actionColumn;
 
     @FXML
-    private TableColumn<?, ?> fiatCurrencyColumn;
+    private TableColumn<PaymentDetailsUIModel, ?> fiatCurrencyColumn;
 
     @FXML
-    private TableColumn<?, ?> paymentMethodColumn;
+    private TableColumn<PaymentDetailsUIModel, ?> paymentMethodColumn;
 
     @FXML
-    private TableColumn<?, ?> paymentDetailsColumn;
+    private TableColumn<PaymentDetailsUIModel, ?> paymentDetailsColumn;
 
     @FXML
-    private TableView<?> paymentDetailsTable;
+    private TableView<PaymentDetailsUIModel> paymentDetailsTable;
 
     @FXML
     private Button addButton;
@@ -104,6 +104,10 @@ public class ProfileUI implements ActorController {
                 profileFxService.updateProfileEmail(profileEmailTextField.textProperty().get());
             }
         });
+
+        // table setup
+
+        paymentDetailsTable.setItems(profileFxService.paymentDetails());
 
         // choice box setup
 
