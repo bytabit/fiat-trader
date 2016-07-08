@@ -16,7 +16,7 @@
 
 package org.bytabit.ft.fxui.client
 
-import javafx.beans.property.SimpleStringProperty
+import javafx.beans.property.{SimpleObjectProperty, SimpleStringProperty}
 
 import org.bytabit.ft.client.model.PaymentDetails
 import org.bytabit.ft.util.PaymentMethod
@@ -28,6 +28,7 @@ object PaymentDetailsUIModel {
 
 case class PaymentDetailsUIModel(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String) {
 
+  val idProperty = new SimpleObjectProperty((currencyUnit, paymentMethod))
   val currencyUnitProperty = new SimpleStringProperty(currencyUnit.getCode)
   val paymentMethodProperty = new SimpleStringProperty(paymentMethod.name)
   val paymentDetailsProperty = new SimpleStringProperty(paymentDetails)

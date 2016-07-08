@@ -15,6 +15,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -50,7 +51,7 @@
                     <columns>
                         <TableColumn fx:id="actionColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
                                      sortable="false" text="Action"/>
-                        <TableColumn fx:id="fiatCurrencyColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
+                        <TableColumn fx:id="currencyUnitColumn" editable="false" maxWidth="100.0" prefWidth="100.0"
                                      sortable="false" text="Fiat Currency"/>
                         <TableColumn fx:id="paymentMethodColumn" editable="false" maxWidth="200.0" prefWidth="200.0"
                                      sortable="false" text="Payment Method"/>
@@ -71,7 +72,8 @@
                         <RowConstraints vgrow="SOMETIMES"/>
                     </rowConstraints>
                     <children>
-                        <Button fx:id="addButton" mnemonicParsing="false" text="ADD"/>
+                        <Button fx:id="addButton" mnemonicParsing="false" onAction="#handleAddPaymentDetails"
+                                text="ADD"/>
                         <ChoiceBox fx:id="addDetailsFiatCurrencyChoiceBox" maxWidth="130.0" GridPane.columnIndex="1"/>
                         <ChoiceBox fx:id="addDetailsPaymentMethodChoiceBox" prefWidth="300.0" GridPane.columnIndex="2"/>
                         <TextField fx:id="addPaymentDetailsTextField" promptText="Payment Details"

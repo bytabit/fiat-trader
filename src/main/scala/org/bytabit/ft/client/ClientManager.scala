@@ -55,6 +55,8 @@ object ClientManager {
 
   case object FindClientProfile extends Command
 
+  case object FindPaymentDetails extends Command
+
   case class UpdateProfileName(name: String) extends Command
 
   case class UpdateProfileEmail(email: String) extends Command
@@ -69,6 +71,14 @@ object ClientManager {
 
   case class ClientCreated(profile: ClientProfile) extends Event
 
+  case class ProfileNameUpdated(name: String) extends Event
+
+  case class ProfileEmailUpdated(email: String) extends Event
+
+  case class PaymentDetailsAdded(details: PaymentDetails) extends Event
+
+  case class PaymentDetailsRemoved(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) extends Event
+
   case class ServerAdded(url: URL) extends Event
 
   case class ServerRemoved(url: URL) extends Event
@@ -77,9 +87,7 @@ object ClientManager {
 
   case class FoundClientProfile(profile: ClientProfile) extends Event
 
-  case class ProfileNameUpdated(name: String) extends Event
-
-  case class ProfileEmailUpdated(email: String) extends Event
+  case class FoundPaymentDetails(paymentDetails: Set[PaymentDetails]) extends Event
 
   // states
 
@@ -103,16 +111,9 @@ object ClientManager {
     }
   }
 
-  case class CreatedClientManager(clientProfile: ClientProfile, servers: Set[URL] = Set())
-    extends Data {
-
-    def clientAdded(url: URL): CreatedClientManager = {
-      this.copy(servers = servers + url)
-    }
-
-    def clientRemoved(url: URL): CreatedClientManager = {
-      this.copy(servers = servers.filterNot(_ == url))
-    }
+  case class CreatedClientManager(clientProfile: ClientProfile,
+                                  paymentDetails: Set[PaymentDetails] = Set(),
+                                  servers: Set[URL] = Set()) extends Data {
 
     def nameUpdated(name: String): CreatedClientManager = {
       this.copy(clientProfile = this.clientProfile.copy(name = Some(name)))
@@ -120,6 +121,22 @@ object ClientManager {
 
     def emailUpdated(email: String): CreatedClientManager = {
       this.copy(clientProfile = this.clientProfile.copy(email = Some(email)))
+    }
+
+    def paymentDetailsAdded(pd: PaymentDetails): CreatedClientManager = {
+      this.copy(paymentDetails = paymentDetails + pd)
+    }
+
+    def paymentDetailsRemoved(cu: CurrencyUnit, pm: PaymentMethod): CreatedClientManager = {
+      this.copy(paymentDetails = paymentDetails.filterNot(pd => pd.currencyUnit == cu && pd.paymentMethod == pm))
+    }
+
+    def clientAdded(url: URL): CreatedClientManager = {
+      this.copy(servers = servers + url)
+    }
+
+    def clientRemoved(url: URL): CreatedClientManager = {
+      this.copy(servers = servers.filterNot(_ == url))
     }
   }
 
@@ -141,10 +158,12 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
 
   def applyEvent(evt: ClientManager.Event, data: Data): Data = (evt, data) match {
     case (ClientCreated(p), data: AddedClientManager) => data.profileCreated(p)
-    case (ServerAdded(u), data: CreatedClientManager) => data.clientAdded(u)
-    case (ServerRemoved(u), data: CreatedClientManager) => data.clientRemoved(u)
     case (ProfileNameUpdated(n), data: CreatedClientManager) => data.nameUpdated(n)
     case (ProfileEmailUpdated(e), data: CreatedClientManager) => data.emailUpdated(e)
+    case (PaymentDetailsAdded(pd), data: CreatedClientManager) => data.paymentDetailsAdded(pd)
+    case (PaymentDetailsRemoved(cu, pm), data: CreatedClientManager) => data.paymentDetailsRemoved(cu, pm)
+    case (ServerAdded(u), data: CreatedClientManager) => data.clientAdded(u)
+    case (ServerRemoved(u), data: CreatedClientManager) => data.clientRemoved(u)
     case _ =>
       log.warning(s"unexpected event: $evt, data: $data")
       data
@@ -198,6 +217,20 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
         sender ! peu
       }
 
+    case Event(AddPaymentDetails(apd), d: CreatedClientManager)
+      if !d.paymentDetails.exists(pd => pd.currencyUnit == apd.currencyUnit && pd.paymentMethod == apd.paymentMethod) =>
+      val pda = PaymentDetailsAdded(apd)
+      goto(CREATED) applying pda andThen { u =>
+        system.eventStream.publish(pda)
+      }
+
+    case Event(RemovePaymentDetails(cu, pm), d: CreatedClientManager)
+      if d.paymentDetails.exists(pd => pd.currencyUnit == cu && pd.paymentMethod == pm) =>
+      val pdr = PaymentDetailsRemoved(cu, pm)
+      goto(CREATED) applying pdr andThen { u =>
+        system.eventStream.publish(pdr)
+      }
+
     case Event(ac: AddServer, d: CreatedClientManager) if !d.servers.contains(ac.url) =>
       val ca = ServerAdded(ac.url)
       goto(CREATED) applying ca andThen {
@@ -228,6 +261,10 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
 
     case Event(FindClientProfile, d: CreatedClientManager) =>
       sender() ! FoundClientProfile(d.clientProfile)
+      stay()
+
+    case Event(FindPaymentDetails, d: CreatedClientManager) =>
+      sender() ! FoundPaymentDetails(d.paymentDetails)
       stay()
 
     case Event(ac: ArbitratorManager.Command, d: CreatedClientManager) =>

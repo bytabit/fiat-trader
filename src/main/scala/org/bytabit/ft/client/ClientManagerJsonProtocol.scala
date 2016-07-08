@@ -16,28 +16,37 @@
 package org.bytabit.ft.client
 
 import org.bytabit.ft.client.ClientManager._
-import org.bytabit.ft.client.model.ClientProfile
+import org.bytabit.ft.client.model.{ClientProfile, PaymentDetails}
 import org.bytabit.ft.util.EventJsonFormat
 import org.bytabit.ft.wallet.WalletJsonProtocol
 
 trait ClientManagerJsonProtocol extends WalletJsonProtocol {
 
-  implicit def clientProfile = jsonFormat3(ClientProfile)
+  implicit def clientProfileJsonFormat = jsonFormat3(ClientProfile)
 
-  implicit def clientCreatedFormat = jsonFormat(ClientCreated.apply(_), "profile")
+  implicit def paymentDetailsJsonFormat = jsonFormat3(PaymentDetails)
+
+  implicit def clientCreatedJsonFormat = jsonFormat(ClientCreated.apply(_), "profile")
 
   implicit def serverAddedJsonFormat = jsonFormat(ServerAdded.apply(_), "url")
 
   implicit def serverRemovedJsonFormat = jsonFormat(ServerRemoved.apply(_), "url")
 
-  implicit def profileNameUpdatedFormat = jsonFormat(ProfileNameUpdated.apply(_), "name")
+  implicit def profileNameUpdatedJsonFormat = jsonFormat(ProfileNameUpdated.apply(_), "name")
 
-  implicit def profileEmailUpdatedFormat = jsonFormat(ProfileEmailUpdated.apply(_), "email")
+  implicit def profileEmailUpdatedJsonFormat = jsonFormat(ProfileEmailUpdated.apply(_), "email")
+
+  implicit def paymentDetailsAddedJsonFormat = jsonFormat(PaymentDetailsAdded.apply(_), "paymentDetails")
+
+  implicit def paymentDetailsRemovedJsonFormat = jsonFormat(PaymentDetailsRemoved.apply, "currencyUnit", "paymentMethod")
 
   implicit def clientManagerEventJsonFormat = new EventJsonFormat[ClientManager.Event](
-    Map(simpleName(classOf[ClientCreated]) -> clientCreatedFormat,
+    Map(simpleName(classOf[ClientCreated]) -> clientCreatedJsonFormat,
       simpleName(classOf[ServerAdded]) -> serverAddedJsonFormat,
       simpleName(classOf[ServerRemoved]) -> serverRemovedJsonFormat,
-      simpleName(classOf[ProfileNameUpdated]) -> profileNameUpdatedFormat,
-      simpleName(classOf[ProfileEmailUpdated]) -> profileEmailUpdatedFormat))
+      simpleName(classOf[ProfileNameUpdated]) -> profileNameUpdatedJsonFormat,
+      simpleName(classOf[ProfileEmailUpdated]) -> profileEmailUpdatedJsonFormat,
+      simpleName(classOf[PaymentDetailsAdded]) -> paymentDetailsAddedJsonFormat,
+      simpleName(classOf[PaymentDetailsRemoved]) -> paymentDetailsRemovedJsonFormat)
+  )
 }

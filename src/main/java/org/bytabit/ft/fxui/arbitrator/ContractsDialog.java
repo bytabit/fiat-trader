@@ -35,11 +35,11 @@ import java.util.ResourceBundle;
 
 public class ContractsDialog extends Alert {
 
-    private LoggingAdapter log;
+    private final LoggingAdapter log;
 
-    private Arbitrator arbitrator;
+    private final Arbitrator arbitrator;
 
-    private ArbitratorManagerFxService arbitratorManagerFxService;
+    private final ArbitratorManagerFxService arbitratorManagerFxService;
 
     @FXML
     private ResourceBundle resources;
@@ -91,24 +91,24 @@ public class ContractsDialog extends Alert {
     private GridPane gridPane;
 
     public ContractsDialog(ArbitratorManagerFxService arbitratorManagerFxService, Arbitrator a) {
-        super(AlertType.INFORMATION);
-        arbitrator = a;
-        log = arbitratorManagerFxService.system().log();
+        super(Alert.AlertType.INFORMATION);
+        this.arbitrator = a;
+        this.log = arbitratorManagerFxService.system().log();
         this.arbitratorManagerFxService = arbitratorManagerFxService;
 
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(FiatTrader.class.getResource("/org/bytabit/ft/fxui/arbitrator/ContractsDialog.fxml"));
         fxmlLoader.setController(this);
 
-        Boolean isArbitratorServer = Config.arbitratorEnabled() && Config.publicUrl().equals(arbitrator.url());
+        Boolean isArbitratorServer = Config.arbitratorEnabled() && Config.publicUrl().equals(this.arbitrator.url());
 
         try {
-            getDialogPane().setContent(fxmlLoader.load());
+            this.getDialogPane().setContent(fxmlLoader.load());
 
-            actionColumn.setVisible(isArbitratorServer);
-            gridPane.setVisible(isArbitratorServer);
+            this.actionColumn.setVisible(isArbitratorServer);
+            this.gridPane.setVisible(isArbitratorServer);
         } catch (IOException e) {
-            log.error("Couldn't load arbitrator contract dialog.");
+            this.log.error("Couldn't load arbitrator contract dialog.");
             e.printStackTrace();
         }
     }
@@ -118,34 +118,33 @@ public class ContractsDialog extends Alert {
     @FXML
     void initialize() {
 
-        setTitle(arbitrator.url().toString());
-        setHeaderText("Arbitrator Contracts");
+        this.setTitle(this.arbitrator.url().toString());
+        this.setHeaderText("Arbitrator Contracts");
 
         // setup arbitrator id listener
-        idLabel.setText(arbitrator.id().toString());
+        this.idLabel.setText(this.arbitrator.id().toString());
 
         // setup arbitrator bond percent listener
-        bondLabel.setText(String.format("%f", arbitrator.bondPercent() * 100));
+        this.bondLabel.setText(String.format("%f", this.arbitrator.bondPercent() * 100));
 
         // setup arbitrator fee listener
-        feeLabel.setText(arbitrator.btcArbitratorFee().toString());
+        this.feeLabel.setText(this.arbitrator.btcArbitratorFee().toString());
 
         // setup arbitrator url listener
-        urlLabel.setText(arbitrator.url().toString());
+        this.urlLabel.setText(this.arbitrator.url().toString());
 
         // setup contract template table
-        actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+        this.actionColumn.setCellFactory(column -> this.newTableCell());
 
-        actionColumn.setCellFactory(column -> newTableCell());
-
-        idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
-        currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
-        paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
+        this.idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
+        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
         //feeColumn.setCellValueFactory(ct -> ct.getValue().arbitratorFeeProperty());
 
-        contractTemplateTable.setItems(arbitratorManagerFxService.contractTemplates().get(arbitrator.url()).get());
+        this.contractTemplateTable.setItems(this.arbitratorManagerFxService.contractTemplates().get(this.arbitrator.url()).get());
 
-        addFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
+        this.addFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
             @Override
             public String toString(CurrencyUnit cu) {
                 return cu.getCode();
@@ -157,9 +156,9 @@ public class ContractsDialog extends Alert {
             }
         });
 
-        addFiatCurrencyChoiceBox.setItems(arbitratorManagerFxService.addCurrencyUnits());
+        this.addFiatCurrencyChoiceBox.setItems(this.arbitratorManagerFxService.addCurrencyUnits());
 
-        addPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
+        this.addPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
             public String toString(PaymentMethod dm) {
                 return dm.name();
@@ -172,23 +171,23 @@ public class ContractsDialog extends Alert {
             }
         });
 
-        addPaymentMethodChoiceBox.setItems(arbitratorManagerFxService.addPaymentMethods());
+        this.addPaymentMethodChoiceBox.setItems(this.arbitratorManagerFxService.addPaymentMethods());
 
-        addFiatCurrencyChoiceBox.setOnAction((event) -> {
-            CurrencyUnit selectedCurrencyUnit = addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-            arbitratorManagerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
-            if (arbitratorManagerFxService.addPaymentMethods().size() == 1)
-                addPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+        this.addFiatCurrencyChoiceBox.setOnAction(event -> {
+            CurrencyUnit selectedCurrencyUnit = this.addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+            this.arbitratorManagerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
+            if (this.arbitratorManagerFxService.addPaymentMethods().size() == 1)
+                this.addPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
     }
 
     @FXML
     void handleAddContractTemplate() {
 
-        CurrencyUnit fiatCurrencyUnit = addFiatCurrencyChoiceBox.getValue();
-        PaymentMethod paymentMethod = addPaymentMethodChoiceBox.getValue();
+        CurrencyUnit fiatCurrencyUnit = this.addFiatCurrencyChoiceBox.getValue();
+        PaymentMethod paymentMethod = this.addPaymentMethodChoiceBox.getValue();
 
-        arbitratorManagerFxService.addContractTemplate(arbitrator, fiatCurrencyUnit, paymentMethod);
+        this.arbitratorManagerFxService.addContractTemplate(this.arbitrator, fiatCurrencyUnit, paymentMethod);
     }
 
     private TableCell<ContractUIModel, String> newTableCell() {
@@ -200,17 +199,17 @@ public class ContractsDialog extends Alert {
                 super.updateItem(item, empty);
 
                 if (item == null || empty) {
-                    setText(null);
-                    setStyle("");
-                    setGraphic(null);
+                    this.setText(null);
+                    this.setStyle("");
+                    this.setGraphic(null);
                 } else {
                     VBox vbox = new VBox();
                     vbox.alignmentProperty().setValue(Pos.CENTER);
                     Button deleteButton = new Button();
                     deleteButton.setText("DELETE");
-                    deleteButton.setOnAction(evt -> arbitratorManagerFxService.deleteContractTemplate(arbitrator, Sha256Hash.wrap(item)));
+                    deleteButton.setOnAction(evt -> ContractsDialog.this.arbitratorManagerFxService.deleteContractTemplate(ContractsDialog.this.arbitrator, Sha256Hash.wrap(item)));
                     vbox.getChildren().addAll(deleteButton);
-                    setGraphic(vbox);
+                    this.setGraphic(vbox);
                 }
             }
         };
