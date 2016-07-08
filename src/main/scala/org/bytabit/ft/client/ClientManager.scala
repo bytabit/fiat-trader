@@ -23,6 +23,7 @@ import akka.persistence.fsm.PersistentFSM.FSMState
 import org.bytabit.ft.arbitrator.ArbitratorManager
 import org.bytabit.ft.client.ClientManager.{ProfileNameUpdated, _}
 import org.bytabit.ft.client.model.{ClientProfile, PaymentDetails}
+import org.bytabit.ft.trade.BtcSellProcess.TakeBtcBuyOffer
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
 import org.bytabit.ft.util.{Config, PaymentMethod}
 import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
@@ -221,14 +222,14 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
       if !d.paymentDetails.exists(pd => pd.currencyUnit == apd.currencyUnit && pd.paymentMethod == apd.paymentMethod) =>
       val pda = PaymentDetailsAdded(apd)
       goto(CREATED) applying pda andThen { u =>
-        system.eventStream.publish(pda)
+        sender ! pda
       }
 
     case Event(RemovePaymentDetails(cu, pm), d: CreatedClientManager)
       if d.paymentDetails.exists(pd => pd.currencyUnit == cu && pd.paymentMethod == pm) =>
       val pdr = PaymentDetailsRemoved(cu, pm)
       goto(CREATED) applying pdr andThen { u =>
-        system.eventStream.publish(pdr)
+        sender ! pdr
       }
 
     case Event(ac: AddServer, d: CreatedClientManager) if !d.servers.contains(ac.url) =>
@@ -273,6 +274,10 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
 
     case Event(apc: ArbitrateProcess.Command, d: CreatedClientManager) =>
       client(apc.url).foreach(_ ! apc)
+      stay()
+
+    case Event(TakeBtcBuyOffer(u, i, pd), d: CreatedClientManager) if pd.isEmpty =>
+      client(u).foreach(_ ! TakeBtcBuyOffer(u, i, d.paymentDetails))
       stay()
 
     case Event(spc: BtcSellProcess.Command, d: CreatedClientManager) =>

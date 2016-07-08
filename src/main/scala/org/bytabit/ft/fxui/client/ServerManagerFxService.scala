@@ -96,12 +96,6 @@ class ServerManagerFxService(actorSystem: ActorSystem) extends ActorFxService {
     case ServerOffline(u) =>
       updateArbitratorUIModel(OFFLINE, u, None)
 
-    case PaymentDetailsAdded(_) =>
-    // do nothing
-
-    case PaymentDetailsRemoved(_, _) =>
-    // do nothing
-
     case u =>
       log.error(s"Unexpected message: ${u.toString}")
   }

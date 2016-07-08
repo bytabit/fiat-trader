@@ -291,8 +291,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
   }
 
   def takeBtcBuyOffer(url: URL, tradeId: UUID): Unit = {
-    // TODO FT-10: get payment details from payment details preferences
-    sendCmd(TakeBtcBuyOffer(url, tradeId, "Swish: +467334557"))
+    sendCmd(TakeBtcBuyOffer(url, tradeId))
   }
 
   def receiveFiat(url: URL, tradeId: UUID): Unit = {

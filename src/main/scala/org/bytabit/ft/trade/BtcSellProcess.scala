@@ -21,6 +21,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
+import org.bytabit.ft.client.model.PaymentDetails
 import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, RequestCertifyPayment, Start, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
@@ -42,7 +43,7 @@ object BtcSellProcess {
 
   final case class Start(url: URL, id: UUID) extends Command
 
-  final case class TakeBtcBuyOffer(url: URL, id: UUID, paymentDetails: String) extends Command
+  final case class TakeBtcBuyOffer(url: URL, id: UUID, paymentDetails: Set[PaymentDetails] = Set()) extends Command
 
   final case class ReceiveFiat(url: URL, id: UUID) extends Command
 
@@ -76,8 +77,9 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
         context.parent ! sco
       }
 
-    case Event(tso: TakeBtcBuyOffer, so: BtcBuyOffer) =>
-      tradeWalletMgrRef ! TradeWalletManager.TakeBtcBuyOffer(so, tso.paymentDetails)
+    case Event(TakeBtcBuyOffer(u, i, pds), so: BtcBuyOffer) =>
+      val pd = pds.find(d => d.currencyUnit == so.contract.fiatCurrencyUnit && d.paymentMethod == so.contract.paymentMethod)
+      pd.foreach(d => tradeWalletMgrRef ! TradeWalletManager.TakeBtcBuyOffer(so, d.paymentDetails))
       stay()
 
     case Event(WalletManager.BtcBuyOfferTaken(to), so: BtcBuyOffer) if to.paymentDetailsKey.isDefined =>
