@@ -34,6 +34,8 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "btcBuyerOpenTxSigs", "btcBuyerPayoutTxSigs")
 
+  implicit def btcBuyerfiatSendJsonFormat = jsonFormat(BtcBuyerFiatSent.apply, "id", "reference", "posted")
+
   implicit def certifyPaymentRequestedJsonFormat = jsonFormat(CertifyPaymentRequested.apply, "id", "evidence", "posted")
 
   implicit def fiatSentCertifiedJsonFormat = jsonFormat(FiatSentCertified.apply, "id", "payoutSigs", "posted")
@@ -100,6 +102,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[BtcBuyerSignedOffer]) -> btcBuyerSignedOfferJsonFormat,
     simpleName(classOf[BtcSellerOpenedEscrow]) -> btcSellerOpenedEscrowJsonFormat,
     simpleName(classOf[BtcSellerFundedEscrow]) -> btcSellerFundedEscrowJsonFormat,
+    simpleName(classOf[BtcBuyerFiatSent]) -> btcBuyerfiatSendJsonFormat,
     simpleName(classOf[CertifyPaymentRequested]) -> certifyPaymentRequestedJsonFormat,
     simpleName(classOf[FiatSentCertified]) -> fiatSentCertifiedJsonFormat,
     simpleName(classOf[FiatNotSentCertified]) -> fiatNotSentCertifiedJsonFormat,

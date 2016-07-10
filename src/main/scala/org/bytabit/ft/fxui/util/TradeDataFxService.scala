@@ -106,7 +106,7 @@ trait TradeDataFxService extends ActorFxService {
 
   // happy path
 
-  def fiatSent(fs: FiatSent) = {
+  def fiatSent(fs: BtcBuyerFiatSent) = {
     findTrade(fs.id) match {
       case Some(TradeUIModel(r, s, ft: FundedTrade)) =>
         updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, FIAT_SENT, ft))

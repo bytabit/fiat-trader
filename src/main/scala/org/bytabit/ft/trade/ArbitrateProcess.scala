@@ -137,6 +137,12 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       startFunded(ft)
       stay()
 
+    case Event(fs: BtcBuyerFiatSent, ft: FundedTrade) =>
+      goto(FIAT_SENT) applying fs andThen {
+        case ft: FundedTrade =>
+          context.parent ! fs
+      }
+
     case Event(cfr: CertifyPaymentRequested, ft: FundedTrade) if cfr.posted.isDefined =>
       goto(CERT_PAYMENT_REQD) applying cfr andThen {
         case sto: CertifyPaymentEvidence =>

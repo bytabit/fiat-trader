@@ -131,7 +131,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
 
     // happy path
 
-    case fs: FiatSent =>
+    case fs: BtcBuyerFiatSent =>
       fiatSent(fs)
       updateUncommitted()
 

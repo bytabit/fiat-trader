@@ -205,6 +205,12 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       startFunded(ft)
       stay()
 
+    case Event(fs: BtcBuyerFiatSent, ft: FundedTrade) =>
+      goto(FIAT_SENT) applying fs andThen {
+        case ft: FundedTrade =>
+          context.parent ! fs
+      }
+
     case Event(e: ReceiveFiat, ft: FundedTrade) =>
       goto(FIAT_RCVD) andThen {
         case ft: FundedTrade =>
