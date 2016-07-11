@@ -85,6 +85,8 @@ class TraderUIActionTableCell(tradefxService: TradeFxService) extends TradeActio
         Seq(fiatSentButton)
       case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT), false) =>
         Seq(btcBuyerReqCertPaymentButton)
+      case (TradeOriginState(u, i, BTCSELLER, FIAT_SENT), false) =>
+        Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
       case _ =>
         setText(null)
         setStyle("")

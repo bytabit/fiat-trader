@@ -232,8 +232,35 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       stay()
   }
 
+  when(FIAT_SENT) {
+
+    case Event(Start, ft: FundedTrade) =>
+      startFiatSent(ft)
+      stay()
+
+    case Event(e: ReceiveFiat, ft: FundedTrade) =>
+      goto(FIAT_RCVD) andThen {
+        case ft: FundedTrade =>
+          tradeWalletMgrRef ! TradeWalletManager.BroadcastTx(ft.btcBuyerSignedPayoutTx, Some(ft.btcSeller.escrowPubKey))
+          context.parent ! FiatReceived(ft.id)
+      }
+
+    case Event(rcf: RequestCertifyPayment, ft: FundedTrade) =>
+      postTradeEvent(rcf.url, CertifyPaymentRequested(ft.id, rcf.evidence), self)
+      stay()
+
+    case Event(cdr: CertifyPaymentRequested, ft: FundedTrade) if cdr.posted.isDefined =>
+      goto(CERT_PAYMENT_REQD) applying cdr andThen {
+        case cfe: CertifyPaymentEvidence =>
+          context.parent ! cdr
+      }
+
+    case Event(etu: EscrowTransactionUpdated, ft: FundedTrade) =>
+      stay()
+  }
+
   def startFiatRcvd(ft: FundedTrade) = {
-    startFunded(ft)
+    startFiatSent(ft)
     context.parent ! FiatReceived(ft.id)
   }
 

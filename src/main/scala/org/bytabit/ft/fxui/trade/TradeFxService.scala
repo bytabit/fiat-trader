@@ -19,8 +19,11 @@ import java.net.URL
 import java.util.UUID
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
-import javafx.scene.control.Alert
 import javafx.scene.control.Alert.AlertType
+import javafx.scene.control.ButtonBar.ButtonData
+import javafx.scene.control._
+import javafx.scene.layout.GridPane
+import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
@@ -326,5 +329,43 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     alert.setHeaderText(title)
     alert.setContentText(reason)
     alert.showAndWait()
+  }
+
+  def dialogSendFiat(url: URL, tradeId: UUID, fiatAmount: Money,
+                     currencyUnits: CurrencyUnit, paymentMethod: PaymentMethod): Unit = {
+
+    val dialog = new Dialog[String]()
+    dialog.setTitle("Send Fiat")
+    dialog.setHeaderText("TODO Fiat Send Info...")
+
+    val fiatSentRefLabel = new Label("Fiat sent reference: ")
+    val fiatSentRefTextField = new TextField()
+    fiatSentRefTextField.setPrefWidth(500)
+    fiatSentRefTextField.setMaxWidth(500)
+
+    val grid = new GridPane()
+    grid.add(fiatSentRefLabel, 1, 1)
+    dialog.getDialogPane.setContent(grid)
+
+    val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
+    val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+
+    dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+
+    dialog.setResultConverter(new Callback[ButtonType, String]() {
+      override def call(bt: ButtonType): String = {
+        if (bt == okButtonType) {
+          fiatSentRefTextField.getText
+        } else {
+          null
+        }
+      }
+    })
+
+    val result = dialog.showAndWait()
+    if (result.isPresent) {
+      log.info(s"Fiat sent reference: ${result.get}")
+      sendCmd(SendFiat(url, tradeId, Some(result.get)))
+    }
   }
 }

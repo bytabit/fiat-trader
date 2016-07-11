@@ -163,6 +163,31 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
         stay()
   }
 
+  when(FIAT_SENT) {
+    case Event(Start, ft: FundedTrade) =>
+      startFiatSent(ft)
+      stay()
+
+    case Event(cfr: CertifyPaymentRequested, ft: FundedTrade) if cfr.posted.isDefined =>
+      goto(CERT_PAYMENT_REQD) applying cfr andThen {
+        case sto: CertifyPaymentEvidence =>
+          context.parent ! cfr
+      }
+
+    case Event(etu: WalletManager.EscrowTransactionUpdated, ft: FundedTrade) =>
+      if (etu.p2shAddresses.contains(ft.escrowAddress) && outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
+        etu.confidenceType == ConfidenceType.BUILDING) {
+        val brp = BtcSellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(TRADED) applying brp andThen {
+          case st: SettledTrade =>
+            context.parent ! brp
+            escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchAddress(ft.escrowAddress)
+        }
+      }
+      else
+        stay()
+  }
+
   // happy path
 
   when(TRADED) {

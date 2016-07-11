@@ -48,16 +48,6 @@ trait TradeDataFxService extends ActorFxService {
   def updateTrade(t: TradeUIModel, ut: TradeUIModel): Unit =
     trades.set(trades.indexOf(t), ut)
 
-  //  def updateTradeState(state: State, id: UUID) {
-  //    trades.find(t => t.getId == id) match {
-  //      case Some(t) =>
-  //        val newTradeUI = t.copy(state = state)
-  //        trades.set(trades.indexOf(t), newTradeUI)
-  //      case None =>
-  //        log.error(s"trade error, id not found: $id")
-  //    }
-  //  }
-
   // common path
 
   def createOffer(role: Role, btcBuyOffer: BtcBuyOffer): Unit = {

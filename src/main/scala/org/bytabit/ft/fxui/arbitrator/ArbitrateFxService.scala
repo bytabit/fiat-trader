@@ -90,6 +90,9 @@ class ArbitrateFxService(serverUrl: URL, actorSystem: ActorSystem) extends Trade
 
     // happy path
 
+    case fs: BtcBuyerFiatSent =>
+      fiatSent(fs)
+
     case fr: FiatReceived =>
       fiatReceived(fr)
 

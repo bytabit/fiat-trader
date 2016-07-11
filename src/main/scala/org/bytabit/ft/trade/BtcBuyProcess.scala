@@ -210,11 +210,6 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
         stay()
   }
 
-  def startFiatSent(ft: FundedTrade) = {
-    startFunded(ft)
-    context.parent ! BtcBuyerFiatSent(ft.id)
-  }
-
   when(FIAT_SENT) {
 
     case Event(Start, ft: FundedTrade) =>

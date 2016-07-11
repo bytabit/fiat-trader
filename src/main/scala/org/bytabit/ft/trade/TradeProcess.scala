@@ -299,6 +299,11 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
     context.parent ! BtcSellerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.paymentDetailsKey)
   }
 
+  def startFiatSent(ft: FundedTrade): Unit = {
+    startFunded(ft)
+    context.parent ! BtcBuyerFiatSent(ft.id, ft.fiatSentReference)
+  }
+
   // happy path
 
   def startBtcBuyerTraded(st: SettledTrade): Unit = {
