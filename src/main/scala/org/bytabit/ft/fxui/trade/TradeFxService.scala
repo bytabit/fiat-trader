@@ -34,7 +34,7 @@ import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, Se
 import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{BTCMoney, _}
 import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
@@ -301,10 +301,6 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     sendCmd(ReceiveFiat(url, tradeId))
   }
 
-  def sendFiat(url: URL, tradeId: UUID): Unit = {
-    sendCmd(SendFiat(url, tradeId))
-  }
-
   // TODO FT-91: collect evidence
   def btcBuyerReqCertPayment(url: URL, tradeId: UUID): Unit = {
     sendCmd(BtcBuyProcess.RequestCertifyPayment(url, tradeId))
@@ -331,41 +327,54 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     alert.showAndWait()
   }
 
-  def dialogSendFiat(url: URL, tradeId: UUID, fiatAmount: Money,
-                     currencyUnits: CurrencyUnit, paymentMethod: PaymentMethod): Unit = {
+  def dialogSendFiatError(url: URL, tradeId: UUID, tradeData: TradeData): Unit = {
+    // TODO dialog to tell user why can't send fiat, not funded yet
+    //sendCmd(SendFiat(url, tradeId))
+  }
 
-    val dialog = new Dialog[String]()
-    dialog.setTitle("Send Fiat")
-    dialog.setHeaderText("TODO Fiat Send Info...")
+  def dialogSendFiat(url: URL, tradeId: UUID, trade: TradeData): Unit = {
 
-    val fiatSentRefLabel = new Label("Fiat sent reference: ")
-    val fiatSentRefTextField = new TextField()
-    fiatSentRefTextField.setPrefWidth(500)
-    fiatSentRefTextField.setMaxWidth(500)
+    trade match {
 
-    val grid = new GridPane()
-    grid.add(fiatSentRefLabel, 1, 1)
-    dialog.getDialogPane.setContent(grid)
+      case ft: FundedTrade =>
+        val dialog = new Dialog[String]()
+        dialog.setTitle("Send Fiat")
 
-    val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
-    val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+        dialog.setHeaderText(s"Send ${ft.contract.fiatCurrencyUnit.toString}")
 
-    dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+        val fiatSentRefLabel = new Label(s"Send ${ft.fiatAmount} via ${ft.contract.paymentMethod.name} to ${ft.paymentDetails}")
+        val fiatSentRefTextField = new TextField()
+        fiatSentRefTextField.setPrefWidth(500)
+        fiatSentRefTextField.setMaxWidth(500)
+        fiatSentRefTextField.setPromptText(ft.contract.paymentMethod.requiredReference)
 
-    dialog.setResultConverter(new Callback[ButtonType, String]() {
-      override def call(bt: ButtonType): String = {
-        if (bt == okButtonType) {
-          fiatSentRefTextField.getText
-        } else {
-          null
+        val grid = new GridPane()
+        grid.add(fiatSentRefLabel, 0, 0)
+        grid.add(fiatSentRefTextField, 0, 1)
+        dialog.getDialogPane.setContent(grid)
+
+        val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
+        val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+
+        dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+
+        dialog.setResultConverter(new Callback[ButtonType, String]() {
+          override def call(bt: ButtonType): String = {
+            if (bt == okButtonType) {
+              fiatSentRefTextField.getText
+            } else {
+              null
+            }
+          }
+        })
+
+        val result = dialog.showAndWait()
+        if (result.isPresent) {
+          log.info(s"Fiat sent reference: ${result.get}")
+          sendCmd(SendFiat(url, tradeId, Some(result.get)))
         }
-      }
-    })
-
-    val result = dialog.showAndWait()
-    if (result.isPresent) {
-      log.info(s"Fiat sent reference: ${result.get}")
-      sendCmd(SendFiat(url, tradeId, Some(result.get)))
+      case _ =>
+      // TODO show error
     }
   }
 }

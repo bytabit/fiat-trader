@@ -37,7 +37,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val bondPercent = contract.arbitrator.bondPercent
   val arbitratorFee = contract.arbitrator.btcArbitratorFee
 
-  val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
+  val stateProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state, trade))
   val roleProperty = new SimpleStringProperty(role.identifier)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)

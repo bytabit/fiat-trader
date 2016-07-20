@@ -38,7 +38,7 @@ public class ArbitrateUI extends AbstractTradeUI {
 
         // setup trade table
 
-        actionColumn.setCellValueFactory(t -> t.getValue().actionProperty());
+        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
         actionColumn.setCellFactory(column -> new ArbitratorUIActionTableCell(tradeFxService));
 
         tradeTable.setItems(tradeFxService.trades());

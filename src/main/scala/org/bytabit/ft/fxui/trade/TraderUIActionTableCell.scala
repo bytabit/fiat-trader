@@ -25,13 +25,13 @@ import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
 import org.bytabit.ft.fxui.util.TradeActionTableCell
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.{CREATED, FIAT_SENT, FUNDED}
-import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Role}
+import org.bytabit.ft.trade.model._
 
 import scala.collection.JavaConversions._
 
 object TraderUIActionTableCell {
 
-  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State)
+  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State, trade: TradeData)
 
 }
 
@@ -59,8 +59,8 @@ class TraderUIActionTableCell(tradefxService: TradeFxService) extends TradeActio
       tradefxService.receiveFiat(item.url, item.id)
     })
 
-    val fiatSentButton = actionButton("FIAT SENT", event => {
-      tradefxService.sendFiat(item.url, item.id)
+    val sendFiatDialog = actionButton("SEND FIAT", event => {
+      tradefxService.dialogSendFiat(item.url, item.id, item.trade)
     })
 
     // TODO FT-98: only enable buttons after timeout to deliver fiat
@@ -75,17 +75,17 @@ class TraderUIActionTableCell(tradefxService: TradeFxService) extends TradeActio
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, BTCBUYER, CREATED), false) =>
+      case (TradeOriginState(u, i, BTCBUYER, CREATED, _), false) =>
         Seq(cancelButton)
-      case (TradeOriginState(u, i, BTCSELLER, CREATED), false) =>
+      case (TradeOriginState(u, i, BTCSELLER, CREATED, _), false) =>
         Seq(btcSellButton)
-      case (TradeOriginState(u, i, BTCSELLER, FUNDED), false) =>
+      case (TradeOriginState(u, i, BTCSELLER, FUNDED, _), false) =>
         Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
-      case (TradeOriginState(u, i, BTCBUYER, FUNDED), false) =>
-        Seq(fiatSentButton)
-      case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT), false) =>
+      case (TradeOriginState(u, i, BTCBUYER, FUNDED, _), false) =>
+        Seq(sendFiatDialog)
+      case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT, _), false) =>
         Seq(btcBuyerReqCertPaymentButton)
-      case (TradeOriginState(u, i, BTCSELLER, FIAT_SENT), false) =>
+      case (TradeOriginState(u, i, BTCSELLER, FIAT_SENT, _), false) =>
         Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
       case _ =>
         setText(null)

@@ -73,7 +73,7 @@ public class TradeUI extends AbstractTradeUI {
 
         // setup trade table
 
-        actionColumn.setCellValueFactory(t -> t.getValue().actionProperty());
+        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
         actionColumn.setCellFactory(column -> new TraderUIActionTableCell(tradeFxService));
         roleColumn.setCellValueFactory(t -> t.getValue().roleProperty());
 

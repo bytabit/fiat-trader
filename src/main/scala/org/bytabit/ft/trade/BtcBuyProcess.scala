@@ -198,10 +198,10 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
     case Event(etu: EscrowTransactionUpdated, ft: FundedTrade) =>
       if (outputsEqual(ft.openedTrade.signedTakenOffer.btcBuyerSignedPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val srp = BtcBuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
-        goto(TRADED) applying srp andThen {
+        val brp = BtcBuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
-            context.parent ! srp
+            context.parent ! brp
             tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
             escrowWalletMgrRef ! RemoveWatchAddress(ft.escrowAddress)
         }
@@ -229,11 +229,11 @@ case class BtcBuyProcess(offer: Offer, tradeWalletMgrRef: ActorRef, escrowWallet
     case Event(etu: EscrowTransactionUpdated, ft: FundedTrade) =>
       if (outputsEqual(ft.openedTrade.signedTakenOffer.btcBuyerSignedPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val srp = BtcBuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
-        goto(TRADED) applying srp andThen {
+        val brp = BtcBuyerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(TRADED) applying brp andThen {
           case st: SettledTrade =>
             tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
-            context.parent ! srp
+            context.parent ! brp
             escrowWalletMgrRef ! RemoveWatchAddress(ft.escrowAddress)
         }
       }

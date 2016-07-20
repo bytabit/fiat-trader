@@ -191,6 +191,9 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
         system.eventStream.publish(cc)
       }
 
+    case Event(FindPaymentDetails, d: AddedClientManager) =>
+      stay()
+
     case Event(FindClientProfile, d: AddedClientManager) =>
       stay()
 
