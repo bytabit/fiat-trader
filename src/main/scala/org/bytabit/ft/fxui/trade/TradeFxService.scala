@@ -297,10 +297,6 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     sendCmd(TakeBtcBuyOffer(url, tradeId))
   }
 
-  def receiveFiat(url: URL, tradeId: UUID): Unit = {
-    sendCmd(ReceiveFiat(url, tradeId))
-  }
-
   // TODO FT-91: collect evidence
   def btcBuyerReqCertPayment(url: URL, tradeId: UUID): Unit = {
     sendCmd(BtcBuyProcess.RequestCertifyPayment(url, tradeId))
@@ -332,7 +328,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     //sendCmd(SendFiat(url, tradeId))
   }
 
-  def dialogSendFiat(url: URL, tradeId: UUID, trade: TradeData): Unit = {
+  def sendFiatDialog(url: URL, tradeId: UUID, trade: TradeData): Unit = {
 
     trade match {
 
@@ -372,6 +368,26 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
         if (result.isPresent) {
           log.info(s"Fiat sent reference: ${result.get}")
           sendCmd(SendFiat(url, tradeId, Some(result.get)))
+        }
+      case _ =>
+      // TODO show error
+    }
+  }
+
+  def receiveFiatDialog(url: URL, tradeId: UUID, trade: TradeData): Unit = {
+
+    trade match {
+
+      case ft: FundedTrade =>
+        val dialog = new Alert(AlertType.CONFIRMATION)
+        dialog.setTitle("Receive Fiat")
+
+        dialog.setHeaderText(s"Receive ${ft.contract.fiatCurrencyUnit.toString}")
+        dialog.setContentText(s"Receive ${ft.fiatAmount} via ${ft.contract.paymentMethod.name} to ${ft.paymentDetails} with reference: ${ft.fiatSentReference.getOrElse("NONE")}")
+
+        val result = dialog.showAndWait()
+        if (result.get().equals(ButtonType.OK)) {
+          sendCmd(ReceiveFiat(url, tradeId))
         }
       case _ =>
       // TODO show error

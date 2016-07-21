@@ -55,12 +55,12 @@ class TraderUIActionTableCell(tradefxService: TradeFxService) extends TradeActio
       tradefxService.takeBtcBuyOffer(item.url, item.id)
     })
 
-    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
-      tradefxService.receiveFiat(item.url, item.id)
+    val fiatReceivedButton = actionButton("RCV FIAT", event => {
+      tradefxService.receiveFiatDialog(item.url, item.id, item.trade)
     })
 
     val sendFiatDialog = actionButton("SEND FIAT", event => {
-      tradefxService.dialogSendFiat(item.url, item.id, item.trade)
+      tradefxService.sendFiatDialog(item.url, item.id, item.trade)
     })
 
     // TODO FT-98: only enable buttons after timeout to deliver fiat

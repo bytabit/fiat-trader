@@ -99,7 +99,7 @@ trait TradeDataFxService extends ActorFxService {
   def fiatSent(fs: BtcBuyerFiatSent) = {
     findTrade(fs.id) match {
       case Some(TradeUIModel(r, s, ft: FundedTrade)) =>
-        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, FIAT_SENT, ft))
+        updateTrade(TradeUIModel(r, s, ft), TradeUIModel(r, FIAT_SENT, ft.withFiatSentReference(fs.reference)))
       case _ =>
         log.error("No funded trade found to send fiat.")
     }
