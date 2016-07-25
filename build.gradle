@@ -31,6 +31,7 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-ospackage-plugin:3.5.0'
         classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.4.1'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+        classpath 'org.javafxports:jfxmobile-plugin:1.0.8'
     }
 }
 
@@ -40,12 +41,17 @@ apply plugin: 'idea'
 apply plugin: 'nebula.ospackage'
 apply plugin: 'javafx-gradle-plugin'
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'org.javafxports.jfxmobile'
 
 version semverVersion()
 
 repositories {
+    jcenter()
     mavenCentral()
     mavenLocal()
+    maven {
+        url 'http://nexus.gluonhq.com/nexus/content/repositories/releases'
+    }
 }
 
 sourceSets.main.scala.srcDirs = ["src/main/java", "src/main/scala"]
@@ -62,6 +68,7 @@ sourceSets.main.resources {
 def scalaVersion = "2.11"
 def akkaVersion = "2.4.1"
 def akkaStreamVersion = "2.0.1"
+def gluonVersion = "3.0.0"
 
 dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion.7"
@@ -80,6 +87,12 @@ dependencies {
     compile "com.madgag.spongycastle:prov:1.51.0.0"
     compile "net.glxn:qrgen:1.3"
     compile "com.sun.mail:javax.mail:1.5.5"
+
+    compile "com.gluonhq:charm:$gluonVersion"
+    androidRuntime "com.gluonhq:charm-android:$gluonVersion"
+    iosRuntime "com.gluonhq:charm-ios:$gluonVersion"
+    desktopRuntime "com.gluonhq:charm-desktop:$gluonVersion"
+
     testCompile "org.scalatest:scalatest_$scalaVersion:2.2.1"
     testCompile "org.scalacheck:scalacheck_$scalaVersion:1.12.2"
 }
@@ -150,6 +163,24 @@ buildDeb {
     from('package/debian/logback.xml') {
         fileType CONFIG | NOREPLACE
         into 'server'
+    }
+}
+
+jfxmobile {
+    android {
+        manifest = 'src/android/AndroidManifest.xml'
+    }
+    ios {
+        infoPList = file('src/ios/Default-Info.plist')
+        forceLinkClasses = [
+                'org.bytabit.**.*',
+                'com.gluonhq.**.*',
+                'io.datafx.**.*',
+                'javax.annotations.**.*',
+                'javax.inject.**.*',
+                'javax.json.**.*',
+                'org.glassfish.json.**.*'
+        ]
     }
 }
 
