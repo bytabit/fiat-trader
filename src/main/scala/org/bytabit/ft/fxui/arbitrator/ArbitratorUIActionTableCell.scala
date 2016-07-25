@@ -58,7 +58,7 @@ class ArbitratorUIActionTableCell(tradefxService: ArbitrateFxService) extends Tr
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, ARBITRATOR, CERT_PAYMENT_REQD), false) =>
+      case (TradeOriginState(u, i, ARBITRATOR, CERT_PAYMENT_REQD, t), false) =>
         Seq(certifySentButton, certifyNotSentButton)
 
       case _ =>
