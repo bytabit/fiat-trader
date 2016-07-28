@@ -1,0 +1,97 @@
+/*
+ * Copyright 2016 Steven Myers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+buildscript {
+    repositories {
+//        // for bintray plugin
+        jcenter()
+    }
+    dependencies {
+//        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+        classpath 'org.javafxports:jfxmobile-plugin:1.0.8'
+    }
+}
+
+//apply plugin: 'com.jfrog.bintray'
+apply plugin: 'java'
+apply plugin: 'org.javafxports.jfxmobile'
+
+repositories {
+    maven {
+        url 'http://nexus.gluonhq.com/nexus/content/repositories/releases'
+    }
+}
+
+mainClassName = 'org.bytabit.ft.fxui.FiatTrader'
+
+def gluonVersion = "3.0.0"
+
+dependencies {
+    compile project(':core')
+    compile "com.gluonhq:charm:$gluonVersion"
+    androidRuntime "com.gluonhq:charm-android:$gluonVersion"
+    iosRuntime "com.gluonhq:charm-ios:$gluonVersion"
+    desktopRuntime "com.gluonhq:charm-desktop:$gluonVersion"
+}
+
+jfxmobile {
+    android {
+        manifest = 'src/android/AndroidManifest.xml'
+    }
+    ios {
+        infoPList = file('src/ios/Default-Info.plist')
+        forceLinkClasses = [
+                'org.bytabit.**.*',
+                'com.gluonhq.**.*',
+                'io.datafx.**.*',
+                'javax.annotations.**.*',
+                'javax.inject.**.*',
+                'javax.json.**.*',
+                'org.glassfish.json.**.*'
+        ]
+    }
+}
+
+//bintray {
+//    user = System.getenv('BINTRAY_USER')
+//    key = System.getenv('BINTRAY_KEY')
+//
+//    filesSpec {
+//        from('build/jfx/native') {
+//            include '**/*.dmg'
+//            include '**/*.exe'
+//            include '**/*.deb'
+//        }
+//        into '.'
+//    }
+//
+//    pkg {
+//        repo = 'generic'
+//        name = 'fiat-trader'
+//        desc = 'Bytabit Fiat Trader native installers.'
+//        userOrg = 'bytabit'
+//        licenses = ['Apache-2.0']
+//        websiteUrl = 'https://bytabit.org'
+//        issueTrackerUrl = 'https://bytabit.atlassian.net/projects/FT/summary'
+//        vcsUrl = 'https://bitbucket.org/bytabit/fiat-trader'
+//        publish = false
+//        version {
+//            name = semverVersion().toString()
+//            released = new Date()
+//            vcsTag = semverVersion().tagName
+//        }
+//    }
+//}

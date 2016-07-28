@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-java -Dconfig.file=/opt/bytabit/fiat-trader/server/default.conf -Dlogback.configurationFile=/opt/bytabit/fiat-trader/server/logback.xml -cp /opt/bytabit/fiat-trader/lib/*:. org.bytabit.ft.server.Main
