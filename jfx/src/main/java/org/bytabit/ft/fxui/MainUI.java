@@ -17,25 +17,28 @@
 package org.bytabit.ft.fxui;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import org.bytabit.ft.fxui.util.ActorController;
+import org.bytabit.ft.fxui.util.ActorPresenter;
 import org.bytabit.ft.util.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ResourceBundle;
 
-public class MainUI implements ActorController {
+public class MainUI implements ActorPresenter {
 
 
     @FXML
     private ResourceBundle resources;
 
-    private ActorSystem sys;
+    final private ActorSystem system;
+    final private Logger log;
 
     public MainUI(ActorSystem system) {
-        sys = system;
+        this.system = system;
+        this.log = LoggerFactory.getLogger(MainUI.class);
     }
 
     @FXML
@@ -70,11 +73,6 @@ public class MainUI implements ActorController {
 
     @Override
     public ActorSystem system() {
-        return sys;
-    }
-
-    @Override
-    public LoggingAdapter log() {
-        return sys.log();
+        return system;
     }
 }

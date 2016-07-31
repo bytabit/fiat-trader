@@ -44,13 +44,29 @@ public class FiatTrader extends MobileApplication {
     @Override
     public void init() {
 
+        // Create actor system
+        system = ActorSystem.create(Config.config());
+        log = system.log();
+
+        // create data directories if they don't exist
+        if (Config.createDir(Config.snapshotStoreDir()).isFailure()) {
+            log.error("Unable to create snapshot directory.");
+        }
+        if (Config.createDir(Config.journalDir()).isFailure()) {
+            log.error("Unable to create journal directory.");
+        }
+        if (Config.createDir(new File(Config.walletDir())).isFailure()) {
+            log.error("Unable to create wallet directory.");
+        }
+
         // Load  UI
 
         String title = "Fiat Trader (" + Config.walletNet() + ", v" + Config.version();
+        log.info("Config: " + Config.walletNet());
         if (Config.config().length() > 0 && !Config.config().equals("default")) title += ", " + Config.config();
         title += ")";
 
-        addViewFactory(TRADE_VIEW, () -> new TradeView(TRADE_VIEW).getView());
+        addViewFactory(TRADE_VIEW, () -> new TradeView(TRADE_VIEW, system).getView());
         addViewFactory(WALLET_VIEW, () -> new WalletView(WALLET_VIEW).getView());
 
         NavigationDrawer drawer = new NavigationDrawer();
@@ -75,21 +91,6 @@ public class FiatTrader extends MobileApplication {
     @Override
     public void postInit(Scene scene) {
 
-        // Create actor system
-        system = ActorSystem.create(Config.config());
-        log = system.log();
-
-        // create data directories if they don't exist
-        if (Config.createDir(Config.snapshotStoreDir()).isFailure()) {
-            log.error("Unable to create snapshot directory.");
-        }
-        if (Config.createDir(Config.journalDir()).isFailure()) {
-            log.error("Unable to create journal directory.");
-        }
-        if (Config.createDir(new File(Config.walletDir())).isFailure()) {
-            log.error("Unable to create wallet directory.");
-        }
-
         ClientManager.actorOf(system);
 
         if (Config.serverEnabled()) {
@@ -99,7 +100,7 @@ public class FiatTrader extends MobileApplication {
 
     @Override
     public void stop() {
-        system.shutdown();
+        system.terminate();
     }
 
     public static void main(String[] args) {

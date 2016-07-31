@@ -17,10 +17,10 @@ package org.bytabit.ft.fxui.arbitrator;
 
 import akka.actor.ActorSystem;
 import javafx.fxml.FXML;
-import org.bytabit.ft.fxui.util.AbstractTradeUI;
+import org.bytabit.ft.fxui.util.AbstractTradesPresenter;
 import org.bytabit.ft.util.Config;
 
-public class ArbitrateUI extends AbstractTradeUI {
+public class ArbitrateUI extends AbstractTradesPresenter {
 
     private ArbitrateFxService tradeFxService;
 
@@ -38,9 +38,9 @@ public class ArbitrateUI extends AbstractTradeUI {
 
         // setup trade table
 
-        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
-        actionColumn.setCellFactory(column -> new ArbitratorUIActionTableCell(tradeFxService));
-
-        tradeTable.setItems(tradeFxService.trades());
+//        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
+//        actionColumn.setCellFactory(column -> new ArbitratorUIActionTableCell(tradeFxService));
+//
+//        tradeTable.setItems(tradeFxService.trades());
     }
 }

@@ -27,6 +27,7 @@ import org.bytabit.ft.wallet.WalletJsonProtocol
 import org.bytabit.ft.wallet.model.TxTools.{COIN_MINER_FEE, COIN_OP_RETURN_FEE}
 import org.joda.money.CurrencyUnit
 import org.joda.time.DateTime
+import org.scalatest.{FlatSpec, Matchers}
 
 
 class TxSpec extends FlatSpec with Matchers with WalletJsonProtocol {

@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-//buildscript {
-//    repositories {
-//
-//        // for gitsemver plugin
-//        maven {
-//            url "http://dl.bintray.com/palantir/releases"
-//        }
-//    }
-//
-//    dependencies {
-//        org.gradle.jvm.Classpath 'com.palantir:gradle-gitsemver:0.6.0'
-//    }
-//}
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "http://dl.bintray.com/palantir/releases"
+        }
+    }
+    dependencies {
+        classpath 'com.palantir:gradle-gitsemver:0.6.0'
+    }
+}
 
-//apply plugin: gitsemver
+apply plugin: 'gitsemver'
+version semverVersion()
 
-//task createVersionConf(dependsOn: processResources) << {
-//    def semver = semverVersion().toString()
-//    println "Create version.conf file, version = \"$semver\"."
-//    new File("$buildDir/resources/main/version.conf").withWriter { w ->
-//        w.write("bytabit.fiat-trader {\n  version = \"$semver\"\n}\n")
-//    }
-//}
+allprojects {
+    group = 'org.bytabit.ft'
+}
 
 subprojects {
 
@@ -46,12 +41,17 @@ subprojects {
         mavenLocal()
     }
 
-    group = 'org.bytabit.ft'
-    //version = semverVersion()
-}
-
-//project(':jfx') {
-//    dependencies {
-//        compile project(':core')
+//    processResources {
+//        filter ReplaceTokens, tokens: [
+//                "application.version": project.property("application.version")
+//        ]
 //    }
-//}
+
+//    task createVersionConf(dependsOn: init) << {
+//        def semver = semverVersion().toString()
+//        println "Create version.conf file, version = \"$semver\"."
+//        new File("$buildDir/resources/main/version.conf").withWriter { w ->
+//            w.write("bytabit.fiat-trader {\n  version = \"$semver\"\n}\n")
+//        }
+//    }
+}

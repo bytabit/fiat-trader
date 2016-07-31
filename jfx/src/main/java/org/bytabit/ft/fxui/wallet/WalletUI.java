@@ -17,18 +17,19 @@
 package org.bytabit.ft.fxui.wallet;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.bytabit.ft.fxui.trade.TransactionUIModel;
-import org.bytabit.ft.fxui.util.ActorController;
+import org.bytabit.ft.fxui.util.ActorPresenter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ResourceBundle;
 
-public class WalletUI implements ActorController {
+public class WalletUI implements ActorPresenter {
 
     private final WalletFxService walletFxService;
 
@@ -62,9 +63,11 @@ public class WalletUI implements ActorController {
     private TableColumn<TransactionUIModel, String> walletBtcAmtColumn;
 
     final private ActorSystem sys;
+    final private Logger log;
 
     public WalletUI(ActorSystem system) {
         sys = system;
+        log = LoggerFactory.getLogger(WalletUI.class);
         walletFxService = new WalletFxService(system);
     }
 
@@ -121,10 +124,5 @@ public class WalletUI implements ActorController {
     @Override
     public ActorSystem system() {
         return sys;
-    }
-
-    @Override
-    public LoggingAdapter log() {
-        return sys.log();
     }
 }

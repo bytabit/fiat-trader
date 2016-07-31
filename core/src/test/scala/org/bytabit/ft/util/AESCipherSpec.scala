@@ -16,6 +16,9 @@
 
 package org.bytabit.ft.util
 
+import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
+
 class AESCipherSpec extends FlatSpec with Matchers with PropertyChecks {
 
   it should "encrypt and decrypt a message" in {

@@ -18,6 +18,8 @@ package org.bytabit.ft.util
 
 import org.bytabit.ft.util.CurrencyUnits._
 import org.joda.money.IllegalCurrencyException
+import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
 import spray.json.JsString
 
 class UtilJsonProtocolSpec extends FlatSpec with Matchers with PropertyChecks with UtilJsonProtocol {

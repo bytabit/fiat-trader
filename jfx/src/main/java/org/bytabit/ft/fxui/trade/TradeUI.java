@@ -22,14 +22,14 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TextField;
 import javafx.util.StringConverter;
-import org.bytabit.ft.fxui.util.AbstractTradeUI;
+import org.bytabit.ft.fxui.util.AbstractTradesPresenter;
 import org.bytabit.ft.util.BTCMoney;
 import org.bytabit.ft.util.FiatMoney;
 import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 
-public class TradeUI extends AbstractTradeUI {
+public class TradeUI extends AbstractTradesPresenter {
 
     private TradeFxService tradeFxService;
 
@@ -73,11 +73,11 @@ public class TradeUI extends AbstractTradeUI {
 
         // setup trade table
 
-        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
-        actionColumn.setCellFactory(column -> new TraderUIActionTableCell(tradeFxService));
-        roleColumn.setCellValueFactory(t -> t.getValue().roleProperty());
-
-        tradeTable.setItems(tradeFxService.trades());
+//        actionColumn.setCellValueFactory(t -> t.getValue().stateProperty());
+//        actionColumn.setCellFactory(column -> new TraderUIActionTableCell(tradeFxService));
+//        roleColumn.setCellValueFactory(t -> t.getValue().roleProperty());
+//
+//        tradeTable.setItems(tradeFxService.trades());
 
         // bind data to controls
 

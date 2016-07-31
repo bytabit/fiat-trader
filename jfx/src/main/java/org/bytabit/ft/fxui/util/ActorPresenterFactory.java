@@ -19,11 +19,11 @@ package org.bytabit.ft.fxui.util;
 import akka.actor.ActorSystem;
 import javafx.util.Callback;
 
-public class ActorControllerFactory implements Callback<Class<?>, Object> {
+public class ActorPresenterFactory implements Callback<Class<?>, Object> {
 
     final private ActorSystem system;
 
-    public ActorControllerFactory(ActorSystem system) {
+    public ActorPresenterFactory(ActorSystem system) {
         this.system = system;
     }
 
@@ -32,7 +32,7 @@ public class ActorControllerFactory implements Callback<Class<?>, Object> {
 
         try {
             Object obj;
-            if (ActorController.class.isAssignableFrom(aClass)) {
+            if (ActorPresenter.class.isAssignableFrom(aClass)) {
                 obj = aClass.getDeclaredConstructor(ActorSystem.class).newInstance(system);
             } else {
                 obj = aClass.newInstance();

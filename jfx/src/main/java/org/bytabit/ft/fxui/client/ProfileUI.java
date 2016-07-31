@@ -16,20 +16,21 @@
 package org.bytabit.ft.fxui.client;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
-import org.bytabit.ft.fxui.util.ActorController;
+import org.bytabit.ft.fxui.util.ActorPresenter;
 import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.util.ResourceBundle;
 
-public class ProfileUI implements ActorController {
+public class ProfileUI implements ActorPresenter {
 
     private final ProfileFxService profileFxService;
 
@@ -72,11 +73,13 @@ public class ProfileUI implements ActorController {
     @FXML
     private TextField addPaymentDetailsTextField;
 
-    private final ActorSystem sys;
+    final private ActorSystem system;
+    final private Logger log;
 
     public ProfileUI(ActorSystem system) {
-        this.sys = system;
+        this.system = system;
         this.profileFxService = new ProfileFxService(system);
+        this.log = LoggerFactory.getLogger(ProfileUI.class);
     }
 
     @FXML
@@ -164,12 +167,7 @@ public class ProfileUI implements ActorController {
 
     @Override
     public ActorSystem system() {
-        return this.sys;
-    }
-
-    @Override
-    public LoggingAdapter log() {
-        return this.sys.log();
+        return this.system;
     }
 
     @FXML

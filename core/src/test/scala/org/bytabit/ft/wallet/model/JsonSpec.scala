@@ -22,6 +22,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.BTCMoney
 import org.bytabit.ft.wallet.WalletJsonProtocol
+import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 
 class JsonSpec extends FlatSpec with Matchers with WalletJsonProtocol {

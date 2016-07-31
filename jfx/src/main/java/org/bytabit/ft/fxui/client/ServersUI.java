@@ -16,7 +16,6 @@
 package org.bytabit.ft.fxui.client;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -25,13 +24,15 @@ import javafx.scene.layout.VBox;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorManagerFxService;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel;
 import org.bytabit.ft.fxui.arbitrator.ContractsDialog;
-import org.bytabit.ft.fxui.util.ActorController;
+import org.bytabit.ft.fxui.util.ActorPresenter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-public class ServersUI implements ActorController {
+public class ServersUI implements ActorPresenter {
 
     private ServerManagerFxService ServerManagerFxService;
     private ArbitratorManagerFxService arbitratorManagerFxService;
@@ -66,10 +67,12 @@ public class ServersUI implements ActorController {
     @FXML
     private Button addArbitratorButton;
 
-    private ActorSystem sys;
+    final private ActorSystem sys;
+    final private Logger log;
 
     public ServersUI(ActorSystem system) {
         sys = system;
+        log = LoggerFactory.getLogger(ServersUI.class);
         ServerManagerFxService = new ServerManagerFxService(system);
         ServerManagerFxService.start();
 
@@ -154,10 +157,4 @@ public class ServersUI implements ActorController {
     public ActorSystem system() {
         return sys;
     }
-
-    @Override
-    public LoggingAdapter log() {
-        return sys.log();
-    }
-
 }

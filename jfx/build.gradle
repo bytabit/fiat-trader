@@ -28,6 +28,7 @@ buildscript {
 //apply plugin: 'com.jfrog.bintray'
 apply plugin: 'java'
 apply plugin: 'org.javafxports.jfxmobile'
+//apply plugin: 'application'
 
 repositories {
     maven {
@@ -45,6 +46,11 @@ dependencies {
     androidRuntime "com.gluonhq:charm-android:$gluonVersion"
     iosRuntime "com.gluonhq:charm-ios:$gluonVersion"
     desktopRuntime "com.gluonhq:charm-desktop:$gluonVersion"
+}
+
+run {
+    // Need to split the space-delimited value in the exec.args
+    jvmArgs "-Dconfig.file=../core/src/test/resources/trader1-regtest.conf"//System.getProperty("exec.args").split()
 }
 
 jfxmobile {

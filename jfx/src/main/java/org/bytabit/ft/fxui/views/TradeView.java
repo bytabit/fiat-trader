@@ -16,26 +16,36 @@
 
 package org.bytabit.ft.fxui.views;
 
+import akka.actor.ActorSystem;
 import com.gluonhq.charm.glisten.mvc.View;
 import javafx.fxml.FXMLLoader;
+import org.bytabit.ft.fxui.util.ActorPresenterFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class TradeView {
 
     private final String name;
+    private final ActorSystem system;
+    private final Logger log;
 
-    public TradeView(String name) {
+    public TradeView(String name, ActorSystem system) {
         this.name = name;
+        this.system = system;
+        this.log = LoggerFactory.getLogger(TradeView.class);
     }
 
     public View getView() {
         try {
-            View view = FXMLLoader.load(TradeView.class.getResource("trade.fxml"));
+            FXMLLoader loader = new FXMLLoader(TradeView.class.getResource("trade.fxml"));
+            loader.setControllerFactory(new ActorPresenterFactory(system));
+            View view = loader.load();
             view.setName(name);
             return view;
         } catch (IOException e) {
-            System.out.println("IOException: " + e);
+            log.error("IOException: " + e);
             return new View(name);
         }
     }

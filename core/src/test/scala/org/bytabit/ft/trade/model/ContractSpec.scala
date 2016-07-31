@@ -22,6 +22,7 @@ import org.bitcoinj.core.{Context, NetworkParameters}
 import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.util.{BTCMoney, CurrencyUnits, PaymentMethod}
 import org.bytabit.ft.wallet.model.Arbitrator
+import org.scalatest.{FlatSpec, Matchers}
 
 class ContractSpec extends FlatSpec with Matchers {
 

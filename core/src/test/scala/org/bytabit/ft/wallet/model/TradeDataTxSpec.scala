@@ -24,6 +24,7 @@ import org.bitcoinj.wallet.Wallet
 import org.bytabit.ft.trade.model.{Contract, Offer}
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.WalletJsonProtocol
+import org.scalatest.{FlatSpec, Matchers}
 
 class TradeDataTxSpec extends FlatSpec with Matchers with WalletJsonProtocol {
 

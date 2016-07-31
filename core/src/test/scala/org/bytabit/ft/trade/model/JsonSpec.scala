@@ -25,6 +25,7 @@ import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
 import org.bytabit.ft.trade.{TradeJsonProtocol, TradeProcess}
 import org.bytabit.ft.util._
 import org.bytabit.ft.wallet.model.{Arbitrator, BtcBuyer}
+import org.scalatest.{FlatSpec, Matchers}
 import spray.json._
 
 class JsonSpec extends FlatSpec with Matchers with TradeJsonProtocol {

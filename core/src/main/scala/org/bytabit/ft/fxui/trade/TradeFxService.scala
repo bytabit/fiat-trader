@@ -71,8 +71,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     }
   }
 
-  @Override
-  def handler = {
+  override def handler = {
 
     // Handle client events
 

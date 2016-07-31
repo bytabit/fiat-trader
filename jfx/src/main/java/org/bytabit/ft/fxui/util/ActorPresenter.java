@@ -17,11 +17,8 @@
 package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
-import akka.event.LoggingAdapter;
 
-public interface ActorController {
+public interface ActorPresenter {
 
     ActorSystem system();
-
-    LoggingAdapter log();
 }

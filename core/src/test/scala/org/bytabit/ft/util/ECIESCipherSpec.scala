@@ -17,6 +17,8 @@
 package org.bytabit.ft.util
 
 import org.bitcoinj.core.ECKey
+import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
 
 class ECIESCipherSpec extends FlatSpec with Matchers with PropertyChecks {
 

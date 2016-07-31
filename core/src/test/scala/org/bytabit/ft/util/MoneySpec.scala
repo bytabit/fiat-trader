@@ -18,6 +18,9 @@ package org.bytabit.ft.util
 
 import org.bitcoinj.core.Coin
 import org.bytabit.ft.util.BTCMoney._
+import org.scalacheck.Gen
+import org.scalatest.prop.PropertyChecks
+import org.scalatest.{FlatSpec, Matchers}
 
 class MoneySpec extends FlatSpec with Matchers with PropertyChecks with UtilJsonProtocol {
 
