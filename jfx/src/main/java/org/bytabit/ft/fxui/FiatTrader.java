@@ -20,13 +20,10 @@ import akka.event.LoggingAdapter;
 import com.gluonhq.charm.glisten.application.MobileApplication;
 import com.gluonhq.charm.glisten.control.Avatar;
 import com.gluonhq.charm.glisten.control.NavigationDrawer;
-import com.gluonhq.charm.glisten.layout.layer.SidePopupView;
 import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import org.bytabit.ft.client.ClientManager;
-import org.bytabit.ft.fxui.views.TradeView;
-import org.bytabit.ft.fxui.views.WalletView;
 import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
 
@@ -66,8 +63,8 @@ public class FiatTrader extends MobileApplication {
         if (Config.config().length() > 0 && !Config.config().equals("default")) title += ", " + Config.config();
         title += ")";
 
-        addViewFactory(TRADE_VIEW, () -> new TradeView(TRADE_VIEW, system).getView());
-        addViewFactory(WALLET_VIEW, () -> new WalletView(WALLET_VIEW).getView());
+//        addViewFactory(TRADE_VIEW, () -> new TradeView(TRADE_VIEW, system).getView());
+//        addViewFactory(WALLET_VIEW, () -> new WalletView(WALLET_VIEW).getView());
 
         NavigationDrawer drawer = new NavigationDrawer();
 
@@ -80,12 +77,12 @@ public class FiatTrader extends MobileApplication {
         final NavigationDrawer.Item secondaryItem = new NavigationDrawer.Item("Secondary", MaterialDesignIcon.DASHBOARD.graphic());
         drawer.getItems().addAll(primaryItem, secondaryItem);
 
-        drawer.selectedItemProperty().addListener((obs, oldItem, newItem) -> {
-            hideLayer(MENU_LAYER);
-            switchView(newItem.equals(primaryItem) ? TRADE_VIEW : WALLET_VIEW);
-        });
+//        drawer.selectedItemProperty().addListener((obs, oldItem, newItem) -> {
+//            hideLayer(MENU_LAYER);
+//            switchView(newItem.equals(primaryItem) ? TRADE_VIEW : WALLET_VIEW);
+//        });
 
-        addLayerFactory(MENU_LAYER, () -> new SidePopupView(drawer));
+//        addLayerFactory(MENU_LAYER, () -> new SidePopupView(drawer));
     }
 
     @Override

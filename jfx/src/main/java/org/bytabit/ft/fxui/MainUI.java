@@ -68,7 +68,7 @@ public class MainUI implements ActorPresenter {
         // remove trader trades tab if arbitrator is enabled
         traderTradesTab.setDisable(Config.arbitratorEnabled());
 
-        tabPane.getTabs().removeIf(Tab::isDisable);
+//        tabPane.getTabs().removeIf(Tab::isDisable);
     }
 
     @Override

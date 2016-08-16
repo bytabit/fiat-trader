@@ -16,14 +16,8 @@
 
 package org.bytabit.ft.fxui.views;
 
-import com.gluonhq.charm.glisten.animation.BounceInRightTransition;
-import com.gluonhq.charm.glisten.application.MobileApplication;
-import com.gluonhq.charm.glisten.control.AppBar;
-import com.gluonhq.charm.glisten.layout.layer.FloatingActionButton;
 import com.gluonhq.charm.glisten.mvc.View;
-import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
 import javafx.fxml.FXML;
-import org.bytabit.ft.fxui.FiatTrader;
 
 public class WalletPresenter {
 
@@ -31,20 +25,20 @@ public class WalletPresenter {
     private View secondary;
 
     public void initialize() {
-        secondary.setShowTransitionFactory(BounceInRightTransition::new);
+//        secondary.setShowTransitionFactory(BounceInRightTransition::new);
 
-        secondary.getLayers().add(new FloatingActionButton(MaterialDesignIcon.INFO.text,
-                e -> System.out.println("Info")));
+//        secondary.getLayers().add(new FloatingActionButton(MaterialDesignIcon.INFO.text,
+//                e -> System.out.println("Info")));
 
-        secondary.showingProperty().addListener((obs, oldValue, newValue) -> {
-            if (newValue) {
-                AppBar appBar = MobileApplication.getInstance().getAppBar();
-                appBar.setNavIcon(MaterialDesignIcon.MENU.button(e ->
-                        MobileApplication.getInstance().showLayer(FiatTrader.MENU_LAYER)));
-                appBar.setTitleText("Wallet");
-                appBar.getActionItems().add(MaterialDesignIcon.FAVORITE.button(e ->
-                        System.out.println("Favorite")));
-            }
-        });
+//        secondary.showingProperty().addListener((obs, oldValue, newValue) -> {
+//            if (newValue) {
+//                AppBar appBar = MobileApplication.getInstance().getAppBar();
+//                appBar.setNavIcon(MaterialDesignIcon.MENU.button(e ->
+//                        MobileApplication.getInstance().showLayer(FiatTrader.MENU_LAYER)));
+//                appBar.setTitleText("Wallet");
+//                appBar.getActionItems().add(MaterialDesignIcon.FAVORITE.button(e ->
+//                        System.out.println("Favorite")));
+//            }
+//        });
     }
 }

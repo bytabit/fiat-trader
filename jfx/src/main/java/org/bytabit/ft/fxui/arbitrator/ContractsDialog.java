@@ -23,14 +23,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
-import org.bitcoinj.core.Sha256Hash;
 import org.bytabit.ft.fxui.FiatTrader;
 import org.bytabit.ft.util.Config;
 import org.bytabit.ft.util.PaymentMethod;
 import org.bytabit.ft.wallet.model.Arbitrator;
 import org.joda.money.CurrencyUnit;
 
-import java.io.IOException;
 import java.util.ResourceBundle;
 
 public class ContractsDialog extends Alert {
@@ -102,15 +100,15 @@ public class ContractsDialog extends Alert {
 
         Boolean isArbitratorServer = Config.arbitratorEnabled() && Config.publicUrl().equals(this.arbitrator.url());
 
-        try {
-            this.getDialogPane().setContent(fxmlLoader.load());
-
-            this.actionColumn.setVisible(isArbitratorServer);
-            this.gridPane.setVisible(isArbitratorServer);
-        } catch (IOException e) {
-            this.log.error("Couldn't load arbitrator contract dialog.");
-            e.printStackTrace();
-        }
+//        try {
+//            this.getDialogPane().setContent(fxmlLoader.load());
+//
+//            this.actionColumn.setVisible(isArbitratorServer);
+//            this.gridPane.setVisible(isArbitratorServer);
+//        } catch (IOException e) {
+//            this.log.error("Couldn't load arbitrator contract dialog.");
+//            e.printStackTrace();
+//        }
     }
 
     // handlers
@@ -134,12 +132,12 @@ public class ContractsDialog extends Alert {
         this.urlLabel.setText(this.arbitrator.url().toString());
 
         // setup contract template table
-        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
-        this.actionColumn.setCellFactory(column -> this.newTableCell());
+//        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+//        this.actionColumn.setCellFactory(column -> this.newTableCell());
 
-        this.idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
-        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
-        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
+//        this.idColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+//        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().fiatCurrencyUnitProperty());
+//        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
         //feeColumn.setCellValueFactory(ct -> ct.getValue().arbitratorFeeProperty());
 
         this.contractTemplateTable.setItems(this.arbitratorManagerFxService.contractTemplates().get(this.arbitrator.url()).get());
@@ -173,12 +171,12 @@ public class ContractsDialog extends Alert {
 
         this.addPaymentMethodChoiceBox.setItems(this.arbitratorManagerFxService.addPaymentMethods());
 
-        this.addFiatCurrencyChoiceBox.setOnAction(event -> {
-            CurrencyUnit selectedCurrencyUnit = this.addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-            this.arbitratorManagerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
-            if (this.arbitratorManagerFxService.addPaymentMethods().size() == 1)
-                this.addPaymentMethodChoiceBox.getSelectionModel().selectFirst();
-        });
+//        this.addFiatCurrencyChoiceBox.setOnAction(event -> {
+//            CurrencyUnit selectedCurrencyUnit = this.addFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+//            this.arbitratorManagerFxService.setSelectedCurrencyUnit(selectedCurrencyUnit);
+//            if (this.arbitratorManagerFxService.addPaymentMethods().size() == 1)
+//                this.addPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+//        });
     }
 
     @FXML
@@ -207,7 +205,7 @@ public class ContractsDialog extends Alert {
                     vbox.alignmentProperty().setValue(Pos.CENTER);
                     Button deleteButton = new Button();
                     deleteButton.setText("DELETE");
-                    deleteButton.setOnAction(evt -> ContractsDialog.this.arbitratorManagerFxService.deleteContractTemplate(ContractsDialog.this.arbitrator, Sha256Hash.wrap(item)));
+//                    deleteButton.setOnAction(evt -> ContractsDialog.this.arbitratorManagerFxService.deleteContractTemplate(ContractsDialog.this.arbitrator, Sha256Hash.wrap(item)));
                     vbox.getChildren().addAll(deleteButton);
                     this.setGraphic(vbox);
                 }

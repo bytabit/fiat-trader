@@ -33,13 +33,13 @@ allprojects {
     group = 'org.bytabit.ft'
 }
 
-subprojects {
-
-    repositories {
-        jcenter()
-        mavenCentral()
-        mavenLocal()
-    }
+//subprojects {
+//
+//    repositories {
+//        jcenter()
+//        mavenCentral()
+//        mavenLocal()
+//    }
 
 //    processResources {
 //        filter ReplaceTokens, tokens: [
@@ -54,4 +54,4 @@ subprojects {
 //            w.write("bytabit.fiat-trader {\n  version = \"$semver\"\n}\n")
 //        }
 //    }
-}
+//}

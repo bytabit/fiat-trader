@@ -17,10 +17,6 @@
 package org.bytabit.ft.fxui.views;
 
 import akka.actor.ActorSystem;
-import com.gluonhq.charm.glisten.application.MobileApplication;
-import com.gluonhq.charm.glisten.control.AppBar;
-import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
-import org.bytabit.ft.fxui.FiatTrader;
 import org.bytabit.ft.fxui.trade.TradeFxService;
 import org.bytabit.ft.fxui.util.AbstractTradesPresenter;
 import org.slf4j.LoggerFactory;
@@ -37,15 +33,15 @@ public class TradesPresenter extends AbstractTradesPresenter {
     public void initialize() {
         super.initialize();
 
-        tradesView.showingProperty().addListener((obs, oldValue, newValue) -> {
-            if (newValue) {
-                AppBar appBar = MobileApplication.getInstance().getAppBar();
-                appBar.setNavIcon(MaterialDesignIcon.MENU.button(e ->
-                        MobileApplication.getInstance().showLayer(FiatTrader.MENU_LAYER)));
-                appBar.setTitleText("Trade");
-                appBar.getActionItems().add(MaterialDesignIcon.SEARCH.button(e ->
-                        System.out.println("Search")));
-            }
-        });
+//        tradesView.showingProperty().addListener((obs, oldValue, newValue) -> {
+//            if (newValue) {
+//                AppBar appBar = MobileApplication.getInstance().getAppBar();
+//                appBar.setNavIcon(MaterialDesignIcon.MENU.button(e ->
+//                        MobileApplication.getInstance().showLayer(FiatTrader.MENU_LAYER)));
+//                appBar.setTitleText("Trade");
+//                appBar.getActionItems().add(MaterialDesignIcon.SEARCH.button(e ->
+//                        System.out.println("Search")));
+//            }
+//        });
     }
 }

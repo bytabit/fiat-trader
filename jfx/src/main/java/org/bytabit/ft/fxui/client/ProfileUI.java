@@ -97,27 +97,27 @@ public class ProfileUI implements ActorPresenter {
 
         this.profileNameTextField.textProperty().bindBidirectional(this.profileFxService.profileName());
 
-        this.profileNameTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (oldValue && !newValue) {
-                this.profileFxService.updateProfileName(this.profileNameTextField.textProperty().get());
-            }
-        });
+//        this.profileNameTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+//            if (oldValue && !newValue) {
+//                this.profileFxService.updateProfileName(this.profileNameTextField.textProperty().get());
+//            }
+//        });
 
         this.profileEmailTextField.textProperty().bindBidirectional(this.profileFxService.profileEmail());
 
-        this.profileEmailTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (oldValue && !newValue) {
-                this.profileFxService.updateProfileEmail(this.profileEmailTextField.textProperty().get());
-            }
-        });
+//        this.profileEmailTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+//            if (oldValue && !newValue) {
+//                this.profileFxService.updateProfileEmail(this.profileEmailTextField.textProperty().get());
+//            }
+//        });
 
         // table setup
-        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
-        this.actionColumn.setCellFactory(column -> this.newTableCell());
-        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().currencyUnitProperty());
-        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
-        this.paymentDetailsColumn.setCellValueFactory(ct -> ct.getValue().paymentDetailsProperty());
-        this.paymentDetailsTable.setItems(this.profileFxService.paymentDetails());
+//        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+//        this.actionColumn.setCellFactory(column -> this.newTableCell());
+//        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().currencyUnitProperty());
+//        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
+//        this.paymentDetailsColumn.setCellValueFactory(ct -> ct.getValue().paymentDetailsProperty());
+//        this.paymentDetailsTable.setItems(this.profileFxService.paymentDetails());
 
         // choice box setup
 
@@ -133,12 +133,12 @@ public class ProfileUI implements ActorPresenter {
             }
         });
 
-        this.addDetailsFiatCurrencyChoiceBox.setOnAction(event -> {
-            CurrencyUnit selectedCurrencyUnit = this.addDetailsFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-            this.profileFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
-            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
-                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
-        });
+//        this.addDetailsFiatCurrencyChoiceBox.setOnAction(event -> {
+//            CurrencyUnit selectedCurrencyUnit = this.addDetailsFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+//            this.profileFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
+//            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
+//                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+//        });
 
         this.addDetailsPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
@@ -153,15 +153,15 @@ public class ProfileUI implements ActorPresenter {
             }
         });
 
-        this.addDetailsPaymentMethodChoiceBox.setOnAction(event -> {
-            PaymentMethod selectedPaymentMethod = this.addDetailsPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
-            this.profileFxService.setSelectedAddPaymentMethod(selectedPaymentMethod);
-            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
-                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
-            if (!selectedPaymentMethod.requiredDetails().isEmpty()) {
-                this.addPaymentDetailsTextField.promptTextProperty().setValue(selectedPaymentMethod.requiredDetails().mkString(", "));
-            }
-        });
+//        this.addDetailsPaymentMethodChoiceBox.setOnAction(event -> {
+//            PaymentMethod selectedPaymentMethod = this.addDetailsPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+//            this.profileFxService.setSelectedAddPaymentMethod(selectedPaymentMethod);
+//            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
+//                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+//            if (!selectedPaymentMethod.requiredDetails().isEmpty()) {
+//                this.addPaymentDetailsTextField.promptTextProperty().setValue(selectedPaymentMethod.requiredDetails().mkString(", "));
+//            }
+//        });
 
     }
 
@@ -197,7 +197,7 @@ public class ProfileUI implements ActorPresenter {
                     vbox.alignmentProperty().setValue(Pos.CENTER);
                     Button deleteButton = new Button();
                     deleteButton.setText("DELETE");
-                    deleteButton.setOnAction(evt -> ProfileUI.this.profileFxService.removePaymentDetails(item._1, item._2));
+//                    deleteButton.setOnAction(evt -> ProfileUI.this.profileFxService.removePaymentDetails(item._1, item._2));
                     vbox.getChildren().addAll(deleteButton);
                     this.setGraphic(vbox);
                 }

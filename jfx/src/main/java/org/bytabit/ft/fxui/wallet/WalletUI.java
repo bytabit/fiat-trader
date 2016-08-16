@@ -75,31 +75,31 @@ public class WalletUI implements ActorPresenter {
     void initialize() {
 
         // setup wallet download progress bar
-        walletFxService.walletBalance().addListener((observable, oldValue, newValue) -> {
-            walletBalanceLabel.setText(newValue);
-        });
+//        walletFxService.walletBalance().addListener((observable, oldValue, newValue) -> {
+//            walletBalanceLabel.setText(newValue);
+//        });
 
         downloadProgressBar.setProgress(0);
 
-        walletFxService.downloadProgress().addListener((observable, oldValue, newValue) -> {
-            Double percent = newValue.doubleValue() / 100;
-            downloadProgressBar.setProgress(percent);
-            if (percent < 1) {
-                downloadMessageLabel.setText("Downloading Blockchain");
-            } else {
-                downloadMessageLabel.setText("Blockchain Downloaded");
-            }
-        });
+//        walletFxService.downloadProgress().addListener((observable, oldValue, newValue) -> {
+//            Double percent = newValue.doubleValue() / 100;
+//            downloadProgressBar.setProgress(percent);
+//            if (percent < 1) {
+//                downloadMessageLabel.setText("Downloading Blockchain");
+//            } else {
+//                downloadMessageLabel.setText("Blockchain Downloaded");
+//            }
+//        });
 
         // Add observable list data to wallet table
         walletTable.setItems(walletFxService.transactions());
 
         // Initialize transaction table columns
-        walletHashColumn.setCellValueFactory(t -> t.getValue().hashProperty());
-        walletConficenceTypeColumn.setCellValueFactory(t -> t.getValue().confidenceTypeProperty());
-        walletDepthColumn.setCellValueFactory(t -> t.getValue().depthProperty().asObject());
-        walletMemoColumn.setCellValueFactory(t -> t.getValue().memoProperty());
-        walletBtcAmtColumn.setCellValueFactory(t -> t.getValue().btcAmtProperty());
+//        walletHashColumn.setCellValueFactory(t -> t.getValue().hashProperty());
+//        walletConficenceTypeColumn.setCellValueFactory(t -> t.getValue().confidenceTypeProperty());
+//        walletDepthColumn.setCellValueFactory(t -> t.getValue().depthProperty().asObject());
+//        walletMemoColumn.setCellValueFactory(t -> t.getValue().memoProperty());
+//        walletBtcAmtColumn.setCellValueFactory(t -> t.getValue().btcAmtProperty());
 
         // start wallet service
         walletFxService.start();

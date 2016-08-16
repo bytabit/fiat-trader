@@ -23,7 +23,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorManagerFxService;
 import org.bytabit.ft.fxui.arbitrator.ArbitratorUIModel;
-import org.bytabit.ft.fxui.arbitrator.ContractsDialog;
 import org.bytabit.ft.fxui.util.ActorPresenter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,29 +82,29 @@ public class ServersUI implements ActorPresenter {
     @FXML
     void initialize() {
 
-        eventClientTable.setRowFactory(tv -> {
-            TableRow row = new TableRow<ArbitratorUIModel>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && ((ArbitratorUIModel) row.getItem()).arbitrator().isDefined()) {
-                    ArbitratorUIModel rowData = (ArbitratorUIModel) row.getItem();
-
-                    ContractsDialog dialog = new ContractsDialog(arbitratorManagerFxService, rowData.arbitrator().get());
-                    dialog.showAndWait();
-                }
-            });
-            return row;
-        });
+//        eventClientTable.setRowFactory(tv -> {
+//            TableRow row = new TableRow<ArbitratorUIModel>();
+//            row.setOnMouseClicked(event -> {
+//                if (event.getClickCount() == 2 && ((ArbitratorUIModel) row.getItem()).arbitrator().isDefined()) {
+//                    ArbitratorUIModel rowData = (ArbitratorUIModel) row.getItem();
+//
+//                    ContractsDialog dialog = new ContractsDialog(arbitratorManagerFxService, rowData.arbitrator().get());
+//                    dialog.showAndWait();
+//                }
+//            });
+//            return row;
+//        });
 
         // setup event client table
 
-        actionColumn.setCellValueFactory(a -> a.getValue().urlProperty());
-        actionColumn.setCellFactory(column -> newTableCell());
-
-        statusColumn.setCellValueFactory(a -> a.getValue().statusProperty());
-        urlColumn.setCellValueFactory(a -> a.getValue().urlProperty());
-        bondColumn.setCellValueFactory(a -> a.getValue().bondProperty());
-        feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
-        idColumn.setCellValueFactory(a -> a.getValue().idProperty());
+//        actionColumn.setCellValueFactory(a -> a.getValue().urlProperty());
+//        actionColumn.setCellFactory(column -> newTableCell());
+//
+//        statusColumn.setCellValueFactory(a -> a.getValue().statusProperty());
+//        urlColumn.setCellValueFactory(a -> a.getValue().urlProperty());
+//        bondColumn.setCellValueFactory(a -> a.getValue().bondProperty());
+//        feeColumn.setCellValueFactory(a -> a.getValue().feeProperty());
+//        idColumn.setCellValueFactory(a -> a.getValue().idProperty());
 
         eventClientTable.setItems(ServerManagerFxService.arbitrators());
     }
@@ -139,13 +138,13 @@ public class ServersUI implements ActorPresenter {
                     vbox.alignmentProperty().setValue(Pos.CENTER);
                     Button deleteButton = new Button();
                     deleteButton.setText("DELETE");
-                    deleteButton.setOnAction(evt -> {
-                        try {
-                            ServerManagerFxService.removeArbitrator(new URL(item));
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        }
-                    });
+//                    deleteButton.setOnAction(evt -> {
+//                        try {
+//                            ServerManagerFxService.removeArbitrator(new URL(item));
+//                        } catch (MalformedURLException e) {
+//                            e.printStackTrace();
+//                        }
+//                    });
                     vbox.getChildren().addAll(deleteButton);
                     setGraphic(vbox);
                 }

@@ -16,21 +16,28 @@
 
 buildscript {
     repositories {
-//        // for bintray plugin
+        // for jfxmobile plugin
         jcenter()
+        // for retrolambda plugin
+        mavenCentral()
     }
     dependencies {
-//        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
         classpath 'org.javafxports:jfxmobile-plugin:1.0.8'
+        //classpath 'me.tatarka:gradle-retrolambda:3.2.5'
     }
 }
 
-//apply plugin: 'com.jfrog.bintray'
 apply plugin: 'java'
 apply plugin: 'org.javafxports.jfxmobile'
-//apply plugin: 'application'
+//apply plugin: 'me.tatarka.retrolambda'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 repositories {
+    jcenter()
+    mavenCentral()
+    mavenLocal()
     maven {
         url 'http://nexus.gluonhq.com/nexus/content/repositories/releases'
     }
@@ -70,34 +77,3 @@ jfxmobile {
         ]
     }
 }
-
-//bintray {
-//    user = System.getenv('BINTRAY_USER')
-//    key = System.getenv('BINTRAY_KEY')
-//
-//    filesSpec {
-//        from('build/jfx/native') {
-//            include '**/*.dmg'
-//            include '**/*.exe'
-//            include '**/*.deb'
-//        }
-//        into '.'
-//    }
-//
-//    pkg {
-//        repo = 'generic'
-//        name = 'fiat-trader'
-//        desc = 'Bytabit Fiat Trader native installers.'
-//        userOrg = 'bytabit'
-//        licenses = ['Apache-2.0']
-//        websiteUrl = 'https://bytabit.org'
-//        issueTrackerUrl = 'https://bytabit.atlassian.net/projects/FT/summary'
-//        vcsUrl = 'https://bitbucket.org/bytabit/fiat-trader'
-//        publish = false
-//        version {
-//            name = semverVersion().toString()
-//            released = new Date()
-//            vcsTag = semverVersion().tagName
-//        }
-//    }
-//}

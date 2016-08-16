@@ -16,14 +16,11 @@
 package org.bytabit.ft.fxui.util;
 
 import akka.actor.ActorSystem;
-import com.gluonhq.charm.glisten.control.CharmListCell;
 import com.gluonhq.charm.glisten.control.CharmListView;
-import com.gluonhq.charm.glisten.control.ListTile;
 import com.gluonhq.charm.glisten.mvc.View;
 import javafx.fxml.FXML;
 import org.bytabit.ft.fxui.trade.TradeFxService;
 import org.bytabit.ft.fxui.trade.TradeUIModel;
-import org.bytabit.ft.util.Monies;
 import org.joda.money.Money;
 import org.slf4j.Logger;
 
@@ -60,24 +57,24 @@ public abstract class AbstractTradesPresenter implements ActorPresenter {
 
         // setup trades list view
 
-        tradesListView.setCellFactory(tm -> new CharmListCell<TradeUIModel>() {
-            @Override
-            public void updateItem(TradeUIModel item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item != null && !empty) {
-                    ListTile tile = new ListTile();
-                    Money exchangeRate = item.fiatAmount().dividedBy(item.btcAmount().getAmount(), Monies.roundingMode());
-                    tile.textProperty().addAll(item.role().toString() + " offer for " +
-                            item.btcAmount().toString(), "@ " + exchangeRate.toString() + " per XBT" +
-                            " = " + item.fiatAmount().toString() + " via " + item.paymentMethod().name());
-                    setText(null);
-                    setGraphic(tile);
-                } else {
-                    setText(null);
-                    setGraphic(null);
-                }
-            }
-        });
+//        tradesListView.setCellFactory(tm -> new CharmListCell<TradeUIModel>() {
+//            @Override
+//            public void updateItem(TradeUIModel item, boolean empty) {
+//                super.updateItem(item, empty);
+//                if (item != null && !empty) {
+//                    ListTile tile = new ListTile();
+//                    Money exchangeRate = item.fiatAmount().dividedBy(item.btcAmount().getAmount(), Monies.roundingMode());
+//                    tile.textProperty().addAll(item.role().toString() + " offer for " +
+//                            item.btcAmount().toString(), "@ " + exchangeRate.toString() + " per XBT" +
+//                            " = " + item.fiatAmount().toString() + " via " + item.paymentMethod().name());
+//                    setText(null);
+//                    setGraphic(tile);
+//                } else {
+//                    setText(null);
+//                    setGraphic(null);
+//                }
+//            }
+//        });
 
         tradesListView.setItems(tradeFxService.trades());
     }

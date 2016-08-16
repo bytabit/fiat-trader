@@ -86,9 +86,9 @@ public class TradeUI extends AbstractTradesPresenter {
 
         // handle change events
 
-        tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
-            btcBuyButton.disableProperty().setValue(newValue1);
-        });
+//        tradeFxService.tradeUncommitted().addListener((observable1, oldValue1, newValue1) -> {
+//            btcBuyButton.disableProperty().setValue(newValue1);
+//        });
 
         // choice box setup
 
@@ -104,12 +104,12 @@ public class TradeUI extends AbstractTradesPresenter {
             }
         });
 
-        btcBuyFiatCurrencyChoiceBox.setOnAction((event) -> {
-            CurrencyUnit selectedCurrencyUnit = btcBuyFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-            tradeFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
-            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
-                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
-        });
+//        btcBuyFiatCurrencyChoiceBox.setOnAction((event) -> {
+//            CurrencyUnit selectedCurrencyUnit = btcBuyFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+//            tradeFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
+//            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
+//                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+//        });
 
         btcBuyPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
@@ -124,23 +124,23 @@ public class TradeUI extends AbstractTradesPresenter {
             }
         });
 
-        btcBuyPaymentMethodChoiceBox.setOnAction((event) -> {
-            PaymentMethod selectedPaymentMethod = btcBuyPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
-            tradeFxService.setSelectedContract(selectedPaymentMethod);
-            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
-                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
-        });
+//        btcBuyPaymentMethodChoiceBox.setOnAction((event) -> {
+//            PaymentMethod selectedPaymentMethod = btcBuyPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+//            tradeFxService.setSelectedContract(selectedPaymentMethod);
+//            if (tradeFxService.btcBuyPaymentMethods().size() == 1)
+//                btcBuyPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+//        });
 
-        btcBuyFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
-            String exchRate = btcBuyExchRateField.getText();
-            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !exchRate.isEmpty()) updateAddTradeBtcAmt();
-        });
+//        btcBuyFiatAmtField.textProperty().addListener((observable, oldValue, newValue) -> {
+//            String exchRate = btcBuyExchRateField.getText();
+//            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !exchRate.isEmpty()) updateAddTradeBtcAmt();
+//        });
 
-        btcBuyExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
-            String fiatAmt = btcBuyFiatAmtField.getText();
-            //String btcAmt = btcBuyBtcAmtField.getText();
-            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !fiatAmt.isEmpty()) updateAddTradeBtcAmt();
-        });
+//        btcBuyExchRateField.textProperty().addListener((observable, oldValue, newValue) -> {
+//            String fiatAmt = btcBuyFiatAmtField.getText();
+//            //String btcAmt = btcBuyBtcAmtField.getText();
+//            if (!newValue.isEmpty() && !oldValue.equals(newValue) && !fiatAmt.isEmpty()) updateAddTradeBtcAmt();
+//        });
     }
 
     public void handleCreateBtcBuyOffer() {
