@@ -10,24 +10,23 @@ Bytabit Fiat Trader
 git clone git@bitbucket.org:bytabit/fiat-trader.git 
 ```
 
-### Run Trader Client with Gradle From Command Line using Default (testnet) Config
+### Install projects dependencies
 
 1. Install [JDK 8u92](https://jdk8.java.net/download.html)
 2. Install [Scala version  2.11.8](http://www.scala-lang.org/download/)
 3. Install [Gradle version 2.13](https://gradle.org/gradle-download/)
 4. Verify your JAVA_HOME environment variable is set to your JDK home
-5. From the project directory run command:
-
-```
-gradle run
-```
 
 ### Run event server with Gradle using custom config
 
-1. From the project directory run command:
-
 ```
 gradle server -Dconfig.file=./src/test/resources/server1-regtest.conf
+```
+
+### Run trader client with Gradle using default (testnet) config
+
+```
+gradle run
 ```
 
 ### Run arbitrator client on regtest network with Grade using custom config 
