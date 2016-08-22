@@ -64,7 +64,6 @@ def akkaVersion = "2.4.1"
 def akkaStreamVersion = "2.0.1"
 
 dependencies {
-    compile "org.scala-lang:scala-library:$scalaVersion.7"
     compile "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-persistence_$scalaVersion:$akkaVersion"

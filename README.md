@@ -22,59 +22,52 @@ git clone git@bitbucket.org:bytabit/fiat-trader.git
 gradle run
 ```
 
-### Run Trader Client with IntelliJ using Custom Config 
-
-```
-Main class: org.bytabit.ft.fxui.FiatTrader
-VM options: -Dconfig.file=./src/test/resources/trader1-regtest.conf
-Working directory: <project directory>
-Use classpath of module: fiat-trader
-```
-
-### Run Event Server with Gradle From Command Line using Custom Config
+### Run event server with Gradle using custom config
 
 1. From the project directory run command:
 
 ```
-gradle run gradle run -Dconfig.file=./src/test/resources/server1-regtest.conf
+gradle server -Dconfig.file=./src/test/resources/server1-regtest.conf
 ```
 
-### Run Event Server with IntelliJ using Custom Configs 
+### Run arbitrator client on regtest network with Grade using custom config 
 
 ```
-Main class: org.bytabit.ft.server.Main
-VM options: -Dconfig.file=./src/test/resources/server1-regtest.conf
-Working directory: <project directory>
-Use classpath of module: fiat-trader
+gradle run -Dconfig.file=./src/test/resources/arbitrator1-regtest.conf
+```
+
+### Run trader client on regtest network with Gradle using custom config 
+
+```
+gradle run -Dconfig.file=./src/test/resources/trader1-regtest.conf
 ```
 
 ### IntelliJ Setup
 
 1. Install scala and gradle plugins (if not already installed)
-2. Create IntelliJ configs from project directory with gradle command: ```gradle idea```
-3. Open project in IntelliJ
-4. Verify the project JDK and Java Inspections settings are correct
+2. Import gradle project in IntelliJ
+3. Verify the project JDK and Java Inspections settings are correct
 
 ### JavaFX Scene Builder
 
 1. Install [JavaFX Scene Builder 2.0](http://www.oracle.com/technetwork/java/javase/downloads/index.html). Find it under “Additional Resources”.
 2. Open main UI file: ```src/main/java/org/bytabit/ft/fxui/MainUI.fxml```
 
-### Testnet In a Box
+### Testnet In a Box via Docker
 
-1. Clone bitcoin-testnet-box repo
+1. Pull bitcoin-testnet-box docker image
     
     ```
-    git clone https://github.com/freewil/bitcoin-testnet-box.git
+    docker pull freewil/bitcoin-testnet-box
     ```
 
-2. Change 1/bitcoin.conf port to 18444  
+2. Running docker container, mapping and exposing port 18444 from 19000 in our docker container 
     
     ```
-    port=18444
+    docker run -t -i -p 18444:19000 --expose 18444 freewil/bitcoin-testnet-box
     ```
 
-3. Follow README.md instructions
+3. Follow bitcoin-testnet-box [README.md](https://github.com/freewil/bitcoin-testnet-box) instructions
 
 ### Versioning
 
