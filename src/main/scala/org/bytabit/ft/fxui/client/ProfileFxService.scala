@@ -15,6 +15,7 @@
  */
 package org.bytabit.ft.fxui.client
 
+import java.util.function.Predicate
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.{FXCollections, ObservableList}
 import javax.mail.internet.{AddressException, InternetAddress}
@@ -67,12 +68,13 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
     system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.ContractAdded])
     system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.ContractRemoved])
     sendCmd(FindClientProfile)
+    sendCmd(FindPaymentDetails)
   }
 
-  def addPaymentDetail(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String) =
+  def addPaymentDetails(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod, paymentDetails: String) =
     sendCmd(AddPaymentDetails(PaymentDetails(currencyUnit, paymentMethod, paymentDetails)))
 
-  def removePaymentDetail(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) =
+  def removePaymentDetails(currencyUnit: CurrencyUnit, paymentMethod: PaymentMethod) =
     sendCmd(RemovePaymentDetails(currencyUnit, paymentMethod))
 
   @Override
@@ -94,6 +96,19 @@ class ProfileFxService(actorSystem: ActorSystem) extends ActorFxService {
     case ProfileEmailUpdated(e) =>
       profileEmail.set(e)
     // TODO update UI to indicate email updated
+
+    case FoundPaymentDetails(pd) =>
+      paymentDetails.addAll(pd.map(PaymentDetailsUIModel(_)))
+
+    case PaymentDetailsAdded(pd) =>
+      paymentDetails.add(PaymentDetailsUIModel(pd))
+
+    case PaymentDetailsRemoved(cu, pm) =>
+      paymentDetails.removeIf(new Predicate[PaymentDetailsUIModel] {
+        override def test(pd: PaymentDetailsUIModel): Boolean = {
+          pd.currencyUnit == cu && pd.paymentMethod == pm
+        }
+      })
 
     case ContractAdded(u, c, _) =>
       contracts = contracts :+ c

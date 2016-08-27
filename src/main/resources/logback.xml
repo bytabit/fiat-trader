@@ -27,10 +27,9 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${user.home}/.bytabit/fiat-trader/${config}/${config}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
-            <fileNamePattern>%d{yyyy-MM-dd}_${config}.log</fileNamePattern>
+            <fileNamePattern>${user.home}/.bytabit/fiat-trader/${config}/%d{yyyy-MM-dd}_${config}.log</fileNamePattern>
 
             <!-- keep 30 days' worth of history -->
             <maxHistory>30</maxHistory>

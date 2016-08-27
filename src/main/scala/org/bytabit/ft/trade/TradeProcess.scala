@@ -86,7 +86,8 @@ object TradeProcess {
 
   final case class FiatReceived(id: UUID) extends Event
 
-  final case class FiatSent(id: UUID) extends Event
+  final case class BtcBuyerFiatSent(id: UUID, reference: Option[String] = None,
+                                    posted: Option[DateTime] = None) extends PostedEvent
 
   final case class BtcSellerReceivedPayout(id: UUID, txHash: Sha256Hash, updateTime: DateTime) extends Event
 
@@ -229,6 +230,9 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
 
       // happy path
 
+      case (BtcBuyerFiatSent(_, ref, posted), fundedTrade: FundedTrade) =>
+        fundedTrade.withFiatSentReference(ref)
+
       case (BtcSellerReceivedPayout(_, txh, ut), fundedTrade: FundedTrade) =>
         fundedTrade.withPayoutTx(txh, ut)
 
@@ -293,6 +297,11 @@ trait TradeProcess extends PersistentFSM[TradeProcess.State, TradeData, TradePro
   def startFunded(ft: FundedTrade): Unit = {
     startOpened(ft.openedTrade)
     context.parent ! BtcSellerFundedEscrow(ft.id, ft.fundTxHash, ft.fundTxUpdateTime, ft.paymentDetailsKey)
+  }
+
+  def startFiatSent(ft: FundedTrade): Unit = {
+    startFunded(ft)
+    context.parent ! BtcBuyerFiatSent(ft.id, ft.fiatSentReference)
   }
 
   // happy path

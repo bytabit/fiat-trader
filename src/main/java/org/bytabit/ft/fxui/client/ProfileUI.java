@@ -18,17 +18,20 @@ package org.bytabit.ft.fxui.client;
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 import org.bytabit.ft.fxui.util.ActorController;
 import org.bytabit.ft.util.PaymentMethod;
 import org.joda.money.CurrencyUnit;
+import scala.Tuple2;
 
 import java.util.ResourceBundle;
 
 public class ProfileUI implements ActorController {
 
-    private ProfileFxService profileFxService;
+    private final ProfileFxService profileFxService;
 
     @FXML
     private ResourceBundle resources;
@@ -43,19 +46,19 @@ public class ProfileUI implements ActorController {
     private TextField profileEmailTextField;
 
     @FXML
-    private TableColumn<?, ?> actionColumn;
+    private TableColumn<PaymentDetailsUIModel, Tuple2<CurrencyUnit, PaymentMethod>> actionColumn;
 
     @FXML
-    private TableColumn<?, ?> fiatCurrencyColumn;
+    private TableColumn<PaymentDetailsUIModel, String> currencyUnitColumn;
 
     @FXML
-    private TableColumn<?, ?> paymentMethodColumn;
+    private TableColumn<PaymentDetailsUIModel, String> paymentMethodColumn;
 
     @FXML
-    private TableColumn<?, ?> paymentDetailsColumn;
+    private TableColumn<PaymentDetailsUIModel, String> paymentDetailsColumn;
 
     @FXML
-    private TableView<?> paymentDetailsTable;
+    private TableView<PaymentDetailsUIModel> paymentDetailsTable;
 
     @FXML
     private Button addButton;
@@ -69,45 +72,53 @@ public class ProfileUI implements ActorController {
     @FXML
     private TextField addPaymentDetailsTextField;
 
-    private ActorSystem sys;
+    private final ActorSystem sys;
 
     public ProfileUI(ActorSystem system) {
-        sys = system;
-        profileFxService = new ProfileFxService(system);
+        this.sys = system;
+        this.profileFxService = new ProfileFxService(system);
     }
 
     @FXML
     void initialize() {
 
-        profileFxService.start();
+        this.profileFxService.start();
 
         // bind data to controls
 
-        profileIdLabel.textProperty().bind(profileFxService.profileId());
-        addDetailsFiatCurrencyChoiceBox.setItems(profileFxService.addDetailsCurrencyUnits());
-        addDetailsPaymentMethodChoiceBox.setItems(profileFxService.addDetailsPaymentMethods());
+        this.profileIdLabel.textProperty().bind(this.profileFxService.profileId());
+        this.addDetailsFiatCurrencyChoiceBox.setItems(this.profileFxService.addDetailsCurrencyUnits());
+        this.addDetailsPaymentMethodChoiceBox.setItems(this.profileFxService.addDetailsPaymentMethods());
 
         // profile name and email controls
 
-        profileNameTextField.textProperty().bindBidirectional(profileFxService.profileName());
+        this.profileNameTextField.textProperty().bindBidirectional(this.profileFxService.profileName());
 
-        profileNameTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+        this.profileNameTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue && !newValue) {
-                profileFxService.updateProfileName(profileNameTextField.textProperty().get());
+                this.profileFxService.updateProfileName(this.profileNameTextField.textProperty().get());
             }
         });
 
-        profileEmailTextField.textProperty().bindBidirectional(profileFxService.profileEmail());
+        this.profileEmailTextField.textProperty().bindBidirectional(this.profileFxService.profileEmail());
 
-        profileEmailTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+        this.profileEmailTextField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (oldValue && !newValue) {
-                profileFxService.updateProfileEmail(profileEmailTextField.textProperty().get());
+                this.profileFxService.updateProfileEmail(this.profileEmailTextField.textProperty().get());
             }
         });
+
+        // table setup
+        this.actionColumn.setCellValueFactory(ct -> ct.getValue().idProperty());
+        this.actionColumn.setCellFactory(column -> this.newTableCell());
+        this.currencyUnitColumn.setCellValueFactory(ct -> ct.getValue().currencyUnitProperty());
+        this.paymentMethodColumn.setCellValueFactory(ct -> ct.getValue().paymentMethodProperty());
+        this.paymentDetailsColumn.setCellValueFactory(ct -> ct.getValue().paymentDetailsProperty());
+        this.paymentDetailsTable.setItems(this.profileFxService.paymentDetails());
 
         // choice box setup
 
-        addDetailsFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
+        this.addDetailsFiatCurrencyChoiceBox.setConverter(new StringConverter<CurrencyUnit>() {
             @Override
             public String toString(CurrencyUnit cu) {
                 return cu.getCode();
@@ -119,14 +130,14 @@ public class ProfileUI implements ActorController {
             }
         });
 
-        addDetailsFiatCurrencyChoiceBox.setOnAction((event) -> {
-            CurrencyUnit selectedCurrencyUnit = addDetailsFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
-            profileFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
-            if (profileFxService.addDetailsPaymentMethods().size() == 1)
-                addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+        this.addDetailsFiatCurrencyChoiceBox.setOnAction(event -> {
+            CurrencyUnit selectedCurrencyUnit = this.addDetailsFiatCurrencyChoiceBox.getSelectionModel().getSelectedItem();
+            this.profileFxService.setSelectedAddCurrencyUnit(selectedCurrencyUnit);
+            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
+                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
         });
 
-        addDetailsPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
+        this.addDetailsPaymentMethodChoiceBox.setConverter(new StringConverter<PaymentMethod>() {
             @Override
             public String toString(PaymentMethod dm) {
                 return dm.name();
@@ -139,23 +150,61 @@ public class ProfileUI implements ActorController {
             }
         });
 
-        addDetailsPaymentMethodChoiceBox.setOnAction((event) -> {
-            PaymentMethod selectedPaymentMethod = addDetailsPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
-            profileFxService.setSelectedAddPaymentMethod(selectedPaymentMethod);
-            if (profileFxService.addDetailsPaymentMethods().size() == 1)
-                addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+        this.addDetailsPaymentMethodChoiceBox.setOnAction(event -> {
+            PaymentMethod selectedPaymentMethod = this.addDetailsPaymentMethodChoiceBox.getSelectionModel().getSelectedItem();
+            this.profileFxService.setSelectedAddPaymentMethod(selectedPaymentMethod);
+            if (this.profileFxService.addDetailsPaymentMethods().size() == 1)
+                this.addDetailsPaymentMethodChoiceBox.getSelectionModel().selectFirst();
+            if (!selectedPaymentMethod.requiredDetails().isEmpty()) {
+                this.addPaymentDetailsTextField.promptTextProperty().setValue(selectedPaymentMethod.requiredDetails().mkString(", "));
+            }
         });
 
     }
 
     @Override
     public ActorSystem system() {
-        return sys;
+        return this.sys;
     }
 
     @Override
     public LoggingAdapter log() {
-        return sys.log();
+        return this.sys.log();
+    }
+
+    @FXML
+    void handleAddPaymentDetails() {
+
+        CurrencyUnit fiatCurrencyUnit = this.addDetailsFiatCurrencyChoiceBox.getValue();
+        PaymentMethod paymentMethod = this.addDetailsPaymentMethodChoiceBox.getValue();
+        String paymentDetails = this.addPaymentDetailsTextField.getText();
+
+        this.profileFxService.addPaymentDetails(fiatCurrencyUnit, paymentMethod, paymentDetails);
+    }
+
+    private TableCell<PaymentDetailsUIModel, Tuple2<CurrencyUnit, PaymentMethod>> newTableCell() {
+
+        return new TableCell<PaymentDetailsUIModel, Tuple2<CurrencyUnit, PaymentMethod>>() {
+
+            @Override
+            protected void updateItem(Tuple2<CurrencyUnit, PaymentMethod> item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (item == null || empty) {
+                    this.setText(null);
+                    this.setStyle("");
+                    this.setGraphic(null);
+                } else {
+                    VBox vbox = new VBox();
+                    vbox.alignmentProperty().setValue(Pos.CENTER);
+                    Button deleteButton = new Button();
+                    deleteButton.setText("DELETE");
+                    deleteButton.setOnAction(evt -> ProfileUI.this.profileFxService.removePaymentDetails(item._1, item._2));
+                    vbox.getChildren().addAll(deleteButton);
+                    this.setGraphic(vbox);
+                }
+            }
+        };
     }
 
 }

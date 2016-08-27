@@ -21,21 +21,21 @@ import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.layout.VBox
 
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
-import org.bytabit.ft.fxui.util.ActionTableCell
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.util.TradeActionTableCell
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess.{CREATED, FIAT_SENT, FUNDED}
-import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Role}
+import org.bytabit.ft.trade.model._
 
 import scala.collection.JavaConversions._
 
-object TradeUIActionTableCell {
+object TraderUIActionTableCell {
 
-  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State)
+  case class TradeOriginState(url: URL, id: UUID, role: Role, state: TradeProcess.State, trade: TradeData)
 
 }
 
-class TradeUIActionTableCell(tradefxService: TradeFxService) extends ActionTableCell {
+class TraderUIActionTableCell(tradefxService: TradeFxService) extends TradeActionTableCell {
 
   protected override def updateItem(item: TradeOriginState, empty: Boolean) {
     super.updateItem(item, empty)
@@ -55,12 +55,12 @@ class TradeUIActionTableCell(tradefxService: TradeFxService) extends ActionTable
       tradefxService.takeBtcBuyOffer(item.url, item.id)
     })
 
-    val fiatReceivedButton = actionButton("FIAT RCVD", event => {
-      tradefxService.receiveFiat(item.url, item.id)
+    val fiatReceivedButton = actionButton("RCV FIAT", event => {
+      tradefxService.receiveFiatDialog(item.url, item.id, item.trade)
     })
 
-    val fiatSentButton = actionButton("FIAT SENT", event => {
-      tradefxService.sendFiat(item.url, item.id)
+    val sendFiatDialog = actionButton("SEND FIAT", event => {
+      tradefxService.sendFiatDialog(item.url, item.id, item.trade)
     })
 
     // TODO FT-98: only enable buttons after timeout to deliver fiat
@@ -75,16 +75,18 @@ class TradeUIActionTableCell(tradefxService: TradeFxService) extends ActionTable
     // valid action buttons for item
 
     val buttons: Seq[Button] = (item, empty) match {
-      case (TradeOriginState(u, i, BTCBUYER, CREATED), false) =>
+      case (TradeOriginState(u, i, BTCBUYER, CREATED, _), false) =>
         Seq(cancelButton)
-      case (TradeOriginState(u, i, BTCSELLER, CREATED), false) =>
+      case (TradeOriginState(u, i, BTCSELLER, CREATED, _), false) =>
         Seq(btcSellButton)
-      case (TradeOriginState(u, i, BTCSELLER, FUNDED), false) =>
+      case (TradeOriginState(u, i, BTCSELLER, FUNDED, _), false) =>
         Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
-      case (TradeOriginState(u, i, BTCBUYER, FUNDED), false) =>
-        Seq(fiatSentButton)
-      case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT), false) =>
+      case (TradeOriginState(u, i, BTCBUYER, FUNDED, _), false) =>
+        Seq(sendFiatDialog)
+      case (TradeOriginState(u, i, BTCBUYER, FIAT_SENT, _), false) =>
         Seq(btcBuyerReqCertPaymentButton)
+      case (TradeOriginState(u, i, BTCSELLER, FIAT_SENT, _), false) =>
+        Seq(fiatReceivedButton, btcSellerReqCertPaymentButton)
       case _ =>
         setText(null)
         setStyle("")

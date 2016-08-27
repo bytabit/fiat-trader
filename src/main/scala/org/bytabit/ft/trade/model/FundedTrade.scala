@@ -23,7 +23,7 @@ import org.joda.money.Money
 import org.joda.time.DateTime
 
 case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxUpdateTime: DateTime,
-                       paymentDetailsKey: Option[Array[Byte]])
+                       paymentDetailsKey: Option[Array[Byte]], fiatSentReference: Option[String] = None)
 
   extends Template with TradeData {
 
@@ -58,4 +58,7 @@ case class FundedTrade(openedTrade: OpenedTrade, fundTxHash: Sha256Hash, fundTxU
 
   def withPayoutTx(payoutTxHash: Sha256Hash, payoutTxUpdateTime: DateTime) =
     SettledTrade(this, payoutTxHash, payoutTxUpdateTime)
+
+  def withFiatSentReference(reference: Option[String]) =
+    this.copy(fiatSentReference = reference)
 }

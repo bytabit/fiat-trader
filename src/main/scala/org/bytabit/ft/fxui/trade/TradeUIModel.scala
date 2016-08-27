@@ -18,7 +18,7 @@ package org.bytabit.ft.fxui.trade
 
 import javafx.beans.property._
 
-import org.bytabit.ft.fxui.trade.TradeUIActionTableCell.TradeOriginState
+import org.bytabit.ft.fxui.trade.TraderUIActionTableCell.TradeOriginState
 import org.bytabit.ft.trade.TradeProcess
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
@@ -37,7 +37,7 @@ case class TradeUIModel(role: Role, state: TradeProcess.State, trade: TradeData)
   val bondPercent = contract.arbitrator.bondPercent
   val arbitratorFee = contract.arbitrator.btcArbitratorFee
 
-  val actionProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state))
+  val stateProperty = new SimpleObjectProperty[TradeOriginState](TradeOriginState(url, id, role, state, trade))
   val roleProperty = new SimpleStringProperty(role.identifier)
   val statusProperty = new SimpleStringProperty(stateToString(state, role))
   val fiatCurrencyUnitProperty = new SimpleStringProperty(fiatCurrencyUnit.getCode)

@@ -21,13 +21,13 @@ import org.joda.money.CurrencyUnit
 object PaymentMethod {
 
   val moneygram: PaymentMethod =
-    PaymentMethod("Moneygram", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Moneygram Info..."))
+    PaymentMethod("Moneygram", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Moneygram Info..."), "Moneygram Reference #")
 
   val swish: PaymentMethod =
-    PaymentMethod("Swish", Seq(CurrencyUnits.SEK), Seq("Swish Phone Number"))
+    PaymentMethod("Swish", Seq(CurrencyUnits.SEK), Seq("Swish Phone Number"), "Swish Reference #")
 
   val westernUnion: PaymentMethod =
-    PaymentMethod("Western Union", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Western Union Info..."))
+    PaymentMethod("Western Union", Seq(CurrencyUnits.USD, CurrencyUnits.EUR), Seq("Western Union Info..."), "Western Union Reference #")
 
   val all = Seq(moneygram, swish, westernUnion)
 
@@ -37,7 +37,7 @@ object PaymentMethod {
 }
 
 case class PaymentMethod(name: String, currencyUnits: Seq[CurrencyUnit],
-                         requiredDetails: Seq[String]) {
+                         requiredDetails: Seq[String], requiredReference: String) {
 
   currencyUnits.foreach(cu => assert(Monies.isFiat(cu)))
 }

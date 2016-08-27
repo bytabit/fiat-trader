@@ -19,8 +19,11 @@ import java.net.URL
 import java.util.UUID
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ObservableList
-import javafx.scene.control.Alert
 import javafx.scene.control.Alert.AlertType
+import javafx.scene.control.ButtonBar.ButtonData
+import javafx.scene.control._
+import javafx.scene.layout.GridPane
+import javafx.util.Callback
 
 import akka.actor.ActorSystem
 import org.bytabit.ft.arbitrator.ArbitratorManager
@@ -31,7 +34,7 @@ import org.bytabit.ft.trade.BtcBuyProcess.{AddBtcBuyOffer, CancelBtcBuyOffer, Se
 import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade._
-import org.bytabit.ft.trade.model.{BTCBUYER, BTCSELLER, Contract, Offer}
+import org.bytabit.ft.trade.model._
 import org.bytabit.ft.util.{BTCMoney, _}
 import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
@@ -131,7 +134,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
 
     // happy path
 
-    case fs: FiatSent =>
+    case fs: BtcBuyerFiatSent =>
       fiatSent(fs)
       updateUncommitted()
 
@@ -291,16 +294,7 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
   }
 
   def takeBtcBuyOffer(url: URL, tradeId: UUID): Unit = {
-    // TODO FT-10: get payment details from payment details preferences
-    sendCmd(TakeBtcBuyOffer(url, tradeId, "Swish: +467334557"))
-  }
-
-  def receiveFiat(url: URL, tradeId: UUID): Unit = {
-    sendCmd(ReceiveFiat(url, tradeId))
-  }
-
-  def sendFiat(url: URL, tradeId: UUID): Unit = {
-    sendCmd(SendFiat(url, tradeId))
+    sendCmd(TakeBtcBuyOffer(url, tradeId))
   }
 
   // TODO FT-91: collect evidence
@@ -327,5 +321,76 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
     alert.setHeaderText(title)
     alert.setContentText(reason)
     alert.showAndWait()
+  }
+
+  def dialogSendFiatError(url: URL, tradeId: UUID, tradeData: TradeData): Unit = {
+    // TODO dialog to tell user why can't send fiat, not funded yet
+    //sendCmd(SendFiat(url, tradeId))
+  }
+
+  def sendFiatDialog(url: URL, tradeId: UUID, trade: TradeData): Unit = {
+
+    trade match {
+
+      case ft: FundedTrade =>
+        val dialog = new Dialog[String]()
+        dialog.setTitle("Send Fiat")
+
+        dialog.setHeaderText(s"Send ${ft.contract.fiatCurrencyUnit.toString}")
+
+        val fiatSentRefLabel = new Label(s"Send ${ft.fiatAmount} via ${ft.contract.paymentMethod.name} to ${ft.paymentDetails}")
+        val fiatSentRefTextField = new TextField()
+        fiatSentRefTextField.setPrefWidth(500)
+        fiatSentRefTextField.setMaxWidth(500)
+        fiatSentRefTextField.setPromptText(ft.contract.paymentMethod.requiredReference)
+
+        val grid = new GridPane()
+        grid.add(fiatSentRefLabel, 0, 0)
+        grid.add(fiatSentRefTextField, 0, 1)
+        dialog.getDialogPane.setContent(grid)
+
+        val okButtonType = new ButtonType("OK", ButtonData.OK_DONE)
+        val cancelButtonType = new ButtonType("CANCEL", ButtonData.CANCEL_CLOSE)
+
+        dialog.getDialogPane.getButtonTypes.addAll(okButtonType, cancelButtonType)
+
+        dialog.setResultConverter(new Callback[ButtonType, String]() {
+          override def call(bt: ButtonType): String = {
+            if (bt == okButtonType) {
+              fiatSentRefTextField.getText
+            } else {
+              null
+            }
+          }
+        })
+
+        val result = dialog.showAndWait()
+        if (result.isPresent) {
+          log.info(s"Fiat sent reference: ${result.get}")
+          sendCmd(SendFiat(url, tradeId, Some(result.get)))
+        }
+      case _ =>
+      // TODO show error
+    }
+  }
+
+  def receiveFiatDialog(url: URL, tradeId: UUID, trade: TradeData): Unit = {
+
+    trade match {
+
+      case ft: FundedTrade =>
+        val dialog = new Alert(AlertType.CONFIRMATION)
+        dialog.setTitle("Receive Fiat")
+
+        dialog.setHeaderText(s"Receive ${ft.contract.fiatCurrencyUnit.toString}")
+        dialog.setContentText(s"Receive ${ft.fiatAmount} via ${ft.contract.paymentMethod.name} to ${ft.paymentDetails} with reference: ${ft.fiatSentReference.getOrElse("NONE")}")
+
+        val result = dialog.showAndWait()
+        if (result.get().equals(ButtonType.OK)) {
+          sendCmd(ReceiveFiat(url, tradeId))
+        }
+      case _ =>
+      // TODO show error
+    }
   }
 }

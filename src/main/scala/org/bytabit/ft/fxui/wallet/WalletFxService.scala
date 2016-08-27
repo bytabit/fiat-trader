@@ -132,7 +132,10 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     // do nothing
 
     case e: BlockDownloaded =>
-    // do noting
+    // do nothing
+
+    case e: EscrowTransactionUpdated =>
+    // do nothing
 
     case e => log.error(s"Unexpected event: $e")
   }

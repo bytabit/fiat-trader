@@ -21,6 +21,7 @@ import java.util.UUID
 import akka.actor._
 import akka.event.Logging
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
+import org.bytabit.ft.client.model.PaymentDetails
 import org.bytabit.ft.trade.BtcSellProcess.{ReceiveFiat, RequestCertifyPayment, Start, TakeBtcBuyOffer}
 import org.bytabit.ft.trade.TradeProcess._
 import org.bytabit.ft.trade.model._
@@ -42,7 +43,7 @@ object BtcSellProcess {
 
   final case class Start(url: URL, id: UUID) extends Command
 
-  final case class TakeBtcBuyOffer(url: URL, id: UUID, paymentDetails: String) extends Command
+  final case class TakeBtcBuyOffer(url: URL, id: UUID, paymentDetails: Set[PaymentDetails] = Set()) extends Command
 
   final case class ReceiveFiat(url: URL, id: UUID) extends Command
 
@@ -76,8 +77,9 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
         context.parent ! sco
       }
 
-    case Event(tso: TakeBtcBuyOffer, so: BtcBuyOffer) =>
-      tradeWalletMgrRef ! TradeWalletManager.TakeBtcBuyOffer(so, tso.paymentDetails)
+    case Event(TakeBtcBuyOffer(u, i, pds), so: BtcBuyOffer) =>
+      val pd = pds.find(d => d.currencyUnit == so.contract.fiatCurrencyUnit && d.paymentMethod == so.contract.paymentMethod)
+      pd.foreach(d => tradeWalletMgrRef ! TradeWalletManager.TakeBtcBuyOffer(so, d.paymentDetails))
       stay()
 
     case Event(WalletManager.BtcBuyOfferTaken(to), so: BtcBuyOffer) if to.paymentDetailsKey.isDefined =>
@@ -203,6 +205,39 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       startFunded(ft)
       stay()
 
+    case Event(fs: BtcBuyerFiatSent, ft: FundedTrade) =>
+      goto(FIAT_SENT) applying fs andThen {
+        case ft: FundedTrade =>
+          context.parent ! fs
+      }
+
+    case Event(e: ReceiveFiat, ft: FundedTrade) =>
+      goto(FIAT_RCVD) andThen {
+        case ft: FundedTrade =>
+          tradeWalletMgrRef ! TradeWalletManager.BroadcastTx(ft.btcBuyerSignedPayoutTx, Some(ft.btcSeller.escrowPubKey))
+          context.parent ! FiatReceived(ft.id)
+      }
+
+    case Event(rcf: RequestCertifyPayment, ft: FundedTrade) =>
+      postTradeEvent(rcf.url, CertifyPaymentRequested(ft.id, rcf.evidence), self)
+      stay()
+
+    case Event(cdr: CertifyPaymentRequested, ft: FundedTrade) if cdr.posted.isDefined =>
+      goto(CERT_PAYMENT_REQD) applying cdr andThen {
+        case cfe: CertifyPaymentEvidence =>
+          context.parent ! cdr
+      }
+
+    case Event(etu: EscrowTransactionUpdated, ft: FundedTrade) =>
+      stay()
+  }
+
+  when(FIAT_SENT) {
+
+    case Event(Start, ft: FundedTrade) =>
+      startFiatSent(ft)
+      stay()
+
     case Event(e: ReceiveFiat, ft: FundedTrade) =>
       goto(FIAT_RCVD) andThen {
         case ft: FundedTrade =>
@@ -225,7 +260,7 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
   }
 
   def startFiatRcvd(ft: FundedTrade) = {
-    startFunded(ft)
+    startFiatSent(ft)
     context.parent ! FiatReceived(ft.id)
   }
 
@@ -237,11 +272,11 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
     case Event(etu: EscrowTransactionUpdated, ft: FundedTrade) =>
       if (outputsEqual(ft.unsignedPayoutTx, etu.tx) &&
         etu.confidenceType == ConfidenceType.BUILDING) {
-        val brp = BtcSellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
-        goto(TRADED) applying brp andThen {
+        val srp = BtcSellerReceivedPayout(ft.id, etu.tx.getHash, new DateTime(etu.tx.getUpdateTime))
+        goto(TRADED) applying srp andThen {
           case st: SettledTrade =>
             tradeWalletMgrRef ! SetTransactionMemo(etu.tx.getHash, s"Payout Trade $id")
-            context.parent ! brp
+            context.parent ! srp
             escrowWalletMgrRef ! EscrowWalletManager.RemoveWatchAddress(st.escrowAddress)
         }
       }
