@@ -231,7 +231,4 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
     case Event(ServerOffline(_), _) =>
       stay()
   }
-
-  initialize()
-
 }
