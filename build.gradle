@@ -41,6 +41,10 @@ apply plugin: 'nebula.ospackage'
 apply plugin: 'javafx-gradle-plugin'
 apply plugin: 'com.jfrog.bintray'
 
+// TODO comment below back in after testing akka 2.3 with FX UI
+//project.sourceCompatibility = JavaVersion.VERSION_1_6
+//project.targetCompatibility = JavaVersion.VERSION_1_6
+
 version semverVersion()
 
 repositories {
@@ -60,13 +64,13 @@ sourceSets.main.resources {
 }
 
 def scalaVersion = "2.11"
-def akkaVersion = "2.4.1"
+def akkaVersion = "2.3.15"
 def akkaStreamVersion = "2.0.1"
 
 dependencies {
     compile "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
-    compile "com.typesafe.akka:akka-persistence_$scalaVersion:$akkaVersion"
+    compile "com.typesafe.akka:akka-persistence-experimental_$scalaVersion:$akkaVersion"
     compile "org.iq80.leveldb:leveldb:0.7"
     compile "org.fusesource.leveldbjni:leveldbjni-all:1.8"
     compile "com.typesafe.akka:akka-http-experimental_$scalaVersion:$akkaStreamVersion"

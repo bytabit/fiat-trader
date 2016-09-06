@@ -18,15 +18,16 @@ package org.bytabit.ft.fxui;
 import akka.actor.ActorSystem;
 import akka.event.LoggingAdapter;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.bytabit.ft.client.ClientManager;
 import org.bytabit.ft.fxui.util.ActorControllerFactory;
 import org.bytabit.ft.server.EventServer;
 import org.bytabit.ft.util.Config;
-import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 
 import java.io.File;
@@ -38,7 +39,7 @@ public class FiatTrader extends Application {
     public final void start(Stage stage) throws IOException {
 
         // Create actor system
-        ActorSystem system = ActorSystem.create(Config.config());
+        final ActorSystem system = ActorSystem.create(Config.config());
         LoggingAdapter log = system.log();
 
         // create data directories if they don't exist
@@ -72,15 +73,18 @@ public class FiatTrader extends Application {
         stage.setScene(scene);
 
         // Set UI Close Handler
-        stage.setOnCloseRequest(e -> {
-            // Shutdown Actors
-            system.terminate();
-            try {
-                Await.result(system.whenTerminated(), Duration.create(1, "second"));
-            } catch (Exception e1) {
-                e1.printStackTrace();
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent event) {
+                // Shutdown Actors
+                system.shutdown();
+                try {
+                    system.awaitTermination(Duration.create(1, "second"));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+                System.exit(0);
             }
-            System.exit(0);
         });
 
         // Show UI

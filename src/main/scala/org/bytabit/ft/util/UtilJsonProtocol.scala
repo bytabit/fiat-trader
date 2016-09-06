@@ -18,12 +18,15 @@ package org.bytabit.ft.util
 
 import java.net.URL
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import org.joda.money.{CurrencyUnit, Money}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import spray.json._
+
+import scala.concurrent.duration.FiniteDuration
 
 trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -94,6 +97,16 @@ trait UtilJsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
     }
 
     def write(uuid: UUID) = JsString(uuid.toString)
+  }
+
+  implicit object FiniteDurationJsonFormat extends JsonFormat[FiniteDuration] {
+
+    override def read(value: JsValue): FiniteDuration = value match {
+      case JsNumber(bd) => FiniteDuration(bd.toLong, TimeUnit.NANOSECONDS)
+      case _ => deserializationError("FiniteDuration expected")
+    }
+
+    override def write(fd: FiniteDuration): JsValue = JsNumber(fd.toNanos)
   }
 
   // found here: https://groups.google.com/forum/#!topic/spray-user/RkIwRIXzDDc
