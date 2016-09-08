@@ -14,25 +14,13 @@
  * limitations under the License.
  */
 
-buildscript {
-    repositories {
-        mavenCentral()
-        maven {
-            url "http://dl.bintray.com/palantir/releases"
-        }
-    }
-    dependencies {
-        classpath 'com.palantir:gradle-gitsemver:0.6.0'
-    }
-}
+package akka.persistence.fsm
 
-apply plugin: 'gitsemver'
-version semverVersion()
+import akka.persistence.fsm.PersistentFSM.StateChangeEvent
+import org.bytabit.ft.util.UtilJsonProtocol
 
-allprojects {
-    group = 'org.bytabit.ft'
+trait PersistentFSMJsonProtocol extends UtilJsonProtocol {
 
-    // TODO comment below back in after testing akka 2.3 with FX UI
-    //project.sourceCompatibility = JavaVersion.VERSION_1_6
-    //project.targetCompatibility = JavaVersion.VERSION_1_6
+  implicit def stateChangeJsonFormat = jsonFormat2(StateChangeEvent)
+
 }

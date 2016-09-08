@@ -235,7 +235,4 @@ case class TraderClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: Act
     case Event(ServerOffline(_), _) =>
       stay()
   }
-
-  initialize()
-
 }

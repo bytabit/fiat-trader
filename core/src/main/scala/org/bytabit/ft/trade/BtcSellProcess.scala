@@ -420,9 +420,6 @@ case class BtcSellProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRef,
       log.warning(s"Received event after being canceled: ${e.getClass}")
       stay()
   }
-
-  initialize()
-
 }
 
 

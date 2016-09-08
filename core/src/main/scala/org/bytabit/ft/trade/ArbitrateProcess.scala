@@ -322,9 +322,6 @@ case class ArbitrateProcess(btcBuyOffer: BtcBuyOffer, tradeWalletMgrRef: ActorRe
       log.warning(s"Received event after being canceled: ${e.getClass}")
       stay()
   }
-
-  initialize()
-
 }
 
 

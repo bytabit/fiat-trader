@@ -57,7 +57,8 @@ object Main extends App {
     EventServer.actorOf()(system)
   } else {
     system.log.error("EventServer not enabled in config file.")
-    system.terminate()
+    system.shutdown()
+    system.awaitTermination()
   }
 }
 
