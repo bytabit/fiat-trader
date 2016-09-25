@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bytabit.ft.fxui.trade
 
 import java.util.ResourceBundle
@@ -141,8 +142,6 @@ case class TradeInfoDialog(system: ActorSystem, tm: TradeUIModel) extends Alert(
 
   @FXML
   private def initialize(): Unit = {
-
-    import FxTableHelper._
 
     escrowDetailsTable.setItems(escrowDetails)
 

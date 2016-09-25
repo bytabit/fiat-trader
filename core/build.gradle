@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-//buildscript {
-//    repositories {
-//        // for bintray plugin
-//        jcenter()
-//    }
-//    dependencies {
-//        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-//        classpath 'org.javafxports:jfxmobile-plugin:1.0.8'
-//    }
-//}
-
 apply plugin: 'scala'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceSets.main.scala.srcDirs = ["src/main/java", "src/main/scala"]
+sourceSets.main.java.srcDirs = []
+
+sourceSets.test.scala.srcDirs = ["src/test/java", "src/test/scala"]
+sourceSets.test.java.srcDirs = []
+
+sourceSets.main.resources {
+    srcDirs = ['src/main/resources', 'src/main/java']
+    exclude '**/*.java'
+}
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
 
 def scalaVersion = "2.11"
 def akkaVersion = "2.3.15"
@@ -37,11 +37,10 @@ def akkaStreamVersion = "2.0.4"
 repositories {
     jcenter()
     mavenCentral()
-    mavenLocal()
 }
 
 dependencies {
-    compile "org.scala-lang:scala-library:$scalaVersion.7"
+    compile "org.scala-lang:scala-library:$scalaVersion.8"
     compile "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-persistence-experimental_$scalaVersion:$akkaVersion"
@@ -59,17 +58,6 @@ dependencies {
     compile "com.sun.mail:javax.mail:1.5.5"
     testCompile "org.scalatest:scalatest_$scalaVersion:2.2.6"
     testCompile "org.scalacheck:scalacheck_$scalaVersion:1.12.5"
-}
-
-//compileScala {
-//    dependsOn createVersionConf
-//}
-
-task server(type: JavaExec, dependsOn: classes) {
-    main = 'org.bytabit.ft.server.Main'
-    classpath sourceSets.main.runtimeClasspath
-    classpath configurations.runtime
-    systemProperties System.properties
 }
 
 task spec(dependsOn: ['testClasses'], type: JavaExec) {

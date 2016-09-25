@@ -24,35 +24,6 @@ import spray.json._
 
 trait WalletJsonProtocol extends UtilJsonProtocol {
 
-  implicit def btcSellerJsonFormat = jsonFormat(BtcSeller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
-    "openTxUtxo", "fundTxUtxo")
-
-  implicit def btcBuyerJsonFormat = jsonFormat(BtcBuyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
-    "openTxUtxo")
-
-  implicit def NotaryJsonFormat = jsonFormat(Arbitrator.apply, "url", "netParams", "escrowPubKey", "feesAddr",
-    "bondPercent", "btcNotaryFee")
-
-  implicit object Sha256HashJsonFormat extends JsonFormat[Sha256Hash] {
-
-    def read(value: JsValue) = value match {
-      case JsString(h) => Sha256Hash.wrap(h)
-      case _ => deserializationError("Sha256Hash expected")
-    }
-
-    def write(h: Sha256Hash) = JsString(h.toString)
-  }
-
-  implicit object AddressJsonFormat extends JsonFormat[Address] {
-
-    def read(value: JsValue) = value match {
-      case JsArray(Vector(JsString(netId), JsString(addr))) => Address.fromBase58(NetworkParameters.fromID(netId), addr)
-      case _ => deserializationError("Address expected")
-    }
-
-    def write(addr: Address) = JsArray(JsString(addr.getParameters.getId), JsString(addr.toString))
-  }
-
   implicit object NetworkParametersJsonFormat extends JsonFormat[NetworkParameters] {
 
     def read(value: JsValue) = value match {
@@ -73,6 +44,16 @@ trait WalletJsonProtocol extends UtilJsonProtocol {
     def write(pk: PubECKey) = JsString(pk.toString)
   }
 
+  implicit object AddressJsonFormat extends JsonFormat[Address] {
+
+    def read(value: JsValue) = value match {
+      case JsArray(Vector(JsString(netId), JsString(addr))) => Address.fromBase58(NetworkParameters.fromID(netId), addr)
+      case _ => deserializationError("Address expected")
+    }
+
+    def write(addr: Address) = JsArray(JsString(addr.getParameters.getId), JsString(addr.toString))
+  }
+
   implicit object TransactionOutputJsonFormat extends JsonFormat[TransactionOutput] {
 
     override def read(value: JsValue): TransactionOutput = value match {
@@ -91,6 +72,25 @@ trait WalletJsonProtocol extends UtilJsonProtocol {
       val txb = JsString(Utils.HEX.encode(txOutput.getParentTransaction.bitcoinSerialize()))
       JsArray(Vector(np, idx, txb))
     }
+  }
+
+  implicit def btcSellerJsonFormat = jsonFormat(BtcSeller.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+    "openTxUtxo", "fundTxUtxo")
+
+  implicit def btcBuyerJsonFormat = jsonFormat(BtcBuyer.apply, "netParams", "escrowPubKey", "changeAddr", "payoutAddr",
+    "openTxUtxo")
+
+  implicit def NotaryJsonFormat = jsonFormat(Arbitrator.apply, "url", "netParams", "escrowPubKey", "feesAddr",
+    "bondPercent", "btcNotaryFee")
+
+  implicit object Sha256HashJsonFormat extends JsonFormat[Sha256Hash] {
+
+    def read(value: JsValue) = value match {
+      case JsString(h) => Sha256Hash.wrap(h)
+      case _ => deserializationError("Sha256Hash expected")
+    }
+
+    def write(h: Sha256Hash) = JsString(h.toString)
   }
 
   implicit object TxSigJsonFormat extends JsonFormat[TxSig] {

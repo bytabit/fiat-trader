@@ -16,6 +16,8 @@
 
 buildscript {
     repositories {
+        jcenter()
+
         mavenCentral()
         maven {
             url "http://dl.bintray.com/palantir/releases"
@@ -26,13 +28,28 @@ buildscript {
     }
 }
 
-apply plugin: 'gitsemver'
-version semverVersion()
-
 allprojects {
-    group = 'org.bytabit.ft'
 
-    // TODO comment below back in after testing akka 2.3 with FX UI
-    //project.sourceCompatibility = JavaVersion.VERSION_1_6
-    //project.targetCompatibility = JavaVersion.VERSION_1_6
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    apply plugin: 'gitsemver'
+
+    version = semverVersion()
+    project.ext.tagName = semverVersion().getTagName()
+
+    group = 'org.bytabit.ft'
 }
+
+//subprojects {
+//
+//    repositories {
+//        jcenter()
+//    }
+//}
+
+//task clean(type: Delete) {
+//    delete rootProject.buildDir
+//}
