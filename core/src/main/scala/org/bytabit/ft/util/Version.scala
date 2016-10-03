@@ -30,7 +30,7 @@ object Version {
     new Version(major, minor, patch)
   }
 
-  def apply(): Version = apply(Config.version)
+  def apply(config: Config): Version = apply(config.version)
 }
 
 @SerialVersionUID(100L)

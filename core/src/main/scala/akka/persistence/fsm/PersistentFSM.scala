@@ -385,42 +385,42 @@ object PersistentFSM {
   *
   * This is an EXPERIMENTAL feature and is subject to change until it has received more real world testing.
   */
-abstract class AbstractPersistentFSM[S <: FSMState, D, E] extends AbstractPersistentFSMBase[S, D, E] with PersistentFSM[S, D, E] {
-
-  import java.util.function.Consumer
-
-  /**
-    * Adapter from Java 8 Functional Interface to Scala Function
-    *
-    * @param action - Java 8 lambda expression defining the action
-    * @return action represented as a Scala Functin
-    */
-  final def exec(action: Consumer[D]): D ⇒ Unit =
-  data ⇒ action.accept(data)
-
-  /**
-    * Adapter from Java [[Class]] to [[scala.reflect.ClassTag]]
-    *
-    * @return domain event [[scala.reflect.ClassTag]]
-    */
-  final override def domainEventClassTag: ClassTag[E] =
-  ClassTag(domainEventClass)
-
-  /**
-    * Domain event's [[Class]]
-    * Used for identifying domain events during recovery
-    */
-  def domainEventClass: Class[E]
-}
-
-/**
-  * Java API: compatible with lambda expressions
-  *
-  * Persistent Finite State Machine actor abstract base class with FSM Logging
-  *
-  * This is an EXPERIMENTAL feature and is subject to change until it has received more real world testing.
-  */
-abstract class AbstractPersistentLoggingFSM[S <: FSMState, D, E]
-  extends AbstractPersistentFSMBase[S, D, E]
-    with LoggingPersistentFSM[S, D, E]
-    with PersistentFSM[S, D, E]
+//abstract class AbstractPersistentFSM[S <: FSMState, D, E] extends AbstractPersistentFSMBase[S, D, E] with PersistentFSM[S, D, E] {
+//
+//  import java.util.function.Consumer
+//
+//  /**
+//    * Adapter from Java 8 Functional Interface to Scala Function
+//    *
+//    * @param action - Java 8 lambda expression defining the action
+//    * @return action represented as a Scala Functin
+//    */
+//  final def exec(action: Consumer[D]): D ⇒ Unit =
+//  data ⇒ action.accept(data)
+//
+//  /**
+//    * Adapter from Java [[Class]] to [[scala.reflect.ClassTag]]
+//    *
+//    * @return domain event [[scala.reflect.ClassTag]]
+//    */
+//  final override def domainEventClassTag: ClassTag[E] =
+//  ClassTag(domainEventClass)
+//
+//  /**
+//    * Domain event's [[Class]]
+//    * Used for identifying domain events during recovery
+//    */
+//  def domainEventClass: Class[E]
+//}
+//
+///**
+//  * Java API: compatible with lambda expressions
+//  *
+//  * Persistent Finite State Machine actor abstract base class with FSM Logging
+//  *
+//  * This is an EXPERIMENTAL feature and is subject to change until it has received more real world testing.
+//  */
+//abstract class AbstractPersistentLoggingFSM[S <: FSMState, D, E]
+//  extends AbstractPersistentFSMBase[S, D, E]
+//    with LoggingPersistentFSM[S, D, E]
+//    with PersistentFSM[S, D, E]

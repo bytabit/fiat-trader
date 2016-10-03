@@ -23,7 +23,7 @@ import com.typesafe.config.ConfigFactory
 
 import scala.util.Try
 
-object Config {
+case class Config(filesDir: File, cacheDir: File) {
 
   val appConfig = ConfigFactory.load()
 
@@ -31,22 +31,23 @@ object Config {
 
   // app configs
 
-  val home = getString("user.home", "./")
-  val config = getString(s"$configRoot.config", "default")
+  //val home = getString("user.home", "./")
+  val configName = getString(s"$configRoot.configName", "default")
   val version = getString(s"$configRoot.version", "0.0.0")
 
   // persistence configs
 
   val akkaPersistence = "akka.persistence"
 
-  val snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$home/.bytabit/fiat-trader/$config/snapshots")
+  val snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$configName/snapshots")
+  //val snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$home/.bytabit/fiat-trader/$config/snapshots")
 
-  val journalDir = getFile(s"$akkaPersistence.journal.leveldb.dir", s"$home/.bytabit/fiat-trader/$config/journal")
+  val journalDir = getFile(s"$akkaPersistence.journal.leveldb.dir", s"$configName/journal")
 
   // wallet configs
 
   val walletNet = getString(s"$configRoot.wallet.net", "org.bitcoin.test")
-  val walletDir = getString(s"$configRoot.wallet.dir", "$home/.bytabit/$config/wallet")
+  val walletDir = getString(s"$configRoot.wallet.dir", "$config/wallet")
 
   // arbitrator configs
 
@@ -88,12 +89,12 @@ object Config {
   }
 
   def getFile(key: String, default: String): File = {
-    if (appConfig.hasPath(key)) new File(appConfig.getString(key)) else new File(default)
+    if (appConfig.hasPath(key)) new File(filesDir, appConfig.getString(key))
+    else new File(filesDir, default)
   }
 
   // Create data directories if not existing
   def createDir(dir: File): Try[File] = Try {
-
     if (dir.exists && dir.isDirectory) {
       dir
     } else if (dir.mkdirs) {

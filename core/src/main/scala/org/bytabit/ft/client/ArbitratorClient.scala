@@ -32,12 +32,12 @@ import scala.language.postfixOps
 
 object ArbitratorClient {
 
-  def props(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new ArbitratorClient(url, tradeWalletMgr, escrowWalletMgr))
+  def props(config: Config, url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new ArbitratorClient(config, url, tradeWalletMgr, escrowWalletMgr))
 
   def name(url: URL) = s"${ArbitratorClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
+case class ArbitratorClient(config: Config, url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
 
   // persistence
 
@@ -56,7 +56,7 @@ case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr:
     // create arbitrator
 
     case Event(npe: NoPostedEventsReceived, d) =>
-      tradeWalletMgr ! TradeWalletManager.CreateArbitrator(Config.publicUrl, Config.bondPercent, BTCMoney(Config.btcArbitratorFee))
+      tradeWalletMgr ! TradeWalletManager.CreateArbitrator(config.publicUrl, config.bondPercent, BTCMoney(config.btcArbitratorFee))
       stay()
 
     // new arbitrator created

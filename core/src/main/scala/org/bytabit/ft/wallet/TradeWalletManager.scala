@@ -37,10 +37,9 @@ import scala.util.Try
 
 object TradeWalletManager {
 
-  val props = Props(new TradeWalletManager)
-  val name = s"tradeWalletManager"
+  def props(config: Config) = Props(new TradeWalletManager(config))
 
-  // def actorOf(system: ActorSystem) = system.actorOf(props, name)
+  val name = s"tradeWalletManager"
 
   // wallet commands
 
@@ -78,9 +77,11 @@ object TradeWalletManager {
 
 }
 
-class TradeWalletManager extends WalletManager with WalletTools {
+class TradeWalletManager(appConfig: Config) extends WalletManager with WalletTools {
 
-  def kit: WalletAppKit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
+  override val config = appConfig
+
+  def kit: WalletAppKit = new WalletAppKit(btcContext, new File(config.walletDir), config.configName)
 
   def kitListener = new Listener {
 

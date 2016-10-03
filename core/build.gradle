@@ -27,8 +27,8 @@ sourceSets.main.resources {
     exclude '**/*.java'
 }
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 def scalaVersion = "2.11"
 def akkaVersion = "2.3.15"

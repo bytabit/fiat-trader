@@ -37,13 +37,13 @@ object ClientManager {
 
   // actor setup
 
-  def props = Props(new ClientManager())
+  def props(config: Config) = Props(new ClientManager(config))
 
   val name = ClientManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(system: ActorSystem) =
-    system.actorOf(props, name)
+  def actorOf(system: ActorSystem, config: Config) =
+    system.actorOf(props(config), name)
 
   // client manager commands
 
@@ -144,7 +144,7 @@ object ClientManager {
 
 }
 
-class ClientManager() extends PersistentFSM[State, Data, Event] {
+class ClientManager(config: Config) extends PersistentFSM[State, Data, Event] {
 
   // implicits
 
@@ -176,8 +176,8 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
   system.eventStream.subscribe(context.self, classOf[WalletManager.ClientProfileIdCreated])
 
   // Create wallets
-  val tradeWalletMgrRef: ActorRef = context.actorOf(TradeWalletManager.props, TradeWalletManager.name)
-  val escrowWalletMgrRef: ActorRef = context.actorOf(EscrowWalletManager.props, EscrowWalletManager.name)
+  val tradeWalletMgrRef: ActorRef = context.actorOf(TradeWalletManager.props(config), TradeWalletManager.name)
+  val escrowWalletMgrRef: ActorRef = context.actorOf(EscrowWalletManager.props(config), EscrowWalletManager.name)
 
   startWith(ADDED, AddedClientManager())
 
@@ -316,7 +316,7 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
   // start/stop clients
 
   def name(url: URL): String = {
-    if (Config.arbitratorEnabled) {
+    if (config.arbitratorEnabled) {
       ArbitratorClient.name(url)
     } else {
       TraderClient.name(url)
@@ -324,8 +324,8 @@ class ClientManager() extends PersistentFSM[State, Data, Event] {
   }
 
   def props(url: URL): Props = {
-    if (Config.arbitratorEnabled && Config.publicUrl == url) {
-      ArbitratorClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
+    if (config.arbitratorEnabled && config.publicUrl == url) {
+      ArbitratorClient.props(config, url, tradeWalletMgrRef, escrowWalletMgrRef)
     } else {
       TraderClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
     }

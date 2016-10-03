@@ -18,7 +18,7 @@ package org.bytabit.ft.wallet
 
 import java.io.File
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.Props
 import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
@@ -35,10 +35,9 @@ import scala.util.Try
 
 object EscrowWalletManager {
 
-  val props = Props(new EscrowWalletManager)
-  val name = s"escrowWalletManager"
+  def props(config: Config) = Props(new EscrowWalletManager(config: Config))
 
-  def actorOf(system: ActorSystem) = system.actorOf(props, name)
+  val name = s"escrowWalletManager"
 
   sealed trait Command
 
@@ -50,10 +49,11 @@ object EscrowWalletManager {
 
 }
 
-class EscrowWalletManager extends WalletManager {
+class EscrowWalletManager(appConfig: Config) extends WalletManager {
 
-  val directory = new File(Config.walletDir)
-  val filePrefix = s"${Config.config}-escrow"
+  override val config = appConfig
+  val directory = new File(config.walletDir)
+  val filePrefix = s"${config.configName}-escrow"
 
   def kit: WalletAppKit = new WalletAppKit(btcContext, directory, filePrefix)
 
