@@ -47,7 +47,7 @@ case class Config(filesDir: File, cacheDir: File) {
   // wallet configs
 
   val walletNet = getString(s"$configRoot.wallet.net", "org.bitcoin.test")
-  val walletDir = getString(s"$configRoot.wallet.dir", "$config/wallet")
+  val walletDir = getFile(s"$configRoot.wallet.dir", s"$configName/wallet")
 
   // arbitrator configs
 

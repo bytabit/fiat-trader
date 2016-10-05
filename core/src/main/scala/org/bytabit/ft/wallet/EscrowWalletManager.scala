@@ -52,7 +52,7 @@ object EscrowWalletManager {
 class EscrowWalletManager(appConfig: Config) extends WalletManager {
 
   override val config = appConfig
-  val directory = new File(config.walletDir)
+  val directory = config.walletDir
   val filePrefix = s"${config.configName}-escrow"
 
   def kit: WalletAppKit = new WalletAppKit(btcContext, directory, filePrefix)

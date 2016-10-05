@@ -16,7 +16,6 @@
 
 package org.bytabit.ft.wallet
 
-import java.io.File
 import java.net.URL
 
 import akka.actor.Props
@@ -81,7 +80,7 @@ class TradeWalletManager(appConfig: Config) extends WalletManager with WalletToo
 
   override val config = appConfig
 
-  def kit: WalletAppKit = new WalletAppKit(btcContext, new File(config.walletDir), config.configName)
+  def kit: WalletAppKit = new WalletAppKit(btcContext, config.walletDir, config.configName)
 
   def kitListener = new Listener {
 

@@ -24,8 +24,6 @@ import android.util.Log;
 import org.bytabit.ft.client.ClientManager;
 import org.bytabit.ft.util.Config;
 
-import java.io.File;
-
 import akka.actor.ActorSystem;
 import scala.concurrent.duration.Duration;
 
@@ -33,12 +31,13 @@ public class ActorIntentService extends IntentService {
 
     private ActorSystem actorSystem;
 
-    public ActorIntentService(String name) {
-        super(name);
+    public ActorIntentService() {
+        super("ActorIntentService");
     }
 
     @Override
     public void onCreate() {
+        super.onCreate();
 
         // Create config
         final Config config = new Config(getFilesDir(), getCacheDir());
@@ -53,7 +52,7 @@ public class ActorIntentService extends IntentService {
         if (config.createDir(config.journalDir()).isFailure()) {
             Log.e(Constants.APP_LOG, "Unable to create journal directory.");
         }
-        if (config.createDir(new File(config.walletDir())).isFailure()) {
+        if (config.createDir(config.walletDir()).isFailure()) {
             Log.e(Constants.APP_LOG, "Unable to create wallet directory.");
         }
 
@@ -66,6 +65,7 @@ public class ActorIntentService extends IntentService {
     }
 
     public void onDestroy() {
+        super.onDestroy();
 
         // Shutdown Actors
         actorSystem.shutdown();

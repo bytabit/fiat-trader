@@ -90,10 +90,6 @@
   *;
 }
 
-
-
-
-
 -keepclassmembernames class * implements akka.actor.Actor {
   akka.actor.ActorContext context;
   akka.actor.ActorRef self;

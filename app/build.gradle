@@ -43,7 +43,7 @@ android {
     }
 
     packagingOptions {
-        exclude 'reference.conf'
+        merge 'reference.conf'
     }
 
     compileSdkVersion 24
