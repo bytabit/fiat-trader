@@ -23,9 +23,9 @@ import org.bytabit.ft.wallet.WalletJsonProtocol
 
 trait ClientManagerJsonProtocol extends WalletJsonProtocol {
 
-  implicit def clientProfileJsonFormat = jsonFormat3(ClientProfile)
+  implicit def clientProfileJsonFormat = jsonFormat(ClientProfile, "id", "name", "email")
 
-  implicit def paymentDetailsJsonFormat = jsonFormat3(PaymentDetails)
+  implicit def paymentDetailsJsonFormat = jsonFormat(PaymentDetails, "currencyUnit", "paymentMethod", "paymentDetails")
 
   implicit def clientCreatedJsonFormat = jsonFormat(ClientCreated.apply(_), "profile")
 

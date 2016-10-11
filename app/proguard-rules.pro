@@ -9,6 +9,94 @@
 
 # Add any project specific keep options here:
 
+-dontskipnonpubliclibraryclasses
+-dontoptimize
+-dontpreverify
+-dontobfuscate
+-verbose
+
+-keepclassmembers class * implements java.io.Serializable {
+    private static final java.io.ObjectStreamField[] serialPersistentFields;
+    private void writeObject(java.io.ObjectOutputStream);
+    private void readObject(java.io.ObjectInputStream);
+    java.lang.Object writeReplace();
+    java.lang.Object readResolve();
+}
+
+-keepattributes *Annotation*
+
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}
+
+-keepclassmembers,includedescriptorclasses public class * extends android.view.View {
+    void set*(***);
+    *** get*();
+}
+
+-keepclassmembers class * extends android.app.Activity {
+    public void *(android.view.View);
+}
+
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final android.os.Parcelable$Creator CREATOR;
+}
+
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
+
+# android-support
+-dontwarn android.support.**
+-dontnote android.support.**
+-keep class android.support.v7.widget.RoundRectDrawable { *; }
+
+# bitcoinj
+-keep,includedescriptorclasses class org.bitcoinj.wallet.Protos$** { *; }
+-keepclassmembers class org.bitcoinj.wallet.Protos { com.google.protobuf.Descriptors$FileDescriptor descriptor; }
+-keep,includedescriptorclasses class org.bitcoin.protocols.payments.Protos$** { *; }
+-keepclassmembers class org.bitcoin.protocols.payments.Protos { com.google.protobuf.Descriptors$FileDescriptor descriptor; }
+-dontwarn org.bitcoinj.store.WindowsMMapHack
+-dontwarn org.bitcoinj.store.LevelDBBlockStore
+-dontnote org.bitcoinj.crypto.DRMWorkaround
+-dontnote org.bitcoinj.crypto.TrustStoreLoader$DefaultTrustStoreLoader
+-dontnote com.subgraph.orchid.crypto.PRNGFixes
+-dontwarn okio.DeflaterSink
+-dontwarn okio.Okio
+-dontnote com.squareup.okhttp.internal.Platform
+-dontwarn org.bitcoinj.store.LevelDBFullPrunedBlockStore**
+
+# java-wns-resolver
+-dontwarn com.netki.WalletNameResolver
+-dontwarn com.netki.dns.DNSBootstrapService
+-dontnote org.xbill.DNS.ResolverConfig
+-dontwarn org.xbill.DNS.spi.DNSJavaNameServiceDescriptor
+-dontnote org.xbill.DNS.spi.DNSJavaNameServiceDescriptor
+-dontwarn org.apache.log4j.**
+
+# zxing
+-dontwarn com.google.zxing.common.BitMatrix
+
+# Guava
+-dontwarn sun.misc.Unsafe
+-dontnote com.google.common.reflect.**
+-dontnote com.google.common.util.concurrent.MoreExecutors
+-dontnote com.google.common.cache.Striped64,com.google.common.cache.Striped64$Cell
+
+# slf4j
+-dontwarn org.slf4j.MDC
+-dontwarn org.slf4j.MarkerFactory
+
+# logback-android
+-dontwarn javax.mail.**
+-dontnote ch.qos.logback.core.rolling.helper.FileStoreUtil
+
+
 # If your project uses WebView with JS, uncomment the following
 # and specify the fully qualified class name to the JavaScript interface
 # class:
@@ -20,9 +108,6 @@
 
 -dontshrink
 
--dontoptimize
--dontobfuscate
--dontpreverify
 -dontwarn scala.**
 -ignorewarnings
 
@@ -31,8 +116,10 @@
     public protected *;
 }
 
+-keep class org.bytabit.**
 -keep class com.typesafe.**
 -keep class akka.**
+-keep class org.fusesource.**
 -keep class scala.collection.immutable.StringLike {
     *;
 }
@@ -134,10 +221,3 @@
 -keep class * implements akka.serialization.Serializer {
   public <init>(...);
 }
-
-
-#-dontwarn akka.remote.netty.NettySSLSupport**
-#-dontnote akka.**
-
-# this can be omitted if current Android Build target is android-16
--dontwarn org.scaloid.**

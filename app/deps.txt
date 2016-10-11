@@ -1,0 +1,1554 @@
+Incremental java compilation is an incubating feature.
+The TaskInputs.source(Object) method has been deprecated and is scheduled to be removed in Gradle 4.0. Please use TaskInputs.file(Object).skipWhenEmpty() instead.
+:app:dependencies
+
+------------------------------------------------------------
+Project :app
+------------------------------------------------------------
+
+_devDebugAndroidTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_devDebugAndroidTestApk - ## Internal use, do not manually configure ##
+\--- com.android.support.test.espresso:espresso-core:2.2.2
+     +--- com.squareup:javawriter:2.1.1
+     +--- com.android.support.test:rules:0.5
+     |    \--- com.android.support.test:runner:0.5
+     |         +--- junit:junit:4.12
+     |         |    \--- org.hamcrest:hamcrest-core:1.3
+     |         \--- com.android.support.test:exposed-instrumentation-api-publish:0.5
+     +--- com.android.support.test:runner:0.5 (*)
+     +--- javax.inject:javax.inject:1
+     +--- org.hamcrest:hamcrest-library:1.3
+     |    \--- org.hamcrest:hamcrest-core:1.3
+     +--- com.android.support.test.espresso:espresso-idling-resource:2.2.2
+     +--- org.hamcrest:hamcrest-integration:1.3
+     |    \--- org.hamcrest:hamcrest-library:1.3 (*)
+     +--- com.google.code.findbugs:jsr305:2.0.1
+     \--- javax.annotation:javax.annotation-api:1.2
+
+_devDebugAndroidTestCompile - ## Internal use, do not manually configure ##
+\--- com.android.support.test.espresso:espresso-core:2.2.2
+     +--- com.squareup:javawriter:2.1.1
+     +--- com.android.support.test:rules:0.5
+     |    \--- com.android.support.test:runner:0.5
+     |         +--- junit:junit:4.12
+     |         |    \--- org.hamcrest:hamcrest-core:1.3
+     |         \--- com.android.support.test:exposed-instrumentation-api-publish:0.5
+     +--- com.android.support.test:runner:0.5 (*)
+     +--- javax.inject:javax.inject:1
+     +--- org.hamcrest:hamcrest-library:1.3
+     |    \--- org.hamcrest:hamcrest-core:1.3
+     +--- com.android.support.test.espresso:espresso-idling-resource:2.2.2
+     +--- org.hamcrest:hamcrest-integration:1.3
+     |    \--- org.hamcrest:hamcrest-library:1.3 (*)
+     +--- com.google.code.findbugs:jsr305:2.0.1
+     \--- javax.annotation:javax.annotation-api:1.2
+
+_devDebugAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_devDebugApk - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_devDebugCompile - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_devDebugUnitTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_devDebugUnitTestApk - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_devDebugUnitTestCompile - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_devReleaseAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_devReleaseApk - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_devReleaseCompile - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_devReleaseUnitTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_devReleaseUnitTestApk - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_devReleaseUnitTestCompile - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_prodDebugAndroidTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_prodDebugAndroidTestApk - ## Internal use, do not manually configure ##
++--- com.android.support:multidex-instrumentation:1.0.1
+|    \--- com.android.support:multidex:1.0.1
+\--- com.android.support.test.espresso:espresso-core:2.2.2
+     +--- com.squareup:javawriter:2.1.1
+     +--- com.android.support.test:rules:0.5
+     |    \--- com.android.support.test:runner:0.5
+     |         +--- junit:junit:4.12
+     |         |    \--- org.hamcrest:hamcrest-core:1.3
+     |         \--- com.android.support.test:exposed-instrumentation-api-publish:0.5
+     +--- com.android.support.test:runner:0.5 (*)
+     +--- javax.inject:javax.inject:1
+     +--- org.hamcrest:hamcrest-library:1.3
+     |    \--- org.hamcrest:hamcrest-core:1.3
+     +--- com.android.support.test.espresso:espresso-idling-resource:2.2.2
+     +--- org.hamcrest:hamcrest-integration:1.3
+     |    \--- org.hamcrest:hamcrest-library:1.3 (*)
+     +--- com.google.code.findbugs:jsr305:2.0.1
+     \--- javax.annotation:javax.annotation-api:1.2
+
+_prodDebugAndroidTestCompile - ## Internal use, do not manually configure ##
++--- com.android.support:multidex-instrumentation:1.0.1
+|    \--- com.android.support:multidex:1.0.1
+\--- com.android.support.test.espresso:espresso-core:2.2.2
+     +--- com.squareup:javawriter:2.1.1
+     +--- com.android.support.test:rules:0.5
+     |    \--- com.android.support.test:runner:0.5
+     |         +--- junit:junit:4.12
+     |         |    \--- org.hamcrest:hamcrest-core:1.3
+     |         \--- com.android.support.test:exposed-instrumentation-api-publish:0.5
+     +--- com.android.support.test:runner:0.5 (*)
+     +--- javax.inject:javax.inject:1
+     +--- org.hamcrest:hamcrest-library:1.3
+     |    \--- org.hamcrest:hamcrest-core:1.3
+     +--- com.android.support.test.espresso:espresso-idling-resource:2.2.2
+     +--- org.hamcrest:hamcrest-integration:1.3
+     |    \--- org.hamcrest:hamcrest-library:1.3 (*)
+     +--- com.google.code.findbugs:jsr305:2.0.1
+     \--- javax.annotation:javax.annotation-api:1.2
+
+_prodDebugAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_prodDebugApk - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_prodDebugCompile - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_prodDebugUnitTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_prodDebugUnitTestApk - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_prodDebugUnitTestCompile - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_prodReleaseAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_prodReleaseApk - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_prodReleaseCompile - ## Internal use, do not manually configure ##
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+_prodReleaseUnitTestAnnotationProcessor - ## Internal use, do not manually configure ##
+No dependencies
+
+_prodReleaseUnitTestApk - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+_prodReleaseUnitTestCompile - ## Internal use, do not manually configure ##
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+androidJacocoAgent - The Jacoco agent to use to get coverage data.
+\--- org.jacoco:org.jacoco.agent:0.7.5.201505241946
+
+androidJacocoAnt - The Jacoco ant tasks to use to get execute Gradle tasks.
+\--- org.jacoco:org.jacoco.ant:0.7.5.201505241946
+     +--- org.jacoco:org.jacoco.core:0.7.5.201505241946
+     |    \--- org.ow2.asm:asm-debug-all:5.0.1
+     +--- org.jacoco:org.jacoco.report:0.7.5.201505241946
+     |    +--- org.jacoco:org.jacoco.core:0.7.5.201505241946 (*)
+     |    \--- org.ow2.asm:asm-debug-all:5.0.1
+     \--- org.jacoco:org.jacoco.agent:0.7.5.201505241946
+
+androidTestAnnotationProcessor - Classpath for the annotation processor for 'androidTest'.
+No dependencies
+
+androidTestApk - Classpath packaged with the compiled 'androidTest' classes.
+No dependencies
+
+androidTestCompile - Classpath for compiling the androidTest sources.
+\--- com.android.support.test.espresso:espresso-core:2.2.2
+     +--- com.squareup:javawriter:2.1.1
+     +--- com.android.support.test:rules:0.5
+     |    \--- com.android.support.test:runner:0.5
+     |         +--- junit:junit:4.12
+     |         |    \--- org.hamcrest:hamcrest-core:1.3
+     |         \--- com.android.support.test:exposed-instrumentation-api-publish:0.5
+     +--- com.android.support.test:runner:0.5 (*)
+     +--- javax.inject:javax.inject:1
+     +--- org.hamcrest:hamcrest-library:1.3
+     |    \--- org.hamcrest:hamcrest-core:1.3
+     +--- com.android.support.test.espresso:espresso-idling-resource:2.2.2
+     +--- org.hamcrest:hamcrest-integration:1.3
+     |    \--- org.hamcrest:hamcrest-library:1.3 (*)
+     +--- com.google.code.findbugs:jsr305:2.0.1
+     \--- javax.annotation:javax.annotation-api:1.2
+
+androidTestDevAnnotationProcessor - Classpath for the annotation processor for 'androidTestDev'.
+No dependencies
+
+androidTestDevApk - Classpath packaged with the compiled 'androidTestDev' classes.
+No dependencies
+
+androidTestDevCompile - Classpath for compiling the androidTestDev sources.
+No dependencies
+
+androidTestDevProvided - Classpath for only compiling the androidTestDev sources.
+No dependencies
+
+androidTestDevWearApp - Link to a wear app to embed for object 'androidTestDev'.
+No dependencies
+
+androidTestProdAnnotationProcessor - Classpath for the annotation processor for 'androidTestProd'.
+No dependencies
+
+androidTestProdApk - Classpath packaged with the compiled 'androidTestProd' classes.
+No dependencies
+
+androidTestProdCompile - Classpath for compiling the androidTestProd sources.
+No dependencies
+
+androidTestProdProvided - Classpath for only compiling the androidTestProd sources.
+No dependencies
+
+androidTestProdWearApp - Link to a wear app to embed for object 'androidTestProd'.
+No dependencies
+
+androidTestProvided - Classpath for only compiling the androidTest sources.
+No dependencies
+
+androidTestWearApp - Link to a wear app to embed for object 'androidTest'.
+No dependencies
+
+annotationProcessor - Classpath for the annotation processor for 'main'.
+No dependencies
+
+apk - Classpath packaged with the compiled 'main' classes.
+No dependencies
+
+archives - Configuration for archive artifacts.
+No dependencies
+
+compile - Classpath for compiling the main sources.
++--- com.android.support:multidex:1.0.1
++--- com.android.support:appcompat-v7:24.2.1
+|    +--- com.android.support:support-v4:24.2.1
+|    |    +--- com.android.support:support-compat:24.2.1
+|    |    |    \--- com.android.support:support-annotations:24.2.1
+|    |    +--- com.android.support:support-media-compat:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-utils:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    +--- com.android.support:support-core-ui:24.2.1
+|    |    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    |    \--- com.android.support:support-fragment:24.2.1
+|    |         +--- com.android.support:support-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-media-compat:24.2.1 (*)
+|    |         +--- com.android.support:support-core-ui:24.2.1 (*)
+|    |         \--- com.android.support:support-core-utils:24.2.1 (*)
+|    +--- com.android.support:support-vector-drawable:24.2.1
+|    |    \--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:animated-vector-drawable:24.2.1
+|         \--- com.android.support:support-vector-drawable:24.2.1 (*)
++--- project :core
+|    +--- org.scala-lang:scala-library:2.11.8
+|    +--- com.typesafe.akka:akka-actor_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    \--- com.typesafe:config:1.2.1
+|    +--- com.typesafe.akka:akka-slf4j_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    \--- org.slf4j:slf4j-api:1.7.5 -> 1.7.20
+|    +--- com.typesafe.akka:akka-persistence-experimental_2.11:2.3.15
+|    |    +--- org.scala-lang:scala-library:2.11.5 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |    +--- org.iq80.leveldb:leveldb:0.5
+|    |    |    +--- org.iq80.leveldb:leveldb-api:0.5
+|    |    |    \--- com.google.guava:guava:12.0 -> 18.0
+|    |    +--- org.fusesource.leveldbjni:leveldbjni-all:1.7
+|    |    |    \--- org.fusesource.leveldbjni:leveldbjni:1.7
+|    |    |         \--- org.iq80.leveldb:leveldb-api:0.5
+|    |    \--- com.google.protobuf:protobuf-java:2.5.0 -> 2.6.1
+|    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    \--- com.typesafe.akka:akka-http-core-experimental_2.11:2.0.4
+|    |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         +--- com.typesafe.akka:akka-parsing-experimental_2.11:2.0.4
+|    |         |    \--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |         \--- com.typesafe.akka:akka-stream-experimental_2.11:2.0.4
+|    |              +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              +--- com.typesafe.akka:akka-actor_2.11:2.3.15 (*)
+|    |              +--- com.typesafe:ssl-config-akka_2.11:0.1.0
+|    |              |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |    \--- com.typesafe:ssl-config-core_2.11:0.1.0
+|    |              |         +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |              |         +--- com.typesafe:config:1.2.0 -> 1.2.1
+|    |              |         \--- org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4
+|    |              |              \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    |              \--- org.reactivestreams:reactive-streams:1.0.0
+|    +--- com.typesafe.akka:akka-http-spray-json-experimental_2.11:2.0.4
+|    |    +--- org.scala-lang:scala-library:2.11.7 -> 2.11.8
+|    |    +--- com.typesafe.akka:akka-http-experimental_2.11:2.0.4 (*)
+|    |    \--- io.spray:spray-json_2.11:1.3.2
+|    |         \--- org.scala-lang:scala-library:2.11.6 -> 2.11.8
+|    +--- ch.qos.logback:logback-classic:1.1.3
+|    |    +--- ch.qos.logback:logback-core:1.1.3
+|    |    \--- org.slf4j:slf4j-api:1.7.7 -> 1.7.20
+|    +--- joda-time:joda-time:2.9.1
+|    +--- org.joda:joda-convert:1.8
+|    +--- org.joda:joda-money:0.10.0
+|    +--- org.bitcoinj:bitcoinj-core:0.14.1 -> 0.14.3
+|    |    +--- com.madgag.spongycastle:core:1.51.0.0
+|    |    +--- com.google.protobuf:protobuf-java:2.6.1
+|    |    +--- com.google.guava:guava:18.0
+|    |    +--- com.google.code.findbugs:jsr305:2.0.1
+|    |    +--- net.jcip:jcip-annotations:1.0
+|    |    +--- com.lambdaworks:scrypt:1.4.0
+|    |    +--- org.bitcoinj:orchid:1.2.1
+|    |    |    +--- com.google.guava:guava:18.0
+|    |    |    \--- org.slf4j:slf4j-api:1.7.20
+|    |    +--- com.squareup.okhttp:okhttp:2.7.2 -> 2.7.5
+|    |    |    \--- com.squareup.okio:okio:1.6.0
+|    |    \--- org.slf4j:slf4j-api:1.7.20
+|    +--- com.madgag.spongycastle:prov:1.51.0.0
+|    |    \--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- net.glxn:qrgen:1.3
+|    |    \--- com.google.zxing:javase:2.0
+|    |         \--- com.google.zxing:core:2.0 -> 3.3.0
+|    \--- com.sun.mail:javax.mail:1.5.5
+|         \--- javax.activation:activation:1.1
++--- com.android.support:support-annotations:24.2.1
++--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:support-v13:24.2.1
+|    \--- com.android.support:support-v4:24.2.1 (*)
++--- com.android.support:recyclerview-v7:24.2.1
+|    +--- com.android.support:support-annotations:24.2.1
+|    +--- com.android.support:support-compat:24.2.1 (*)
+|    \--- com.android.support:support-core-ui:24.2.1 (*)
++--- com.android.support:cardview-v7:24.2.1
+|    \--- com.android.support:support-annotations:24.2.1
++--- org.bitcoinj:bitcoinj-core:0.14.3 (*)
++--- com.google.protobuf:protobuf-java:2.6.1
++--- com.google.guava:guava:18.0
++--- com.google.zxing:core:3.3.0
++--- com.squareup.okhttp:okhttp:2.7.5 (*)
++--- com.netki:wallet-name-resolver:0.1.3
+|    +--- com.google.guava:guava:18.0
+|    +--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    +--- com.madgag.spongycastle:core:1.51.0.0
+|    +--- org.jitsi:dnssecjava:1.1
+|    |    +--- org.slf4j:slf4j-api:1.7.18 -> 1.7.20
+|    |    \--- dnsjava:dnsjava:[2.1.6,) -> 2.1.7
+|    \--- org.bitcoinj:bitcoinj-core:0.13.5 -> 0.14.3 (*)
++--- org.slf4j:slf4j-api:1.7.20
++--- com.github.tony19:logback-android-classic:1.1.1-5
+|    +--- com.github.tony19:logback-android-core:1.1.1-5
+|    \--- com.github.tony19:apktool-lib:1.4.4-3
+\--- com.github.tony19:logback-android-core:1.1.1-5
+
+debugAnnotationProcessor - Classpath for the annotation processor for 'debug'.
+No dependencies
+
+debugApk - Classpath packaged with the compiled 'debug' classes.
+No dependencies
+
+debugCompile - Classpath for compiling the debug sources.
+No dependencies
+
+debugProvided - Classpath for only compiling the debug sources.
+No dependencies
+
+debugWearApp - Link to a wear app to embed for object 'debug'.
+No dependencies
+
+default - Configuration for default artifacts.
+No dependencies
+
+default-mapping - Configuration for default mapping artifacts.
+No dependencies
+
+default-metadata - Metadata for the produced APKs.
+No dependencies
+
+devAnnotationProcessor - Classpath for the annotation processor for 'dev'.
+No dependencies
+
+devApk - Classpath packaged with the compiled 'dev' classes.
+No dependencies
+
+devCompile - Classpath for compiling the dev sources.
+No dependencies
+
+devDebugAnnotationProcessor - Classpath for the annotation processor for 'devDebug'.
+No dependencies
+
+devDebugApk - Classpath packaged with the compiled 'devDebug' classes.
+No dependencies
+
+devDebugCompile - Classpath for compiling the devDebug sources.
+No dependencies
+
+devDebugProvided - Classpath for only compiling the devDebug sources.
+No dependencies
+
+devDebugWearApp - Link to a wear app to embed for object 'devDebug'.
+No dependencies
+
+devProvided - Classpath for only compiling the dev sources.
+No dependencies
+
+devReleaseAnnotationProcessor - Classpath for the annotation processor for 'devRelease'.
+No dependencies
+
+devReleaseApk - Classpath packaged with the compiled 'devRelease' classes.
+No dependencies
+
+devReleaseCompile - Classpath for compiling the devRelease sources.
+No dependencies
+
+devReleaseProvided - Classpath for only compiling the devRelease sources.
+No dependencies
+
+devReleaseWearApp - Link to a wear app to embed for object 'devRelease'.
+No dependencies
+
+devWearApp - Link to a wear app to embed for object 'dev'.
+No dependencies
+
+prodAnnotationProcessor - Classpath for the annotation processor for 'prod'.
+No dependencies
+
+prodApk - Classpath packaged with the compiled 'prod' classes.
+No dependencies
+
+prodCompile - Classpath for compiling the prod sources.
+No dependencies
+
+prodDebugAnnotationProcessor - Classpath for the annotation processor for 'prodDebug'.
+No dependencies
+
+prodDebugApk - Classpath packaged with the compiled 'prodDebug' classes.
+No dependencies
+
+prodDebugCompile - Classpath for compiling the prodDebug sources.
+No dependencies
+
+prodDebugProvided - Classpath for only compiling the prodDebug sources.
+No dependencies
+
+prodDebugWearApp - Link to a wear app to embed for object 'prodDebug'.
+No dependencies
+
+prodProvided - Classpath for only compiling the prod sources.
+No dependencies
+
+prodReleaseAnnotationProcessor - Classpath for the annotation processor for 'prodRelease'.
+No dependencies
+
+prodReleaseApk - Classpath packaged with the compiled 'prodRelease' classes.
+No dependencies
+
+prodReleaseCompile - Classpath for compiling the prodRelease sources.
+No dependencies
+
+prodReleaseProvided - Classpath for only compiling the prodRelease sources.
+No dependencies
+
+prodReleaseWearApp - Link to a wear app to embed for object 'prodRelease'.
+No dependencies
+
+prodWearApp - Link to a wear app to embed for object 'prod'.
+No dependencies
+
+provided - Classpath for only compiling the main sources.
+No dependencies
+
+releaseAnnotationProcessor - Classpath for the annotation processor for 'release'.
+No dependencies
+
+releaseApk - Classpath packaged with the compiled 'release' classes.
+No dependencies
+
+releaseCompile - Classpath for compiling the release sources.
+No dependencies
+
+releaseProvided - Classpath for only compiling the release sources.
+No dependencies
+
+releaseWearApp - Link to a wear app to embed for object 'release'.
+No dependencies
+
+testAnnotationProcessor - Classpath for the annotation processor for 'test'.
+No dependencies
+
+testApk - Classpath packaged with the compiled 'test' classes.
+No dependencies
+
+testCompile - Classpath for compiling the test sources.
+\--- junit:junit:4.12
+     \--- org.hamcrest:hamcrest-core:1.3
+
+testDebugAnnotationProcessor - Classpath for the annotation processor for 'testDebug'.
+No dependencies
+
+testDebugApk - Classpath packaged with the compiled 'testDebug' classes.
+No dependencies
+
+testDebugCompile - Classpath for compiling the testDebug sources.
+No dependencies
+
+testDebugProvided - Classpath for only compiling the testDebug sources.
+No dependencies
+
+testDebugWearApp - Link to a wear app to embed for object 'testDebug'.
+No dependencies
+
+testDevAnnotationProcessor - Classpath for the annotation processor for 'testDev'.
+No dependencies
+
+testDevApk - Classpath packaged with the compiled 'testDev' classes.
+No dependencies
+
+testDevCompile - Classpath for compiling the testDev sources.
+No dependencies
+
+testDevDebugAnnotationProcessor - Classpath for the annotation processor for 'testDevDebug'.
+No dependencies
+
+testDevDebugApk - Classpath packaged with the compiled 'testDevDebug' classes.
+No dependencies
+
+testDevDebugCompile - Classpath for compiling the testDevDebug sources.
+No dependencies
+
+testDevDebugProvided - Classpath for only compiling the testDevDebug sources.
+No dependencies
+
+testDevDebugWearApp - Link to a wear app to embed for object 'testDevDebug'.
+No dependencies
+
+testDevProvided - Classpath for only compiling the testDev sources.
+No dependencies
+
+testDevReleaseAnnotationProcessor - Classpath for the annotation processor for 'testDevRelease'.
+No dependencies
+
+testDevReleaseApk - Classpath packaged with the compiled 'testDevRelease' classes.
+No dependencies
+
+testDevReleaseCompile - Classpath for compiling the testDevRelease sources.
+No dependencies
+
+testDevReleaseProvided - Classpath for only compiling the testDevRelease sources.
+No dependencies
+
+testDevReleaseWearApp - Link to a wear app to embed for object 'testDevRelease'.
+No dependencies
+
+testDevWearApp - Link to a wear app to embed for object 'testDev'.
+No dependencies
+
+testProdAnnotationProcessor - Classpath for the annotation processor for 'testProd'.
+No dependencies
+
+testProdApk - Classpath packaged with the compiled 'testProd' classes.
+No dependencies
+
+testProdCompile - Classpath for compiling the testProd sources.
+No dependencies
+
+testProdDebugAnnotationProcessor - Classpath for the annotation processor for 'testProdDebug'.
+No dependencies
+
+testProdDebugApk - Classpath packaged with the compiled 'testProdDebug' classes.
+No dependencies
+
+testProdDebugCompile - Classpath for compiling the testProdDebug sources.
+No dependencies
+
+testProdDebugProvided - Classpath for only compiling the testProdDebug sources.
+No dependencies
+
+testProdDebugWearApp - Link to a wear app to embed for object 'testProdDebug'.
+No dependencies
+
+testProdProvided - Classpath for only compiling the testProd sources.
+No dependencies
+
+testProdReleaseAnnotationProcessor - Classpath for the annotation processor for 'testProdRelease'.
+No dependencies
+
+testProdReleaseApk - Classpath packaged with the compiled 'testProdRelease' classes.
+No dependencies
+
+testProdReleaseCompile - Classpath for compiling the testProdRelease sources.
+No dependencies
+
+testProdReleaseProvided - Classpath for only compiling the testProdRelease sources.
+No dependencies
+
+testProdReleaseWearApp - Link to a wear app to embed for object 'testProdRelease'.
+No dependencies
+
+testProdWearApp - Link to a wear app to embed for object 'testProd'.
+No dependencies
+
+testProvided - Classpath for only compiling the test sources.
+No dependencies
+
+testReleaseAnnotationProcessor - Classpath for the annotation processor for 'testRelease'.
+No dependencies
+
+testReleaseApk - Classpath packaged with the compiled 'testRelease' classes.
+No dependencies
+
+testReleaseCompile - Classpath for compiling the testRelease sources.
+No dependencies
+
+testReleaseProvided - Classpath for only compiling the testRelease sources.
+No dependencies
+
+testReleaseWearApp - Link to a wear app to embed for object 'testRelease'.
+No dependencies
+
+testWearApp - Link to a wear app to embed for object 'test'.
+No dependencies
+
+wearApp - Link to a wear app to embed for object 'main'.
+No dependencies
+
+BUILD SUCCESSFUL
+
+Total time: 2.733 secs

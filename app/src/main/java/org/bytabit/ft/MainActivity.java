@@ -29,8 +29,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent intent = new Intent(this, ActorIntentService.class);
-        startService(intent);
+        Intent actorIntentService = new Intent(this, ActorIntentService.class);
+        startService(actorIntentService);
     }
 
     @Override
@@ -49,5 +49,10 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 }

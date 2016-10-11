@@ -21,6 +21,6 @@ import org.bytabit.ft.util.UtilJsonProtocol
 
 trait PersistentFSMJsonProtocol extends UtilJsonProtocol {
 
-  implicit def stateChangeJsonFormat = jsonFormat2(StateChangeEvent)
+  implicit def stateChangeJsonFormat = jsonFormat(StateChangeEvent, "stateIdentifier", "timeout")
 
 }

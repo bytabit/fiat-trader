@@ -52,21 +52,23 @@ gradle run -Dconfig.file=./src/test/resources/trader1-regtest.conf
 1. Install [JavaFX Scene Builder 2.0](http://www.oracle.com/technetwork/java/javase/downloads/index.html). Find it under “Additional Resources”.
 2. Open main UI file: ```src/main/java/org/bytabit/ft/fxui/MainUI.fxml```
 
-### Testnet In a Box via Docker
+### Testnet In a Box 
 
-1. Pull bitcoin-testnet-box docker image
+1. Clone bitcoin-testnet-box project
     
     ```
-    docker pull freewil/bitcoin-testnet-box
+    git clone https://github.com/freewil/bitcoin-testnet-box.git
     ```
 
-2. Running docker container, mapping and exposing port 18444 from 19000 in our docker container 
+2. Start bitcoin-testnet-box, see bitcoin-testnet-box [README.md](https://github.com/freewil/bitcoin-testnet-box) instructions
+
+3. Reverse map Anddroid Studio device emulator VM port 18444 to localhost bitcoin-testnet-box port 19000 
     
     ```
-    docker run -t -i -p 18444:19000 --expose 18444 freewil/bitcoin-testnet-box
+    ~/Library/Android/sdk/platform-tools/adb reverse tcp:18444 tcp:19000
     ```
 
-3. Follow bitcoin-testnet-box [README.md](https://github.com/freewil/bitcoin-testnet-box) instructions
+Note: do not use the bitcoin-testnet-box docker image, docker can not be run on the same machine with Android Studio device emulator VM
 
 ### Versioning
 

@@ -18,7 +18,9 @@ package org.bytabit.ft;
 
 
 import android.app.IntentService;
+import android.app.Service;
 import android.content.Intent;
+import android.os.IBinder;
 import android.util.Log;
 
 import org.bytabit.ft.client.ClientManager;
@@ -27,12 +29,13 @@ import org.bytabit.ft.util.Config;
 import akka.actor.ActorSystem;
 import scala.concurrent.duration.Duration;
 
-public class ActorIntentService extends IntentService {
+public class ActorIntentService extends Service {
 
     private ActorSystem actorSystem;
+    private Config config;
 
     public ActorIntentService() {
-        super("ActorIntentService");
+        super();
     }
 
     @Override
@@ -40,7 +43,7 @@ public class ActorIntentService extends IntentService {
         super.onCreate();
 
         // Create config
-        final Config config = new Config(getFilesDir(), getCacheDir());
+        config = new Config(getFilesDir(), getCacheDir());
 
         // Create actor system
         actorSystem = ActorSystem.create(config.configName());
@@ -55,17 +58,20 @@ public class ActorIntentService extends IntentService {
         if (config.createDir(config.walletDir()).isFailure()) {
             Log.e(Constants.APP_LOG, "Unable to create wallet directory.");
         }
-
-        ClientManager.actorOf(actorSystem, config);
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        ClientManager.actorOf(actorSystem, config);
+        return super.onStartCommand(intent, flags, startId);
     }
 
     public void onDestroy() {
-        super.onDestroy();
 
         // Shutdown Actors
         actorSystem.shutdown();
@@ -74,6 +80,7 @@ public class ActorIntentService extends IntentService {
         } catch (Exception e1) {
             Log.e(Constants.APP_LOG, String.format("Exception during shutdown [%s]:%s", e1.getMessage(), e1.getCause()));
         }
+        super.onDestroy();
     }
 
 

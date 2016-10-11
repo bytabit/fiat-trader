@@ -17,6 +17,6 @@
 package org.bytabit.ft;
 
 public interface Constants {
-    String APP_LOG = "org.bytabit.ft.app";
-    String CORE_LOG = "org.bytabit.ft.core";
+    String APP_LOG = "ft.app";
+    String CORE_LOG = "ft.core";
 }

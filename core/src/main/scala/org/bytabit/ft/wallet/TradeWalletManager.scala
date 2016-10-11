@@ -76,9 +76,7 @@ object TradeWalletManager {
 
 }
 
-class TradeWalletManager(appConfig: Config) extends WalletManager with WalletTools {
-
-  override val config = appConfig
+class TradeWalletManager(override val config: Config) extends WalletManager with WalletTools {
 
   def kit: WalletAppKit = new WalletAppKit(btcContext, config.walletDir, config.configName)
 

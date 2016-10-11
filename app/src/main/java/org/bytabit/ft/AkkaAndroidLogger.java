@@ -34,15 +34,15 @@ class AkkaAndroidLogger extends UntypedActor {
             Log.e(Constants.CORE_LOG, String.format("[%s] %s: %s", e.logSource(), e.message(), e.cause()));
         } else if (message instanceof Warning) {
             Warning w = (Warning) message;
-            Log.e(Constants.CORE_LOG, String.format("[%s] %s", w.logSource(), w.message()));
+            Log.w(Constants.CORE_LOG, String.format("[%s] %s", w.logSource(), w.message()));
         } else if (message instanceof Info) {
             Info i = (Info) message;
-            Log.e(Constants.CORE_LOG, String.format("[%s] %s", i.logSource(), i.message()));
+            Log.i(Constants.CORE_LOG, String.format("[%s] %s", i.logSource(), i.message()));
         } else if (message instanceof Debug) {
             Debug d = (Debug) message;
-            Log.e(Constants.CORE_LOG, String.format("[%s] %s", d.logSource(), d.message()));
+            Log.d(Constants.CORE_LOG, String.format("[%s] %s", d.logSource(), d.message()));
         } else if (message instanceof InitializeLogger) {
-            Log.d(Constants.CORE_LOG, "Logging started.");
+            Log.i(Constants.CORE_LOG, "Logging started.");
             getSender().tell(Logging.loggerInitialized(), getSelf());
         } else {
             unhandled(message);

@@ -49,9 +49,26 @@ dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion.8"
     compile "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-slf4j_$scalaVersion:$akkaVersion"
-    compile "com.typesafe.akka:akka-persistence-experimental_$scalaVersion:$akkaVersion"
-    compile "org.iq80.leveldb:leveldb:0.7"
-    compile "org.fusesource.leveldbjni:leveldbjni-all:1.8"
+    compile ("com.typesafe.akka:akka-persistence-experimental_$scalaVersion:$akkaVersion") {
+        exclude group: 'org.fusesource.leveldbjni'
+//        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-osx'
+//        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux32'
+//        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux64'
+//        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win32'
+//        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win64'
+//        exclude group: 'org.fusesource.hawtjni'
+    }
+
+    compile "org.iq80.leveldb"            % "leveldb"          % "0.7"
+    compile  "org.fusesource.leveldbjni"   % "leveldbjni-all"   % "1.8"
+
+    compile ('org.fusesource.leveldbjni:leveldbjni-all:1.7') {
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-osx'
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux32'
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux64'
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win32'
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win64'
+    }
     compile "com.typesafe.akka:akka-http-experimental_$scalaVersion:$akkaStreamVersion"
     compile "com.typesafe.akka:akka-http-spray-json-experimental_$scalaVersion:$akkaStreamVersion"
     compile "ch.qos.logback:logback-classic:1.1.3"
