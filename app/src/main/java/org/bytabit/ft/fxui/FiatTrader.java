@@ -97,7 +97,8 @@ public class FiatTrader extends MobileApplication {
 
     @Override
     public void stop() {
-        system.terminate();
+        system.shutdown();
+        system.awaitTermination();
     }
 
     public static void main(String[] args) {

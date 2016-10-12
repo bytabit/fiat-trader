@@ -27,8 +27,19 @@
 
 apply plugin: 'scala'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+//sourceCompatibility = 1.7
+//targetCompatibility = 1.7
+
+sourceSets.main.scala.srcDirs = ["src/main/java", "src/main/scala"]
+sourceSets.main.java.srcDirs = []
+
+sourceSets.test.scala.srcDirs = ["src/test/java", "src/test/scala"]
+sourceSets.test.java.srcDirs = []
+
+sourceSets.main.resources {
+    srcDirs = ['src/main/resources', 'src/main/java']
+    exclude '**/*.java'
+}
 
 def scalaVersion = "2.11"
 def akkaVersion = "2.3.15"
