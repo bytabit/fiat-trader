@@ -75,7 +75,7 @@ jfxmobile {
 
         dexOptions {
             javaMaxHeapSize '3g'
-            minimizeMainDexList true
+            keepRuntimeAnnotatedClasses false
         }
     }
     ios {
