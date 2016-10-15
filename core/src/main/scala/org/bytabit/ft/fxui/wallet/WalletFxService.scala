@@ -52,10 +52,10 @@ import scala.concurrent.duration.FiniteDuration
 object WalletFxService {
   val name = "walletFxService"
 
-  def apply(system: ActorSystem) = new WalletFxService(system)
+  def apply(config:Config, system: ActorSystem) = new WalletFxService(config, system)
 }
 
-class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
+class WalletFxService(config:Config, actorSystem: ActorSystem) extends ActorFxService {
 
   override val system = actorSystem
 
@@ -307,7 +307,7 @@ class WalletFxService(actorSystem: ActorSystem) extends ActorFxService {
     }
   }
 
-  def depositAddressUri(a: Address): String = BitcoinURI.convertToBitcoinURI(a, null, Config.config, "Deposit")
+  def depositAddressUri(a: Address): String = BitcoinURI.convertToBitcoinURI(a, null, config.configName, "Deposit")
 
   def copyAddress(address: Address): Unit = {
     val clipboard = Clipboard.getSystemClipboard

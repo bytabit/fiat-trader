@@ -42,11 +42,12 @@ class ArbitrateFxService(serverUrl: URL, actorSystem: ActorSystem) extends Trade
   lazy val arbitratorMgrRef = arbitratorMgrSel.resolveOne(FiniteDuration(5, "seconds"))
 
   override def start() {
-    if (Config.arbitratorEnabled) {
-      super.start()
-      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
-      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
-    }
+    // TODO
+//    if (config.arbitratorEnabled) {
+//      super.start()
+//      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+//      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
+//    }
   }
 
   @Override

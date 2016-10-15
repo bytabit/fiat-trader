@@ -15,7 +15,6 @@
  */
 package org.bytabit.ft.wallet
 
-import java.io.File
 import java.net.URL
 
 import akka.actor.Props
@@ -36,10 +35,9 @@ import scala.util.Try
 
 object TradeWalletManager {
 
-  val props = Props(new TradeWalletManager)
-  val name = s"tradeWalletManager"
+  def props(config: Config) = Props(new TradeWalletManager(config))
 
-  // def actorOf(system: ActorSystem) = system.actorOf(props, name)
+  val name = s"tradeWalletManager"
 
   // wallet commands
 
@@ -77,9 +75,10 @@ object TradeWalletManager {
 
 }
 
-class TradeWalletManager extends WalletManager with WalletTools {
+class TradeWalletManager(override val config: Config) extends WalletManager with WalletTools {
 
-  def kit: WalletAppKit = new WalletAppKit(btcContext, new File(Config.walletDir), Config.config)
+  // TODO handle when walletDir is None
+  def kit: WalletAppKit = new WalletAppKit(btcContext, config.walletDir.get, config.configName)
 
   def kitListener = new Listener {
 

@@ -63,12 +63,13 @@ class TradeFxService(actorSystem: ActorSystem) extends TradeDataFxService {
   private var btcBuyContractSelected: Option[Contract] = None
 
   override def start() {
-    if (!Config.arbitratorEnabled) {
-      super.start()
-      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
-      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
-      system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.InsufficientBtc])
-    }
+    // TODO
+//    if (!Config.arbitratorEnabled) {
+//      super.start()
+//      system.eventStream.subscribe(inbox.getRef(), classOf[ArbitratorManager.Event])
+//      system.eventStream.subscribe(inbox.getRef(), classOf[TradeProcess.Event])
+//      system.eventStream.subscribe(inbox.getRef(), classOf[WalletManager.InsufficientBtc])
+//    }
   }
 
   override def handler = {

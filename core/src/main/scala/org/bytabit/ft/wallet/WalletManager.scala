@@ -109,9 +109,11 @@ object WalletManager {
 
 trait WalletManager extends FSM[State, Data] {
 
+  val config: Config
+
   val dispatcher = context.system.dispatcher
 
-  val netParams = NetworkParameters.fromID(Config.walletNet)
+  val netParams = NetworkParameters.fromID(config.walletNet)
   val btcContext = Context.getOrCreate(netParams)
 
   def kit: WalletAppKit
@@ -151,7 +153,7 @@ trait WalletManager extends FSM[State, Data] {
     // setup wallet app kit
     k.setAutoSave(true)
     k.setBlockingStartup(false)
-    k.setUserAgent(Config.config, Config.version)
+    k.setUserAgent(config.configName, config.version)
     k.setDownloadListener(dpt)
     k.addListener(kitListener, dispatcher)
     if (netParams == RegTestParams.get) k.connectToLocalHost()

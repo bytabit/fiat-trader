@@ -16,14 +16,16 @@
 
 package org.bytabit.ft.util
 
-import java.io.File
+import java.io.{File, IOException}
 import java.net.URL
 
 import com.typesafe.config.ConfigFactory
 
 import scala.util.Try
 
-object Config {
+trait Config {
+
+  def filesDir: Option[File]
 
   val appConfig = ConfigFactory.load()
 
@@ -31,22 +33,21 @@ object Config {
 
   // app configs
 
-  val home = getString("user.home", "./")
-  val config = getString(s"$configRoot.config", "default")
+  val configName = getString(s"$configRoot.configName", "default")
   val version = getString(s"$configRoot.version", "0.0.0")
 
   // persistence configs
 
   val akkaPersistence = "akka.persistence"
 
-  val snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$home/.bytabit/fiat-trader/$config/snapshots")
+  def snapshotStoreDir = getFile(s"$akkaPersistence.snapshot-store.local.dir", s"$configName/snapshots")
 
-  val journalDir = getFile(s"$akkaPersistence.journal.leveldb.dir", s"$home/.bytabit/fiat-trader/$config/journal")
+  def journalDir = getFile(s"$akkaPersistence.journal.leveldb.dir", s"$configName/journal")
 
   // wallet configs
 
   val walletNet = getString(s"$configRoot.wallet.net", "org.bitcoin.test")
-  val walletDir = getString(s"$configRoot.wallet.dir", "$home/.bytabit/$config/wallet")
+  val walletDir = getFile(s"$configRoot.wallet.dir", s"$configName/wallet")
 
   // arbitrator configs
 
@@ -87,8 +88,13 @@ object Config {
     if (appConfig.hasPath(key)) appConfig.getDouble(key) else default
   }
 
-  def getFile(key: String, default: String): File = {
-    if (appConfig.hasPath(key)) new File(appConfig.getString(key)) else new File(default)
+  def getFile(key: String, default: String): Option[File] = {
+    if (filesDir.isDefined) {
+      if (appConfig.hasPath(key))
+        Some(new File(filesDir.get, appConfig.getString(key)))
+      else
+        Some(new File(filesDir.get, default))
+    } else None
   }
 
   // Create data directories if not existing
