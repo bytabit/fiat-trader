@@ -34,7 +34,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   implicit def signedTakenOfferJsonFormat = jsonFormat(SignedTakenOffer.apply, "takenOffer", "btcBuyerOpenTxSigs", "btcBuyerPayoutTxSigs")
 
-  implicit def btcBuyerfiatSendJsonFormat = jsonFormat(BtcBuyerFiatSent.apply, "id", "reference", "posted")
+  implicit def btcBuyerFiatSendJsonFormat = jsonFormat(BtcBuyerFiatSent.apply, "id", "reference", "posted")
 
   implicit def certifyPaymentRequestedJsonFormat = jsonFormat(CertifyPaymentRequested.apply, "id", "evidence", "posted")
 
@@ -66,31 +66,31 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
 
   // events
 
-  implicit def btcBuyerAddedToOfferJsonFormat: RootJsonFormat[BtcBuyerAddedToOffer] = jsonFormat2(BtcBuyerAddedToOffer)
+  implicit def btcBuyerAddedToOfferJsonFormat = jsonFormat(BtcBuyerAddedToOffer, "id", "btcBuyer")
 
-  implicit def localBtcBuyerCreatedOfferJsonFormat = jsonFormat3(LocalBtcBuyerCreatedOffer)
+  implicit def localBtcBuyerCreatedOfferJsonFormat = jsonFormat(LocalBtcBuyerCreatedOffer, "id", "offer", "posted")
 
-  implicit def btcBuyerCreatedOfferJsonFormat = jsonFormat3(BtcBuyerCreatedOffer)
+  implicit def btcBuyerCreatedOfferJsonFormat = jsonFormat(BtcBuyerCreatedOffer, "id", "offer", "posted")
 
-  implicit def btcBuyerCanceledOfferJsonFormat = jsonFormat2(BtcBuyerCanceledOffer)
+  implicit def btcBuyerCanceledOfferJsonFormat = jsonFormat(BtcBuyerCanceledOffer, "id", "posted")
 
-  implicit def btcSellerSetPaymentDetailsKeyJsonFormat = jsonFormat2(BtcSellerSetPaymentDetailsKey)
+  implicit def btcSellerSetPaymentDetailsKeyJsonFormat = jsonFormat(BtcSellerSetPaymentDetailsKey, "id", "paymentDetailsKey")
 
-  implicit def btcSellerTookOfferJsonFormat = jsonFormat6(BtcSellerTookOffer)
+  implicit def btcSellerTookOfferJsonFormat = jsonFormat(BtcSellerTookOffer,"id","btcSeller","btcSellerOpenTxSigs","btcSellerFundPayoutTxo","cipherBtcSellerPaymentDetails","posted")
 
-  implicit def btcBuyerSignedOfferJsonFormat = jsonFormat5(BtcBuyerSignedOffer)
+  implicit def btcBuyerSignedOfferJsonFormat = jsonFormat(BtcBuyerSignedOffer, "id", "btcBuyerId", "openSigs", "payoutSigs", "posted")
 
-  implicit def btcSellerOpenedEscrowJsonFormat = jsonFormat3(BtcSellerOpenedEscrow)
+  implicit def btcSellerOpenedEscrowJsonFormat = jsonFormat(BtcSellerOpenedEscrow, "id", "txHash", "updateTime")
 
-  implicit def btcSellerFundedEscrowJsonFormat = jsonFormat4(BtcSellerFundedEscrow)
+  implicit def btcSellerFundedEscrowJsonFormat = jsonFormat(BtcSellerFundedEscrow, "id","txHash", "updateTime", "paymentDetailsKey")
 
-  implicit def btcBuyerReceivedPayoutJsonFormat = jsonFormat3(BtcBuyerReceivedPayout)
+  implicit def btcBuyerReceivedPayoutJsonFormat = jsonFormat(BtcBuyerReceivedPayout, "id", "txHash", "updateTime")
 
-  implicit def btcSellerReceivedPayoutJsonFormat = jsonFormat3(BtcSellerReceivedPayout)
+  implicit def btcSellerReceivedPayoutJsonFormat = jsonFormat(BtcSellerReceivedPayout, "id", "txHash", "updateTime")
 
-  implicit def btcBuyerFundedJsonFormat = jsonFormat3(BtcBuyerFunded)
+  implicit def btcBuyerFundedJsonFormat = jsonFormat(BtcBuyerFunded, "id", "txHash", "updateTime")
 
-  implicit def btcSellerRefundedJsonFormat = jsonFormat3(BtcSellerRefunded)
+  implicit def btcSellerRefundedJsonFormat = jsonFormat(BtcSellerRefunded, "id", "txHash", "updateTime")
 
   val tradeEventJsonFormatMap: Map[String, RootJsonFormat[_ <: TradeProcess.Event]] = Map(
     simpleName(classOf[LocalBtcBuyerCreatedOffer]) -> localBtcBuyerCreatedOfferJsonFormat,
@@ -102,7 +102,7 @@ trait TradeJsonProtocol extends WalletJsonProtocol {
     simpleName(classOf[BtcBuyerSignedOffer]) -> btcBuyerSignedOfferJsonFormat,
     simpleName(classOf[BtcSellerOpenedEscrow]) -> btcSellerOpenedEscrowJsonFormat,
     simpleName(classOf[BtcSellerFundedEscrow]) -> btcSellerFundedEscrowJsonFormat,
-    simpleName(classOf[BtcBuyerFiatSent]) -> btcBuyerfiatSendJsonFormat,
+    simpleName(classOf[BtcBuyerFiatSent]) -> btcBuyerFiatSendJsonFormat,
     simpleName(classOf[CertifyPaymentRequested]) -> certifyPaymentRequestedJsonFormat,
     simpleName(classOf[FiatSentCertified]) -> fiatSentCertifiedJsonFormat,
     simpleName(classOf[FiatNotSentCertified]) -> fiatNotSentCertifiedJsonFormat,

@@ -24,13 +24,13 @@ import spray.json._
 
 trait EventClientJsonProtocol extends ArbitratorJsonProtocol {
 
-  implicit def arbitratorAddedJsonFormat = jsonFormat3(ArbitratorAdded)
+  implicit def arbitratorAddedJsonFormat = jsonFormat(ArbitratorAdded, "url", "arbitrator", "posted")
 
-  implicit def tradeAddedJsonFormat = jsonFormat5(TradeAdded)
+  implicit def tradeAddedJsonFormat = jsonFormat(TradeAdded, "url", "role", "tradeId", "offer", "posted")
 
-  implicit def tradeRemovedJsonFormat = jsonFormat3(TradeRemoved)
+  implicit def tradeRemovedJsonFormat = jsonFormat(TradeRemoved, "url", "tradeId", "posted")
 
-  implicit def postedTradeEventReceivedJsonFormat = jsonFormat2(PostedEventReceived)
+  implicit def postedTradeEventReceivedJsonFormat = jsonFormat(PostedEventReceived, "url", "posted")
 
   val eventClientJsonFormatMap: Map[String, RootJsonFormat[_ <: EventClient.Event]] = Map(
     simpleName(classOf[ArbitratorAdded]) -> arbitratorAddedJsonFormat,
