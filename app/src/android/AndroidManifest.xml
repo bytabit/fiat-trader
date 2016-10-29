@@ -2,33 +2,29 @@
 <!--
   ~ Copyright 2016 Steven Myers
   ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
+  ~ Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
   ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~      http://www.apache.org/licenses/LICENSE-2.0
   ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
+  ~ Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.bytabit" android:versionCode="1" android:versionName="1.0">
-        <supports-screens android:xlargeScreens="true"/>
-        <uses-permission android:name="android.permission.INTERNET"/>
-        <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-        <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-        <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>
-        <application android:label="fiat-trader" android:name="android.support.multidex.MultiDexApplication" android:icon="@mipmap/ic_launcher">
-                <activity android:name="javafxports.android.FXActivity" android:label="fiat-trader" android:configChanges="orientation|screenSize">
-                        <meta-data android:name="main.class" android:value="org.bytabit.ft.fxui.FiatTrader"/>
-                        <meta-data android:name="debug.port" android:value="0"/>
-                        <intent-filter>
-                                <action android:name="android.intent.action.MAIN"/>
-                                <category android:name="android.intent.category.LAUNCHER"/>
-                        </intent-filter>
-                </activity>
-        </application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.bytabit.ft" android:versionCode="1"
+          android:versionName="0.12.1-4+gda8c37c.dirty">
+    <supports-screens android:xlargeScreens="true"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="21"/>
+    <application android:label="app" android:name="android.support.multidex.MultiDexApplication">
+        <activity android:name="javafxports.android.FXActivity" android:label="app"
+                  android:configChanges="orientation|screenSize">
+            <meta-data android:name="main.class" android:value="org.bytabit.ft.fxui.FiatTrader"/>
+            <meta-data android:name="debug.port" android:value="0"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>
