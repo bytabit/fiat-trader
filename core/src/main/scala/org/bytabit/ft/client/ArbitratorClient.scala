@@ -1,17 +1,11 @@
 /*
  * Copyright 2016 Steven Myers
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.bytabit.ft.client
@@ -24,7 +18,7 @@ import org.bytabit.ft.client.EventClient._
 import org.bytabit.ft.trade.TradeProcess.BtcBuyerCreatedOffer
 import org.bytabit.ft.trade.model.ARBITRATOR
 import org.bytabit.ft.trade.{ArbitrateProcess, TradeProcess}
-import org.bytabit.ft.util.{BTCMoney, Config}
+import org.bytabit.ft.util.{BTCMoney, ConfigKeys}
 import org.bytabit.ft.wallet.{TradeWalletManager, WalletManager}
 
 import scala.concurrent.duration._
@@ -32,12 +26,22 @@ import scala.language.postfixOps
 
 object ArbitratorClient {
 
-  def props(config: Config, url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new ArbitratorClient(config, url, tradeWalletMgr, escrowWalletMgr))
+  def props(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) = Props(new ArbitratorClient(url, tradeWalletMgr, escrowWalletMgr))
 
   def name(url: URL) = s"${ArbitratorClient.getClass.getSimpleName}-${url.getHost}-${url.getPort}"
 }
 
-case class ArbitratorClient(config: Config, url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
+case class ArbitratorClient(url: URL, tradeWalletMgr: ActorRef, escrowWalletMgr: ActorRef) extends EventClient {
+
+  // config
+  val config = system.settings.config
+  val publicProtocol = config.getBoolean(ConfigKeys.PUBLIC_PROTOCOL)
+  val publicAddress = config.getBoolean(ConfigKeys.PUBLIC_ADDRESS)
+  val publicPort = config.getBoolean(ConfigKeys.PUBLIC_PORT)
+  val publicUrl = new URL(s"$publicProtocol://$publicAddress:$publicPort")
+
+  val bondPercent = config.getDouble(ConfigKeys.BOND_PERCENT)
+  val arbitratorFee = config.getDouble(ConfigKeys.ARBITRATOR_FEE)
 
   // persistence
 
@@ -56,7 +60,7 @@ case class ArbitratorClient(config: Config, url: URL, tradeWalletMgr: ActorRef, 
     // create arbitrator
 
     case Event(npe: NoPostedEventsReceived, d) =>
-      tradeWalletMgr ! TradeWalletManager.CreateArbitrator(config.publicUrl, config.bondPercent, BTCMoney(config.btcArbitratorFee))
+      tradeWalletMgr ! TradeWalletManager.CreateArbitrator(publicUrl, bondPercent, BTCMoney(arbitratorFee))
       stay()
 
     // new arbitrator created

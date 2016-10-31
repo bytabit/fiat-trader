@@ -1,17 +1,11 @@
 /*
  * Copyright 2016 Steven Myers
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.bytabit.ft.wallet
@@ -22,7 +16,6 @@ import akka.actor.Props
 import com.google.common.util.concurrent.Service.Listener
 import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
-import org.bytabit.ft.util.Config
 import org.bytabit.ft.wallet.EscrowWalletManager.{AddWatchAddress, BroadcastSignedTx, RemoveWatchAddress}
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
@@ -35,7 +28,7 @@ import scala.util.Try
 
 object EscrowWalletManager {
 
-  def props(config: Config) = Props(new EscrowWalletManager(config: Config))
+  val props = Props(new EscrowWalletManager())
 
   val name = s"escrowWalletManager"
 
@@ -49,13 +42,13 @@ object EscrowWalletManager {
 
 }
 
-class EscrowWalletManager(override val config: Config) extends WalletManager {
+class EscrowWalletManager extends WalletManager {
 
-  val directory = config.walletDir
-  val filePrefix = s"${config.configName}-escrow"
+  // config
 
-  // TODO handle when directory is None
-  def kit: WalletAppKit = new WalletAppKit(btcContext, directory.get, filePrefix)
+  val filePrefix = s"$configName-escrow"
+
+  def kit: WalletAppKit = new WalletAppKit(btcContext, walletDir, filePrefix)
 
   def kitListener = new Listener {
 
@@ -87,9 +80,10 @@ class EscrowWalletManager(override val config: Config) extends WalletManager {
       if (k.wallet.addWatchedAddress(address, creationTime.getMillis / 1000)) {
         // stop wallet, delete chainFile and restart wallet
         k.stopAsync().awaitTerminated()
-        // TODO handle when directory is None
-        val chainFile: File = new File(directory.get, filePrefix + ".spvchain")
-        val success = chainFile.delete()
+        val chainFile: File = new File(walletDir, filePrefix + ".spvchain")
+        if (!chainFile.delete()) {
+          log.error(s"Failed to delete chain file: ${chainFile.getAbsoluteFile}")
+        }
         val newKit = startWallet(kit, downloadProgressTracker)
         goto(STARTING) using Data(newKit)
       }

@@ -1,21 +1,16 @@
 /*
  * Copyright 2016 Steven Myers
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 
 package org.bytabit.ft.wallet
 
+import java.io.{File, IOException}
 import java.util.Date
 
 import akka.actor._
@@ -109,11 +104,26 @@ object WalletManager {
 
 trait WalletManager extends FSM[State, Data] {
 
-  val config: Config
+  // config
+
+  val config = context.system.settings.config
+  val walletDir = new File(config.getString(ConfigKeys.WALLET_DIR))
+  val configName = config.getString(ConfigKeys.CONFIG_NAME)
+  val walletNet = config.getString(ConfigKeys.WALLET_NET)
+  val version = config.getString(ConfigKeys.VERSION)
+
+  // create empty wallets dir
+  if (!walletDir.isDirectory) {
+    // try to create the directory, on failure double check if someone else beat us to it
+    if (!walletDir.mkdirs() && !walletDir.isDirectory) {
+      throw new IOException(s"Failed to create directory [${walletDir.getAbsolutePath}]")
+    }
+  }
+
 
   val dispatcher = context.system.dispatcher
 
-  val netParams = NetworkParameters.fromID(config.walletNet)
+  val netParams = NetworkParameters.fromID(walletNet)
   val btcContext = Context.getOrCreate(netParams)
 
   def kit: WalletAppKit
@@ -153,7 +163,7 @@ trait WalletManager extends FSM[State, Data] {
     // setup wallet app kit
     k.setAutoSave(true)
     k.setBlockingStartup(false)
-    k.setUserAgent(config.configName, config.version)
+    k.setUserAgent("org.bytabit.ft", version)
     k.setDownloadListener(dpt)
     k.addListener(kitListener, dispatcher)
     if (netParams == RegTestParams.get) k.connectToLocalHost()

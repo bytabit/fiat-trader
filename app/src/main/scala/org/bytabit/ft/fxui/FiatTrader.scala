@@ -7,19 +7,25 @@
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
+
 package org.bytabit.ft.fxui
 
+import java.io.FileNotFoundException
+import java.util.function.Supplier
 import javafx.scene.Scene
 import javafx.scene.control.CheckBox
 
 import akka.actor.ActorSystem
+import com.gluonhq.charm.down.Services
+import com.gluonhq.charm.down.plugins.StorageService
 import com.gluonhq.charm.glisten.application.MobileApplication
 import com.gluonhq.charm.glisten.mvc.View
 import com.gluonhq.charm.glisten.visual.Swatch
+import com.typesafe.config.{ConfigFactory, ConfigParseOptions, ConfigResolveOptions}
 import org.bytabit.ft.client.ClientManager
-import org.bytabit.ft.fxui.util.GluonConfig
-import org.bytabit.ft.util.{Config, JavaLogging}
+import org.bytabit.ft.util.{ConfigKeys, JavaLogging}
 
+import scala.collection.JavaConversions._
 import scala.compat.java8.FunctionConverters._
 import scala.util.Success
 
@@ -36,27 +42,26 @@ class FiatTrader extends MobileApplication with JavaLogging {
 
   import FiatTrader._
 
-  val config: Config = new GluonConfig
-  val actorSystem = ActorSystem.create(config.configName)
+  val fileNotFound = new Supplier[FileNotFoundException] {
+    override def get(): FileNotFoundException = new FileNotFoundException("Could not access private storage.")
+  }
+
+  val storageService = Services.get(classOf[StorageService]).orElseThrow(fileNotFound)
+  val filesDir = storageService.getPrivateStorage.orElseThrow(fileNotFound).getAbsolutePath
+
+  val appConfig = ConfigFactory.load(ConfigParseOptions.defaults(), ConfigResolveOptions.defaults().setAllowUnresolved(true))
+    .withFallback(ConfigFactory.parseMap(Map("bytabit.fiat-trader.filesDir" -> filesDir))).resolve()
+
+  val configName = appConfig.getString(ConfigKeys.CONFIG_NAME)
+  val actorSystem = ActorSystem.create(configName, appConfig)
 
   override def init() {
-
-    // create data directories if they don't exist
-    if (config.snapshotStoreDir.isDefined && config.createDir(config.snapshotStoreDir.get).isFailure) {
-      log.error("Unable to create snapshot directory.")
-    }
-    if (config.journalDir.isDefined && config.createDir(config.journalDir.get).isFailure) {
-      log.error("Unable to create journal directory.")
-    }
-    if (config.walletDir.isDefined && config.createDir(config.walletDir.get).isFailure) {
-      log.error("Unable to create wallet directory.")
-    }
 
     val tradeViewFactory: () => View = () => {
       //      val tradeView = new TradeView()
       //      tradeView.getView.asInstanceOf[View]
 
-      ClientManager.actorOf(config, actorSystem)
+      ClientManager.actorOf(actorSystem)
 
       new View(new CheckBox("I like Glisten"))
     }

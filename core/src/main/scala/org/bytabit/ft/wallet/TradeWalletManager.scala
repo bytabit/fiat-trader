@@ -1,17 +1,11 @@
 /*
  * Copyright 2016 Steven Myers
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 package org.bytabit.ft.wallet
 
@@ -23,7 +17,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.kits.WalletAppKit
 import org.bitcoinj.wallet.{DeterministicSeed, KeyChain, SendRequest, Wallet}
 import org.bytabit.ft.trade.model.{BtcBuyOffer, CertifyPaymentEvidence, Offer, TakenOffer}
-import org.bytabit.ft.util.{AESCipher, BTCMoney, Config, Monies}
+import org.bytabit.ft.util.{AESCipher, BTCMoney, Monies}
 import org.bytabit.ft.wallet.TradeWalletManager._
 import org.bytabit.ft.wallet.WalletManager._
 import org.bytabit.ft.wallet.model._
@@ -35,7 +29,7 @@ import scala.util.Try
 
 object TradeWalletManager {
 
-  def props(config: Config) = Props(new TradeWalletManager(config))
+  val props = Props(new TradeWalletManager())
 
   val name = s"tradeWalletManager"
 
@@ -75,10 +69,9 @@ object TradeWalletManager {
 
 }
 
-class TradeWalletManager(override val config: Config) extends WalletManager with WalletTools {
+class TradeWalletManager extends WalletManager with WalletTools {
 
-  // TODO handle when walletDir is None
-  def kit: WalletAppKit = new WalletAppKit(btcContext, config.walletDir.get, config.configName)
+  def kit: WalletAppKit = new WalletAppKit(btcContext, walletDir, configName)
 
   def kitListener = new Listener {
 

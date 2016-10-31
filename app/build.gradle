@@ -35,20 +35,27 @@ repositories {
 mainClassName = 'org.bytabit.ft.fxui.FiatTrader'
 
 def scalaVersion = "2.11"
-def gluonVersion = "3.0.0"
 
 dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion.7"
     compile "org.scala-lang.modules:scala-java8-compat_$scalaVersion:0.7.0"
+
     compile project(':core')
-    compile "com.gluonhq:charm:$gluonVersion"
-    compile 'com.airhacks:afterburner.mfx:1.6.2'
-    androidRuntime "com.gluonhq:charm-android:$gluonVersion"
-    iosRuntime "com.gluonhq:charm-ios:$gluonVersion"
-    desktopRuntime "com.gluonhq:charm-desktop:$gluonVersion"
+    compile "com.gluonhq:charm:4.0.0"
+    compileNoRetrolambda 'com.airhacks:afterburner.mfx:1.6.2'
+    compileNoRetrolambda 'de.jensd:fontawesomefx:8.8'
+
+    androidRuntime "com.gluonhq:charm-android:3.0.0"
+    iosRuntime "com.gluonhq:charm-ios:3.0.0"
+    desktopRuntime "com.gluonhq:charm-desktop:3.0.0"
 }
 
 jfxmobile {
+
+    downConfig {
+        plugins 'display', 'lifecycle', 'statusbar', 'storage'
+    }
+
     android {
 
         applicationPackage = 'org.bytabit.ft'

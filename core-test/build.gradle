@@ -29,7 +29,7 @@ dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion.7"
     compile "com.typesafe.akka:akka-actor_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-persistence_$scalaVersion:$akkaVersion"
-    compile "org.iq80.leveldb:leveldb:0.7"
+    compile "org.iq80.leveldb:leveldb:0.9"
     compile "org.fusesource.leveldbjni:leveldbjni-all:1.8"
     compile "com.typesafe.akka:akka-http-experimental_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-http-spray-json-experimental_$scalaVersion:$akkaVersion"

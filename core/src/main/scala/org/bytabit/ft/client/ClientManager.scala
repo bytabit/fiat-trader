@@ -1,17 +1,11 @@
 /*
  * Copyright 2016 Steven Myers
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
  */
 package org.bytabit.ft.client
 
@@ -25,7 +19,7 @@ import org.bytabit.ft.client.ClientManager.{ProfileNameUpdated, _}
 import org.bytabit.ft.client.model.{ClientProfile, PaymentDetails}
 import org.bytabit.ft.trade.BtcSellProcess.TakeBtcBuyOffer
 import org.bytabit.ft.trade.{ArbitrateProcess, BtcBuyProcess, BtcSellProcess, TradeProcess}
-import org.bytabit.ft.util.{Config, PaymentMethod}
+import org.bytabit.ft.util.{ConfigKeys, PaymentMethod}
 import org.bytabit.ft.wallet.WalletManager.InsufficientBtc
 import org.bytabit.ft.wallet.{EscrowWalletManager, TradeWalletManager, WalletManager}
 import org.joda.money.CurrencyUnit
@@ -36,13 +30,12 @@ object ClientManager {
 
   // actor setup
 
-  def props(config: Config) = Props(new ClientManager(config))
+  val props = Props(new ClientManager())
 
   val name = ClientManager.getClass.getSimpleName
   val persistenceId = s"$name-persister"
 
-  def actorOf(config: Config, system: ActorSystem) =
-    system.actorOf(props(config), name)
+  def actorOf(system: ActorSystem) = system.actorOf(props, name)
 
   // client manager commands
 
@@ -143,11 +136,16 @@ object ClientManager {
 
 }
 
-class ClientManager(config: Config) extends PersistentFSM[State, Data, Event] {
+class ClientManager() extends PersistentFSM[State, Data, Event] {
 
   // implicits
 
   implicit val system = context.system
+
+  // config
+
+  val config = system.settings.config
+  val arbitratorEnabled = config.getBoolean(ConfigKeys.ARBITRATOR_ENABLED)
 
   // persistence
 
@@ -175,8 +173,8 @@ class ClientManager(config: Config) extends PersistentFSM[State, Data, Event] {
   system.eventStream.subscribe(context.self, classOf[WalletManager.ClientProfileIdCreated])
 
   // Create wallets
-  val tradeWalletMgrRef: ActorRef = context.actorOf(TradeWalletManager.props(config), TradeWalletManager.name)
-  val escrowWalletMgrRef: ActorRef = context.actorOf(EscrowWalletManager.props(config), EscrowWalletManager.name)
+  val tradeWalletMgrRef: ActorRef = context.actorOf(TradeWalletManager.props, TradeWalletManager.name)
+  val escrowWalletMgrRef: ActorRef = context.actorOf(EscrowWalletManager.props, EscrowWalletManager.name)
 
   startWith(ADDED, AddedClientManager())
 
@@ -315,7 +313,7 @@ class ClientManager(config: Config) extends PersistentFSM[State, Data, Event] {
   // start/stop clients
 
   def name(url: URL): String = {
-    if (config.arbitratorEnabled) {
+    if (arbitratorEnabled) {
       ArbitratorClient.name(url)
     } else {
       TraderClient.name(url)
@@ -323,8 +321,8 @@ class ClientManager(config: Config) extends PersistentFSM[State, Data, Event] {
   }
 
   def props(url: URL): Props = {
-    if (config.arbitratorEnabled && config.publicUrl == url) {
-      ArbitratorClient.props(config, url, tradeWalletMgrRef, escrowWalletMgrRef)
+    if (arbitratorEnabled) {
+      ArbitratorClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
     } else {
       TraderClient.props(url, tradeWalletMgrRef, escrowWalletMgrRef)
     }

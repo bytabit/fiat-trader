@@ -42,7 +42,7 @@ class TradePresenter {
       }
     })
 
-    tradeView.getLayers.add(fab)
+    //    tradeView.getLayers.add(fab)
 
     val viewToTransition: View => Transition = v => new FadeInLeftBigTransition(v)
     tradeView.setShowTransitionFactory(viewToTransition.asJava)
