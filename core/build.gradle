@@ -35,15 +35,8 @@ dependencies {
         exclude group: 'org.fusesource.leveldbjni'
         exclude group: 'org.iq80.leveldb'
     }
-    compile "org.iq80.leveldb:leveldb:0.9"
-    compile("org.fusesource.leveldbjni:leveldbjni-all:1.8") {
-        exclude group: 'org.iq80.leveldb'
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-osx'
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux32'
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-linux64'
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win32'
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-win64'
-    }
+    compile "com.github.dnvriend:akka-persistence-jdbc_$scalaVersion:2.6.8-SNAPSHOT"
+    compile "com.h2database:h2:1.4.193"
 
     compile "com.typesafe.akka:akka-http-experimental_$scalaVersion:$akkaVersion"
     compile "com.typesafe.akka:akka-http-spray-json-experimental_$scalaVersion:$akkaVersion"

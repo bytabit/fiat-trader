@@ -10,22 +10,18 @@
 
 package org.bytabit.ft.fxui
 
-import java.io.FileNotFoundException
-import java.util.function.Supplier
 import javafx.scene.Scene
 import javafx.scene.control.CheckBox
 
 import akka.actor.ActorSystem
-import com.gluonhq.charm.down.Services
-import com.gluonhq.charm.down.plugins.StorageService
 import com.gluonhq.charm.glisten.application.MobileApplication
 import com.gluonhq.charm.glisten.mvc.View
 import com.gluonhq.charm.glisten.visual.Swatch
-import com.typesafe.config.{ConfigFactory, ConfigParseOptions, ConfigResolveOptions}
+import com.typesafe.config.ConfigFactory
 import org.bytabit.ft.client.ClientManager
 import org.bytabit.ft.util.{ConfigKeys, JavaLogging}
+import slick.driver.H2Driver.api._
 
-import scala.collection.JavaConversions._
 import scala.compat.java8.FunctionConverters._
 import scala.util.Success
 
@@ -42,24 +38,67 @@ class FiatTrader extends MobileApplication with JavaLogging {
 
   import FiatTrader._
 
-  val fileNotFound = new Supplier[FileNotFoundException] {
-    override def get(): FileNotFoundException = new FileNotFoundException("Could not access private storage.")
-  }
+  // TODO FT-126, need to add below back in once slick is able to use same config as akka
+  //    val fileNotFound = new Supplier[FileNotFoundException] {
+  //      override def get(): FileNotFoundException = new FileNotFoundException("Could not access private storage.")
+  //    }
+  //
+  //    val storageService = Services.get(classOf[StorageService]).orElseThrow(fileNotFound)
+  //    val filesDir = storageService.getPrivateStorage.orElseThrow(fileNotFound).getAbsolutePath
+  //
+  //    val appConfig = ConfigFactory.load(ConfigParseOptions.defaults(), ConfigResolveOptions.defaults().setAllowUnresolved(true))
+  //      .withFallback(ConfigFactory.parseMap(Map("bytabit.fiat-trader.filesDir" -> filesDir))).resolve()
 
-  val storageService = Services.get(classOf[StorageService]).orElseThrow(fileNotFound)
-  val filesDir = storageService.getPrivateStorage.orElseThrow(fileNotFound).getAbsolutePath
-
-  val appConfig = ConfigFactory.load(ConfigParseOptions.defaults(), ConfigResolveOptions.defaults().setAllowUnresolved(true))
-    .withFallback(ConfigFactory.parseMap(Map("bytabit.fiat-trader.filesDir" -> filesDir))).resolve()
-
+  val appConfig = ConfigFactory.load()
   val configName = appConfig.getString(ConfigKeys.CONFIG_NAME)
   val actorSystem = ActorSystem.create(configName, appConfig)
+
+  // Definition of the JOURNAL table
+  class Journal(tag: Tag) extends Table[(Long, String, Long, Boolean, Option[String], Array[Byte])](tag, "JOURNAL") {
+    def ordering = column[Long]("ORDERING", O.AutoInc)
+
+    def persistenceId = column[String]("PERSISTENCE_ID", O.Length(255))
+
+    def sequenceNumber = column[Long]("SEQUENCE_NUMBER")
+
+    def deleted = column[Boolean]("DELETED", O.Default(false))
+
+    def tags = column[Option[String]]("TAGS", O.Default(None), O.Length(255))
+
+    def message = column[Array[Byte]]("MESSAGE")
+
+    def jIdx = index("J_IDX", (persistenceId, sequenceNumber), unique = true)
+
+    // Every table needs a * projection with the same type as the table's type parameter
+    def * = (ordering, persistenceId, sequenceNumber, deleted, tags, message)
+  }
+
+  // Definition of the SNAPSHOT table
+  class Snapshot(tag: Tag) extends Table[(String, Long, Long, Array[Byte])](tag, "SNAPSHOT") {
+    def persistenceId = column[String]("PERSISTENCE_ID", O.Length(255))
+
+    def sequenceNumber = column[Long]("SEQUENCE_NUMBER")
+
+    def created = column[Long]("CREATED")
+
+    def snapshot = column[Array[Byte]]("SNAPSHOT")
+
+    def sIdx = index("S_IDX", (persistenceId, sequenceNumber), unique = true)
+
+    // Every table needs a * projection with the same type as the table's type parameter
+    def * = (persistenceId, sequenceNumber, created, snapshot)
+  }
 
   override def init() {
 
     val tradeViewFactory: () => View = () => {
       //      val tradeView = new TradeView()
       //      tradeView.getView.asInstanceOf[View]
+
+      val db = Database.forConfig("slick.db")
+      val journal = TableQuery[Journal]
+      val snapshot = TableQuery[Snapshot]
+      db.run((journal.schema ++ snapshot.schema).create)
 
       ClientManager.actorOf(actorSystem)
 

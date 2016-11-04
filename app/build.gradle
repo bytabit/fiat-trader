@@ -60,7 +60,7 @@ jfxmobile {
 
         applicationPackage = 'org.bytabit.ft'
 
-        //proguardFile 'src/android/proguard.cfg'
+        proguardFile 'src/android/proguard.cfg'
 
         packagingOptions {
             exclude 'META-INF/LICENSE.txt'
